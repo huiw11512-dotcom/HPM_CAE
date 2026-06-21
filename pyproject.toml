@@ -3,29 +3,18 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hpm-digital-twin"
-version = "2.0a0"
-description = "全中文归一化阵列算法 CAE：V2.0A 可信度验证体系、Bootstrap 验证中心、中文报告与论文图表输出"
+name = "hpmdt-studio"
+version = "0.1.0a0"
+description = "HPM-DT Studio: system-level electromagnetic scene and mission simulation studio"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [
-  "numpy>=1.26",
-  "scipy>=1.11",
-  "matplotlib>=3.8",
-  "PyYAML>=6.0",
-  "threadpoolctl>=3.0",
-  "Pillow>=10.0",
-  "pandas>=2.0",
-  "plotly>=6.0",
-  "gradio>=6.5,<7",
-  "fastapi>=0.110",
-  "uvicorn>=0.29",
-  "jinja2>=3.1",
-  "httpx>=0.27"
-]
+dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "playwright>=1.49", "nbformat>=5.10", "nbclient>=0.10"]
+dev = ["pytest>=8.0", "mypy>=1.8", "ruff>=0.8", "hypothesis>=6.100", "playwright>=1.49"]
+
+[project.scripts]
+hpmdt-studio = "hpmdt.__main__:main"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["backend/src"]

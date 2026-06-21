@@ -14,12 +14,21 @@ env/
 
 # Generated run outputs and local archives
 outputs*/
+outputs_*/
+outputs-v*/
+PROJECT_MANIFEST.json
 *.log
 *.sqlite
 *.db
 *.zip
 *.sha256
 *.sha256.txt
+
+# Studio frontend/generated assets
+frontend/node_modules/
+frontend/dist/
+frontend/playwright-report/
+frontend/test-results/
 
 # Temporary files
 *.tmp

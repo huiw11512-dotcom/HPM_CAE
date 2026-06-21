@@ -1,5 +1,0 @@
--r requirements.txt
-pytest>=8.0
-playwright>=1.49
-nbformat>=5.10
-nbclient>=0.10
