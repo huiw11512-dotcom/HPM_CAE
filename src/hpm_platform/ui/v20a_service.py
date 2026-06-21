@@ -119,9 +119,11 @@ class V20AValidationService:
             imported_bridge = self.ensure_workbench_imported_calibration_bridge()
             scene = self.workbench3d.scene()
             assets = self.workbench3d.list_assets()
+            material_audit = assets.get("材料代理审计", {})
             if not any(item.get("类型") == "求解结果" for item in assets.get("资产", ()) if isinstance(item, dict)):
                 self.workbench3d.submit_solve_job("平台成熟度基线求解")
                 assets = self.workbench3d.list_assets()
+                material_audit = assets.get("材料代理审计", {})
             paper_status = self.paper_factory.status()
             if not paper_status.get("通过"):
                 paper_status = self.paper_factory.generate()
@@ -135,6 +137,7 @@ class V20AValidationService:
                     "scene": scene,
                     "assets": assets,
                     "imported_calibration": imported_bridge,
+                    "material_audit": material_audit,
                 },
                 data_import={
                     "catalog": data_catalog,

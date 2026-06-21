@@ -239,6 +239,13 @@ def create_app(
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"更新材料代理失败：{exc}") from exc
 
+    @app.get("/api/workbench3d/materials/audit")
+    async def audit_workbench3d_materials() -> dict[str, Any]:
+        try:
+            return service.workbench3d.audit_materials()
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"生成材料代理审计失败：{exc}") from exc
+
     @app.post("/api/workbench3d/solve")
     async def solve_workbench3d_scene() -> dict[str, Any]:
         try:

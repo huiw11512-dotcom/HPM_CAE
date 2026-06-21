@@ -49,6 +49,7 @@
     "三维拖拽移动",
     "受控几何变换控件",
     "材料代理编辑",
+    "材料代理审计资产 MAT-AUDIT-001",
     "绝对量纲标定卡片",
     "三维工作台求解联动",
     "求解任务队列与JOB记录",
@@ -79,6 +80,7 @@
     "/api/workbench3d/scene",
     "/api/workbench3d/objects/{object_id}",
     "/api/workbench3d/materials/{material_id}",
+    "/api/workbench3d/materials/audit",
     "/api/workbench3d/absolute-calibration",
     "/api/workbench3d/solve",
     "/api/workbench3d/solve-jobs",
@@ -142,7 +144,9 @@
     "outputs_v20a_vv/workbench3d_assets/absolute_calibration_points.csv",
     "outputs_v20a_vv/workbench3d_assets/absolute_element_powers.csv",
     "outputs_v20a_vv/workbench3d_assets/imported_calibration_bridge.json",
-    "outputs_v20a_vv/workbench3d_assets/imported_calibration_bridge.csv"
+    "outputs_v20a_vv/workbench3d_assets/imported_calibration_bridge.csv",
+    "outputs_v20a_vv/workbench3d_assets/material_proxy_audit.json",
+    "outputs_v20a_vv/workbench3d_assets/material_proxy_audit.csv"
   ],
   "V2.0B浏览器验收截图": [
     "outputs_v20a_vv/v20b_3d_canvas_smoke.png",

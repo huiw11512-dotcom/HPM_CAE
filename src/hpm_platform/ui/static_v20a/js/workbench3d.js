@@ -36,6 +36,7 @@ let assetNamingAudit = {};
 let assetReproducibilityAudit = {};
 let assetAbsoluteCalibration = {};
 let assetImportedCalibration = {};
+let assetMaterialAudit = {};
 let absoluteCalibration = {};
 let assetLedgerFilter = {type: "全部", query: ""};
 let profileAxis = "x";
@@ -750,6 +751,7 @@ function assetClass(item) {
   if (item["类型"] === "求解结果") return "result";
   if (item["类型"] === "工程快照") return "snapshot";
   if (item["类型"] === "导入标定桥接") return "imported";
+  if (item["类型"] === "材料代理审计") return "material";
   return "";
 }
 
@@ -763,7 +765,7 @@ function assetLedgerUrl(path, limit = 12) {
 }
 
 function assetTypeOptions() {
-  return ["全部", "工程快照", "求解任务", "求解结果", "导入标定桥接"].map((item) => {
+  return ["全部", "工程快照", "求解任务", "求解结果", "导入标定桥接", "材料代理审计"].map((item) => {
     const selected = assetLedgerFilter.type === item ? "selected" : "";
     return `<option value="${escapeAttr(item)}" ${selected}>${escapeAttr(item)}</option>`;
   }).join("");
@@ -777,6 +779,7 @@ function assetCountsSummary() {
     `快照 ${counts["工程快照"] || 0}`,
     `任务 ${counts["求解任务"] || 0}`,
     `结果 ${counts["求解结果"] || 0}`,
+    `材料审计 ${counts["材料代理审计"] || 0}`,
     `匹配 ${assetLedgerAudit["匹配资产"] ?? assetLedger.length}`,
     `事件 ${dbRows.workbench3d_solve_job_events ?? assetDatabaseAudit["任务事件数"] ?? "--"}`,
     `库表 ${assetDatabaseRecords["表数量"] ?? "--"}`,
@@ -784,6 +787,7 @@ function assetCountsSummary() {
     `复现 ${assetReproducibilityAudit["摘要"]?.["可复查结果数"] ?? "--"}`,
     `标定 ${assetAbsoluteCalibration["校准结果"]?.["相对RMSE_percent"] ?? "--"}%`,
     `导入 ${assetImportedCalibration["摘要"]?.["样本数"] ?? "--"}点`,
+    `材料 ${assetMaterialAudit["材料数量"] ?? "--"}`,
   ];
 }
 
@@ -801,6 +805,7 @@ function assetFilterControls() {
       <button type="button" data-asset-action="reproducibility">复现</button>
       <button type="button" data-asset-action="calibration">标定</button>
       <button type="button" data-asset-action="imported-calibration">导入</button>
+      <button type="button" data-asset-action="materials">材料</button>
       <button type="button" data-asset-action="naming">命名</button>
     </div>
     <div class="workbench3d-asset-summary" data-testid="workbench3d-asset-summary">
@@ -811,6 +816,7 @@ function assetFilterControls() {
       <span>${escapeAttr(assetReproducibilityAudit["结论"] ? `复现 ${assetReproducibilityAudit["结论"]}` : "复现 --")}</span>
       <span>${escapeAttr(assetAbsoluteCalibration["结论"] ? `标定 ${assetAbsoluteCalibration["结论"]}` : "标定 --")}</span>
       <span>${escapeAttr(assetImportedCalibration["结论"] ? `导入 ${assetImportedCalibration["结论"]}` : "导入 --")}</span>
+      <span>${escapeAttr(assetMaterialAudit["结论"] ? `材料 ${assetMaterialAudit["结论"]}` : "材料 --")}</span>
     </div>`;
 }
 
@@ -1029,9 +1035,11 @@ async function loadAssetLedger() {
   assetReproducibilityAudit = data["复现审计"] || assetReproducibilityAudit;
   assetAbsoluteCalibration = data["绝对量纲标定"] || assetAbsoluteCalibration;
   assetImportedCalibration = data["导入数据标定桥接"] || assetImportedCalibration;
+  assetMaterialAudit = data["材料代理审计"] || assetMaterialAudit;
   absoluteCalibration = assetAbsoluteCalibration && assetAbsoluteCalibration["版本"] ? assetAbsoluteCalibration : absoluteCalibration;
   if (sceneData && absoluteCalibration && absoluteCalibration["版本"]) sceneData["绝对量纲标定"] = absoluteCalibration;
   if (sceneData && assetImportedCalibration && assetImportedCalibration["版本"]) sceneData["导入数据标定桥接"] = assetImportedCalibration;
+  if (sceneData && assetMaterialAudit && assetMaterialAudit["版本"]) sceneData["材料代理审计"] = assetMaterialAudit;
   if (sceneData && data["历史"]) {
     sceneData["历史"] = data["历史"];
     updateHistoryControls();
@@ -1131,6 +1139,17 @@ async function browseAssetImportedCalibration() {
   );
 }
 
+async function auditMaterials() {
+  const data = await requestJson("/api/workbench3d/materials/audit");
+  assetMaterialAudit = data["材料代理审计"] || {};
+  if (sceneData && assetMaterialAudit["版本"]) sceneData["材料代理审计"] = assetMaterialAudit;
+  await loadAssetLedger();
+  status(
+    `材料代理审计${assetMaterialAudit["结论"] || "--"}：材料 ${assetMaterialAudit["材料数量"] ?? "--"} 个，引用 ${assetMaterialAudit["引用关系数量"] ?? "--"} 条。`,
+    assetMaterialAudit["通过"] === false ? "warning" : "success",
+  );
+}
+
 async function auditAssetNaming() {
   const data = await requestJson("/api/workbench3d/assets/naming");
   assetNamingAudit = data["命名审计"] || {};
@@ -1164,6 +1183,7 @@ async function onAssetLedgerClick(event) {
     if (button.dataset.assetAction === "reproducibility") await browseAssetReproducibility();
     if (button.dataset.assetAction === "calibration") await browseAssetCalibration();
     if (button.dataset.assetAction === "imported-calibration") await browseAssetImportedCalibration();
+    if (button.dataset.assetAction === "materials") await auditMaterials();
     if (button.dataset.assetAction === "naming") await auditAssetNaming();
   } catch (error) {
     status(error.message, "danger");

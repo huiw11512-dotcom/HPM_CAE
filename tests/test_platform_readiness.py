@@ -18,6 +18,8 @@ def test_platform_readiness_config_lives_under_configs():
     assert "use_readiness" in config["summary_weights"]
     assert config["caps"]["publication_readiness_if_p0"] == 68
     assert "真实作用距离" in config["safety_boundary"]["no_output_items"]
+    workbench_gates = config["dimension_weights"]["三维CAE工作台"]["gates"]
+    assert "材料代理审计通过" in workbench_gates
     paper_gates = config["dimension_weights"]["论文生产"]["gates"]
     assert "引用库存在" in paper_gates
     assert "文献复现注册表存在" in paper_gates
@@ -40,6 +42,7 @@ def test_platform_readiness_api_generates_report_artifacts_and_blockers(tmp_path
     assert payload["平台成熟度/%"] > 60
     assert payload["配置"].endswith("configs\\platform_readiness.yaml") or payload["配置"].endswith("configs/platform_readiness.yaml")
     assert {"可信度验证", "三维CAE工作台", "真实数据接入", "论文生产"} <= {item["维度"] for item in payload["维度"]}
+    assert any(item["步骤"] == "设置材料" and item["通过"] is True for item in payload["主链路"])
     assert any(item["步骤"] == "正式数据纳入评分" and item["通过"] is False for item in payload["主链路"])
     assert any("真实源链" in item["阻断项"] or "相位参考" in item["阻断项"] for item in payload["关键阻断项"])
     assert "真实作用距离" in payload["安全边界"]["不输出项"]
@@ -60,6 +63,7 @@ def test_mission_control_api_summarizes_visible_main_workflow(tmp_path):
     assert payload["总览"]["数据样例数"] >= 7
     assert any(item["入口"] == "插件市场" for item in payload["快速动作"])
     assert any(item["入口"] == "三维CAE编辑器" for item in payload["可用入口"])
+    assert any(item["步骤"] == "设置材料" and item["通过"] is True for item in payload["主链路"])
     assert any(item["步骤"] == "正式数据纳入评分" and item["通过"] is False for item in payload["主链路"])
     assert "真实作用距离" in payload["安全边界"]["不输出项"]
 

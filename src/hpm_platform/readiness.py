@@ -150,10 +150,12 @@ def _workbench_dimension(workbench: Mapping[str, Any], config: Mapping[str, Any]
     scene = _mapping(workbench.get("scene"))
     assets = _mapping(workbench.get("assets"))
     imported = _mapping(workbench.get("imported_calibration"))
+    material_audit = _mapping(workbench.get("material_audit") or assets.get("材料代理审计"))
     records = list(assets.get("资产", ()) or ())
     asset_types = {str(item.get("类型", "")) for item in records if isinstance(item, Mapping)}
     checks = [
         _check("三维场景可读", bool(scene.get("objects") or scene.get("对象")), "Workbench scene API 已返回"),
+        _check("材料代理审计通过", bool(material_audit.get("通过")) and "材料代理审计" in asset_types, "MAT-AUDIT-001 已进入资产台账并通过字段/引用/边界审计"),
         _check("资产台账通过", bool(_mapping(assets.get("审计")).get("通过")), "资产 JSON/CSV/SQLite 索引可审计"),
         _check("数据库审计通过", bool(_mapping(assets.get("数据库审计")).get("通过")), "SQLite 表结构和行数可读"),
         _check("复现审计通过", bool(_mapping(assets.get("复现审计")).get("通过")), "结果/哈希/JOB/SOL 可复查"),
@@ -312,13 +314,14 @@ def _workflow_status(
 ) -> list[dict[str, Any]]:
     scene = _mapping(workbench.get("scene"))
     assets = _mapping(workbench.get("assets"))
+    material_audit = _mapping(workbench.get("material_audit") or assets.get("材料代理审计"))
     bridge = _mapping(data_import.get("bridge"))
     audit = _mapping(data_import.get("vv_audit"))
     asset_types = {str(item.get("类型", "")) for item in assets.get("资产", ()) if isinstance(item, Mapping)}
     steps = [
         ("新建/加载工程", bool(scene), "默认工程可由 Workbench scene API 加载"),
         ("拖拽阵列/目标", bool(scene), "已有三维视口、对象树、移动模式和后端几何校验；尺寸/旋转 Gizmo 仍是后续门槛"),
-        ("设置材料", bool(scene.get("materials") or scene.get("材料")), "材料代理可由 Workbench API 编辑"),
+        ("设置材料", bool(material_audit.get("通过")) and "材料代理审计" in asset_types, "材料代理审计 MAT-AUDIT-001 已入账，字段白名单、参数范围和安全边界可复查"),
         ("运行求解", "求解结果" in asset_types, "SOL 结果档案进入资产台账"),
         ("自动验证", _number(_mapping(vv.get("摘要")).get("失败数")) == 0, "V&V 用例、评分、不确定度和敏感性可读"),
         ("接入真实数据", bool(bridge.get("通过")), "Measurement Campaign 可桥接为 CalibrationSamples"),

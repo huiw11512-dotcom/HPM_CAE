@@ -40,6 +40,7 @@ _SNP_ID_RE = re.compile(r"^SNP-\d{4}$")
 _HASH16_RE = re.compile(r"^[0-9a-f]{16}$")
 _ABSOLUTE_CALIBRATION_VERSION = "V2.0B-absolute-calibration"
 _IMPORTED_CALIBRATION_VERSION = "V3.0-imported-calibration-to-workbench"
+_MATERIAL_PROXY_AUDIT_VERSION = "V2.0B-material-proxy-audit"
 _ABSOLUTE_CALIBRATION_FORBIDDEN_KEYS = (
     "threshold",
     "damage",
@@ -668,6 +669,97 @@ def _material_records(project: CAEProject) -> list[dict[str, Any]]:
     return records
 
 
+def build_material_proxy_audit(project: CAEProject, *, revision: int = 1) -> dict[str, Any]:
+    """Audit normalized material proxies and their project references."""
+
+    records = _material_records(project)
+    material_ids = {item.material_id for item in project.materials}
+    referenced_ids = [
+        item.material_id
+        for item in (*project.reflecting_planes, *project.cavities)
+        if getattr(item, "material_id", None)
+    ]
+    unknown_references = sorted({item for item in referenced_ids if item not in material_ids})
+    rows = [_material_proxy_audit_row(item) for item in records]
+    checks = [
+        _material_audit_check("材料库非空", bool(records), f"{len(records)} 个材料代理"),
+        _material_audit_check("材料引用完整", not unknown_references, "缺失引用：" + "、".join(unknown_references) if unknown_references else "反射面与腔体引用均可解析"),
+        _material_audit_check("参数范围全部通过", all(row["参数范围通过"] for row in rows), "相对介电常数、损耗、反射幅相和粗糙度代理均在归一化边界内"),
+        _material_audit_check("编辑字段白名单通过", all(row["编辑字段通过"] for row in rows), "材料面板只开放归一化代理字段"),
+        _material_audit_check("安全边界写入", all(row["安全边界通过"] for row in rows), "材料代理声明不等价于全波材料库或器件阈值"),
+    ]
+    passed = all(item["通过"] for item in checks) and all(row["通过"] for row in rows)
+    return {
+        "版本": _MATERIAL_PROXY_AUDIT_VERSION,
+        "更新时间": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "修订": int(revision),
+        "结论": "通过" if passed else "关注",
+        "通过": passed,
+        "材料数量": len(records),
+        "引用关系数量": len(referenced_ids),
+        "未知材料引用": unknown_references,
+        "材料": rows,
+        "验收清单": checks,
+        "索引": {
+            "material_proxy_audit_json": None,
+            "material_proxy_audit_csv": None,
+        },
+        "安全边界": "材料代理审计只检查归一化降阶模型参数、引用关系和编辑白名单；不输出真实作用距离、器件阈值或真实毁伤概率。",
+    }
+
+
+def _material_proxy_audit_row(record: Mapping[str, Any]) -> dict[str, Any]:
+    properties = record.get("属性") if isinstance(record.get("属性"), Mapping) else {}
+    editable_fields = set(str(item) for item in record.get("可编辑字段", ()) or ())
+    safety_text = str(record.get("安全边界", ""))
+    range_checks = [
+        _finite_positive(properties.get("relative_permittivity")),
+        _finite_non_negative(properties.get("loss_tangent")),
+        _finite_unit_interval(properties.get("reflection_magnitude")),
+        _finite_number(properties.get("reflection_phase_deg")),
+        _finite_non_negative(properties.get("roughness_proxy")),
+    ]
+    editable_ok = editable_fields <= MATERIAL_FIELDS and bool(editable_fields)
+    safety_ok = "器件阈值" in safety_text and "全波材料库" in safety_text
+    passed = all(range_checks) and editable_ok and safety_ok
+    return {
+        "材料ID": record.get("id"),
+        "名称": record.get("名称"),
+        "类型": record.get("类型"),
+        "引用对象": "；".join(str(item) for item in record.get("引用对象", ()) or ()),
+        "引用对象数": len(record.get("引用对象", ()) or ()),
+        "可编辑字段": "；".join(sorted(editable_fields)),
+        "参数范围通过": all(range_checks),
+        "编辑字段通过": editable_ok,
+        "安全边界通过": safety_ok,
+        "通过": passed,
+        "说明": "归一化材料代理可审计" if passed else "材料代理字段、范围或安全边界需要复核",
+    }
+
+
+def _material_audit_check(name: str, passed: bool, evidence: str) -> dict[str, Any]:
+    return {"项目": name, "通过": bool(passed), "说明": evidence}
+
+
+def _finite_number(value: Any) -> bool:
+    try:
+        return bool(np.isfinite(float(value)))
+    except (TypeError, ValueError):
+        return False
+
+
+def _finite_positive(value: Any) -> bool:
+    return _finite_number(value) and float(value) > 0.0
+
+
+def _finite_non_negative(value: Any) -> bool:
+    return _finite_number(value) and float(value) >= 0.0
+
+
+def _finite_unit_interval(value: Any) -> bool:
+    return _finite_number(value) and 0.0 <= float(value) <= 1.0
+
+
 def _target_record(target: TargetRegionSpec, z_lambda: float) -> dict[str, Any]:
     return _object_record(
         object_id=target.object_id,
@@ -1264,6 +1356,15 @@ class Workbench3DService:
             paths=self._asset_index_paths(),
         )
 
+    def _material_proxy_audit_payload(self) -> dict[str, Any]:
+        audit = build_material_proxy_audit(self._project, revision=self._revision)
+        paths = self._asset_index_paths()
+        audit["索引"] = {
+            "material_proxy_audit_json": paths.get("material_proxy_audit_json"),
+            "material_proxy_audit_csv": paths.get("material_proxy_audit_csv"),
+        }
+        return audit
+
     def _write_absolute_calibration(self, payload: Mapping[str, Any] | None = None) -> None:
         if self._asset_dir is None:
             return
@@ -1338,11 +1439,43 @@ class Workbench3DService:
             writer.writeheader()
             writer.writerows(rows)
 
+    def _write_material_proxy_audit(self, payload: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        audit = dict(payload or self._material_proxy_audit_payload())
+        if self._asset_dir is None:
+            return audit
+        self._asset_dir.mkdir(parents=True, exist_ok=True)
+        (self._asset_dir / "material_proxy_audit.json").write_text(
+            json.dumps(audit, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        with (self._asset_dir / "material_proxy_audit.csv").open("w", encoding="utf-8-sig", newline="") as handle:
+            writer = csv.DictWriter(
+                handle,
+                fieldnames=[
+                    "材料ID",
+                    "名称",
+                    "类型",
+                    "引用对象",
+                    "引用对象数",
+                    "可编辑字段",
+                    "参数范围通过",
+                    "编辑字段通过",
+                    "安全边界通过",
+                    "通过",
+                    "说明",
+                ],
+                extrasaction="ignore",
+            )
+            writer.writeheader()
+            writer.writerows(audit.get("材料", []))
+        return audit
+
     def scene(self) -> dict[str, Any]:
         with self._lock:
             scene = build_workbench3d_scene(self._project, self._revision, self.history())
             scene["绝对量纲标定"] = self._absolute_calibration_payload()
             scene["导入数据标定桥接"] = self._imported_calibration_bridge_payload()
+            scene["材料代理审计"] = self._material_proxy_audit_payload()
             return scene
 
     def history(self) -> dict[str, Any]:
@@ -1388,6 +1521,16 @@ class Workbench3DService:
                     raise ValueError("未配置工程路径，无法保存材料")
                 updated.save_yaml(self.project_path)
             return self.scene()
+
+    def audit_materials(self) -> dict[str, Any]:
+        with self._lock:
+            audit = self._write_material_proxy_audit()
+            return {
+                "材料代理审计": audit,
+                "资产": self._asset_records(),
+                "索引": self._asset_index_paths(),
+                "历史": self.history(),
+            }
 
     def solve_preview(self) -> dict[str, Any]:
         """Run the current 3D workbench project through the quick CAE solver."""
@@ -2075,6 +2218,8 @@ class Workbench3DService:
                 "absolute_element_powers_csv": None,
                 "imported_calibration_bridge_json": None,
                 "imported_calibration_bridge_csv": None,
+                "material_proxy_audit_json": None,
+                "material_proxy_audit_csv": None,
             }
         return {
             "json": str(self._asset_dir / "index.json"),
@@ -2095,6 +2240,8 @@ class Workbench3DService:
             "absolute_element_powers_csv": str(self._asset_dir / "absolute_element_powers.csv"),
             "imported_calibration_bridge_json": str(self._asset_dir / "imported_calibration_bridge.json"),
             "imported_calibration_bridge_csv": str(self._asset_dir / "imported_calibration_bridge.csv"),
+            "material_proxy_audit_json": str(self._asset_dir / "material_proxy_audit.json"),
+            "material_proxy_audit_csv": str(self._asset_dir / "material_proxy_audit.csv"),
         }
 
     @staticmethod
@@ -2354,6 +2501,31 @@ class Workbench3DService:
                         f"正式评分 {'可纳入' if imported_summary.get('可纳入正式可信度评分') else '未纳入'}"
                     ),
                     "安全边界": imported.get("安全边界"),
+                }
+            )
+        material_audit = self._material_proxy_audit_payload()
+        material_paths = material_audit.get("索引") if isinstance(material_audit.get("索引"), Mapping) else {}
+        if material_audit.get("材料数量", 0):
+            assets.append(
+                {
+                    "资产id": "MAT-AUDIT-001",
+                    "类型": "材料代理审计",
+                    "标签": "材料库归一化代理审计",
+                    "状态": material_audit.get("结论") or ("通过" if material_audit.get("通过") else "关注"),
+                    "创建时间": material_audit.get("更新时间"),
+                    "修订": self._revision,
+                    "scene_hash": build_workbench3d_scene(self._project, self._revision, self.history())["scene_hash"],
+                    "field_hash": None,
+                    "job_id": None,
+                    "result_id": None,
+                    "路径": material_paths.get("material_proxy_audit_json"),
+                    "辅助路径": material_paths.get("material_proxy_audit_csv"),
+                    "摘要": (
+                        f"材料 {material_audit.get('材料数量', 0)} · "
+                        f"引用 {material_audit.get('引用关系数量', 0)} · "
+                        f"审计 {material_audit.get('结论', '--')}"
+                    ),
+                    "安全边界": material_audit.get("安全边界"),
                 }
             )
         assets = [item for item in assets if item.get("资产id")]
@@ -3075,6 +3247,7 @@ class Workbench3DService:
             return
         self._asset_dir.mkdir(parents=True, exist_ok=True)
         self._write_imported_calibration_bridge()
+        self._write_material_proxy_audit()
         assets = self._asset_records()
         index_payload = {
             "版本": "V2.0B-asset-ledger",
@@ -3449,6 +3622,7 @@ class Workbench3DService:
                 "复现审计": self._asset_reproducibility_payload(),
                 "绝对量纲标定": self._absolute_calibration_payload(),
                 "导入数据标定桥接": self._imported_calibration_bridge_payload(),
+                "材料代理审计": self._material_proxy_audit_payload(),
                 "筛选": filter_meta,
                 "索引": self._asset_index_paths(),
                 "历史": self.history(),

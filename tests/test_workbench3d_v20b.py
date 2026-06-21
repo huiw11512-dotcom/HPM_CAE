@@ -17,6 +17,7 @@ from hpm_platform.ui.workbench3d import (
     Workbench3DService,
     apply_workbench3d_material_update,
     apply_workbench3d_update,
+    build_material_proxy_audit,
     build_workbench3d_scene,
 )
 
@@ -69,6 +70,10 @@ def test_workbench3d_material_update_is_validated_by_project_model():
     updated = apply_workbench3d_material_update(project, "MAT-金属代理", {"reflection_magnitude": 0.61})
     material = next(item for item in updated.materials if item.material_id == "MAT-金属代理")
     assert material.reflection_magnitude == pytest.approx(0.61)
+    audit = build_material_proxy_audit(updated)
+    assert audit["通过"] is True
+    assert audit["材料数量"] >= 1
+    assert any(item["材料ID"] == "MAT-金属代理" and item["通过"] for item in audit["材料"])
     with pytest.raises(ValueError, match="reflection_magnitude"):
         apply_workbench3d_material_update(project, "MAT-金属代理", {"reflection_magnitude": 1.2})
 
@@ -227,7 +232,7 @@ def test_workbench3d_service_tracks_solve_jobs(tmp_path):
     snapshot = service.capture_snapshot("资产快照")
     assets = service.list_assets()
     asset_types = {item["类型"] for item in assets["资产"]}
-    assert {"求解任务", "求解结果", "工程快照"} <= asset_types
+    assert {"求解任务", "求解结果", "工程快照", "材料代理审计"} <= asset_types
     assert Path(assets["索引"]["json"]).exists()
     assert Path(assets["索引"]["csv"]).exists()
     assert Path(assets["索引"]["sqlite"]).exists()
@@ -239,8 +244,12 @@ def test_workbench3d_service_tracks_solve_jobs(tmp_path):
     assert Path(assets["索引"]["naming_audit_csv"]).exists()
     assert Path(assets["索引"]["lineage_json"]).exists()
     assert Path(assets["索引"]["lineage_csv"]).exists()
+    assert Path(assets["索引"]["material_proxy_audit_json"]).exists()
+    assert Path(assets["索引"]["material_proxy_audit_csv"]).exists()
     assert assets["数据库审计"]["通过"] is True
     assert assets["命名审计"]["通过"] is True
+    assert assets["材料代理审计"]["通过"] is True
+    assert assets["材料代理审计"]["材料数量"] >= 1
     assert assets["命名审计"]["统计"]["任务数"] == 4
     background_done = service.get_solve_job("JOB-0003")["任务"]
     assert Path(background_done["任务路径"]).name == f"JOB-0003_{background_done['scene_hash']}_{background_done['result_id']}.json"
@@ -248,6 +257,7 @@ def test_workbench3d_service_tracks_solve_jobs(tmp_path):
     assert service.get_asset("JOB-0001")["资产"]["类型"] == "求解任务"
     assert service.get_asset(job["result_id"])["资产"]["类型"] == "求解结果"
     assert service.get_asset(snapshot["快照"]["id"])["资产"]["类型"] == "工程快照"
+    assert service.get_asset("MAT-AUDIT-001")["资产"]["类型"] == "材料代理审计"
     job_assets = service.list_assets(asset_type="求解任务", query="JOB-0001", limit=1)
     assert job_assets["筛选"]["匹配资产"] == 1
     assert job_assets["筛选"]["返回资产"] == 1
@@ -535,7 +545,7 @@ def test_v20a_api_exposes_workbench3d_scene_and_rejects_invalid_update(tmp_path)
         assert assets.status_code == 200
         asset_payload = assets.json()
         asset_types = {item["类型"] for item in asset_payload["资产"]}
-        assert {"求解任务", "求解结果", "工程快照"} <= asset_types
+        assert {"求解任务", "求解结果", "工程快照", "材料代理审计"} <= asset_types
         assert Path(asset_payload["索引"]["json"]).exists()
         assert Path(asset_payload["索引"]["csv"]).exists()
         assert Path(asset_payload["索引"]["sqlite"]).exists()
@@ -554,6 +564,8 @@ def test_v20a_api_exposes_workbench3d_scene_and_rejects_invalid_update(tmp_path)
         assert Path(asset_payload["索引"]["absolute_element_powers_csv"]).exists()
         assert Path(asset_payload["索引"]["imported_calibration_bridge_json"]).exists()
         assert Path(asset_payload["索引"]["imported_calibration_bridge_csv"]).exists()
+        assert Path(asset_payload["索引"]["material_proxy_audit_json"]).exists()
+        assert Path(asset_payload["索引"]["material_proxy_audit_csv"]).exists()
         assert asset_payload["审计"]["通过"] is True
         assert asset_payload["数据库审计"]["通过"] is True
         assert {"workbench3d_solve_jobs", "workbench3d_results", "workbench3d_snapshots"} <= set(asset_payload["数据库审计"]["表"])
@@ -561,7 +573,14 @@ def test_v20a_api_exposes_workbench3d_scene_and_rejects_invalid_update(tmp_path)
         assert asset_payload["复现审计"]["通过"] is True
         assert asset_payload["绝对量纲标定"]["通过"] is True
         assert asset_payload["导入数据标定桥接"]["通过"] is True
+        assert asset_payload["材料代理审计"]["通过"] is True
         assert any(item["资产id"] == "IMP-CAL-001" and item["类型"] == "导入标定桥接" for item in asset_payload["资产"])
+        assert any(item["资产id"] == "MAT-AUDIT-001" and item["类型"] == "材料代理审计" for item in asset_payload["资产"])
+
+        material_audit = client.get("/api/workbench3d/materials/audit")
+        assert material_audit.status_code == 200
+        assert material_audit.json()["材料代理审计"]["通过"] is True
+        assert material_audit.json()["材料代理审计"]["材料数量"] >= 1
 
         filtered_assets = client.get("/api/workbench3d/assets", params={"asset_type": "求解任务", "q": "JOB-0001", "limit": 1})
         assert filtered_assets.status_code == 200
@@ -733,6 +752,7 @@ def test_v20b_frontend_assets_are_local_and_registered():
     assert "/api/workbench3d/assets/imported-calibration" in js
     assert "/api/workbench3d/assets/naming" in js
     assert "/api/workbench3d/absolute-calibration" in js
+    assert "/api/workbench3d/materials/audit" in js
     assert "workbench3d-result-layer" in js
     assert "data-job-action" in js
     assert 'data-job-action="retry"' in js
@@ -749,6 +769,7 @@ def test_v20b_frontend_assets_are_local_and_registered():
     assert 'data-asset-action="reproducibility"' in js
     assert 'data-asset-action="calibration"' in js
     assert 'data-asset-action="imported-calibration"' in js
+    assert 'data-asset-action="materials"' in js
     assert 'data-asset-action="naming"' in js
     assert "data-asset-filter" in js
     assert "assetDatabaseAudit" in js
@@ -764,6 +785,7 @@ def test_v20b_frontend_assets_are_local_and_registered():
     assert "workbench3d-asset-calibration" in js
     assert "workbench3d-database-records" in js
     assert "assetNamingAudit" in js
+    assert "assetMaterialAudit" in js
     assert "workbench3d-asset-filters" in js
     assert "workbench3d-transform-controls" in js
     assert "data-transform-action" in js

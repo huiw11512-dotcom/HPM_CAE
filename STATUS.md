@@ -9,7 +9,7 @@
 ## 已完成
 
 - V2.0A 可信度验证体系：解析验证、算法基准、后端一致性、不确定度、敏感性、可信度评分。
-- V2.0B 三维 Workbench 预览：Three.js 视口、对象树、属性面板、材料设置、求解联动、资产台账、SQLite 审计、谱系和复现审计。
+- V2.0B 三维 Workbench 预览：Three.js 视口、对象树、属性面板、材料设置、材料代理审计、求解联动、资产台账、SQLite 审计、谱系和复现审计。
 - V2.0C 插件市场预览：本地 manifest、启停、白名单 hook、参数 Schema 和五个内置插件，已包含数据导入证据链插件和论文模板包插件。
 - V2.0D Paper Factory 预览：Markdown 草稿、IEEE LaTeX 骨架、IEEE/期刊/学位论文多模板、插件模板合并、BibTeX 引用库、文献复现注册表、统计审计、模板审计、LaTeX 编译审计、图表清单、补充材料索引和论文包 ZIP。
 - V3.0 数据导入预览：CST/HFSS/测量批次/CSV/Touchstone/NPZ/HDF5 识别、标定准备度、标定桥接、模型误差对比和外部数据 V&V 审计。
