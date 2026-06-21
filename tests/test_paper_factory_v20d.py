@@ -4,6 +4,11 @@ import zipfile
 
 from fastapi.testclient import TestClient
 
+from hpm_platform.data_import import (
+    DataImportService,
+    generate_evidence_package_template,
+    generate_evidence_package_vv_candidate,
+)
 from hpm_platform.publication import PaperFactoryService, generate_paper_factory_bundle, load_paper_factory_config
 from hpm_platform.ui.app_v20a import create_app
 from hpm_platform.validation.vv_runner import run_vv
@@ -14,31 +19,53 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     run_vv(mode="fast", project_path=ROOT / "configs" / "cae_project_v14.yaml", output_dir=tmp_path)
+    evidence_template = generate_evidence_package_template(tmp_path)
+    candidate = generate_evidence_package_vv_candidate(
+        ROOT / "configs" / "cae_project_v14.yaml",
+        Path(evidence_template["输出文件"]),
+        tmp_path,
+        DataImportService(tmp_path),
+        base_credibility_score=91.58,
+    )
 
     bundle = generate_paper_factory_bundle(tmp_path)
     manifest = json.loads(bundle.manifest.read_text(encoding="utf-8"))
     draft = bundle.draft_markdown.read_text(encoding="utf-8")
     latex = bundle.ieee_latex.read_text(encoding="utf-8")
     bibliography = bundle.bibliography.read_text(encoding="utf-8")
+    registry = bundle.reproduction_registry.read_text(encoding="utf-8-sig")
+    supplement = bundle.supplement_index.read_text(encoding="utf-8")
     template_audit = json.loads(bundle.template_audit.read_text(encoding="utf-8"))
     latex_audit = json.loads(bundle.latex_compile_audit.read_text(encoding="utf-8"))
 
+    assert candidate["候选门槛满足"] is False
     assert manifest["版本"] == "V2.0D-preview"
     assert manifest["通过"] is True
     assert manifest["图表数量"] >= 3
     assert manifest["表格数量"] >= 3
-    assert manifest["引用数量"] >= 3
-    assert manifest["复现条目数"] >= 6
+    assert manifest["引用数量"] >= 4
+    assert manifest["复现条目数"] >= 7
     assert manifest["模板数量"] >= 5
     assert manifest["统计审计"]["统计审计通过"] is True
+    assert manifest["统计审计"]["证据包候选评分审计"]["报告存在"] is True
+    assert manifest["统计审计"]["证据包候选评分审计"]["候选门槛满足"] is False
     assert manifest["模板审计"]["模板审计通过"] is True
     assert manifest["LaTeX编译审计"]["结构审计通过"] is True
+    assert manifest["证据包候选评分"]["存在"] is True
+    assert manifest["证据包候选评分"]["候选门槛满足"] is False
+    assert manifest["证据包候选评分"]["正式评分改写"] is False
     assert "摘要" in draft
     assert "安全边界" in draft
+    assert "证据包 V&V 候选评分" in draft
+    assert "不自动改写正式可信度评分" in draft
     assert "引用、复现注册与统计审计" in draft
+    assert "外部数据证据包候选评分" in supplement
     assert "\\documentclass[conference]{IEEEtran}" in latex
     assert "\\bibliography{HPM_DT_V20D_引用库}" in latex
     assert "@misc{hpm_dt_platform" in bibliography
+    assert "@misc{hpm_dt_evidence_candidate" in bibliography
+    assert "REP-DATA-001" in registry
+    assert "证据包 V&V 候选评分" in registry
     assert template_audit["模板审计通过"] is True
     assert {row["类型"] for row in template_audit["模板"]} >= {"ieee_conference", "journal_article", "thesis_chapter"}
     assert any(row["来源插件"] == "hpm.publication.paper_template_pack" for row in template_audit["模板"])
@@ -59,6 +86,7 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     assert "paper_factory_manifest.json" in names
     assert any(name.startswith("figures/") for name in names)
     assert any(name.startswith("tables/") for name in names)
+    assert any("evidence_package_vv_candidate" in name for name in names)
 
 
 def test_v20d_paper_factory_config_lives_under_configs():
@@ -69,7 +97,9 @@ def test_v20d_paper_factory_config_lives_under_configs():
     assert config["templates"]["min_templates"] == 3
     assert "hpm.publication.paper_template_pack" in config["templates"]["plugin_templates"]["plugin_ids"]
     assert {item["kind"] for item in config["templates"]["entries"]} >= {"ieee_conference", "journal_article", "thesis_chapter"}
-    assert len(config["references"]) >= 3
+    assert config["statistics"]["require_evidence_candidate"] is True
+    assert len(config["references"]) >= 4
+    assert "hpm_dt_evidence_candidate" in {item["key"] for item in config["references"]}
     assert "真实作用距离" in config["safety_boundary"]["no_output_items"]
 
 

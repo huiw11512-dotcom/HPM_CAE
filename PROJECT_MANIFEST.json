@@ -242,6 +242,14 @@
     "outputs_v20a_vv/paper_factory_v20d/paper_factory_manifest.json",
     "outputs_v20a_vv/paper_factory_v20d/HPM_DT_V20D_paper_factory_bundle.zip"
   ],
+  "V2.0D论文工厂证据包候选评分链路": [
+    "outputs_v20a_vv/data_import_v30/evidence_package_vv_candidate.json",
+    "outputs_v20a_vv/paper_factory_v20d/HPM_DT_V20D_论文草稿.md",
+    "outputs_v20a_vv/paper_factory_v20d/HPM_DT_V20D_文献复现注册表.csv",
+    "outputs_v20a_vv/paper_factory_v20d/HPM_DT_V20D_统计审计.json",
+    "outputs_v20a_vv/paper_factory_v20d/HPM_DT_V20D_补充材料索引.md",
+    "outputs_v20a_vv/paper_factory_v20d/paper_factory_manifest.json"
+  ],
   "V2.0D浏览器验收截图": "outputs_v20a_vv/v20d_paper_factory_smoke.png",
   "V3.0数据导入": "src/hpm_platform/data_import/importers.py",
   "V3.0标定桥接": "src/hpm_platform/data_import/calibration_bridge.py",

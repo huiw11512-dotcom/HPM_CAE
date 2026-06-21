@@ -65,6 +65,7 @@ statistics:
   min_tables: 3
   require_uncertainty: true
   require_sensitivity: true
+  require_evidence_candidate: true
 
 references:
   - key: hpm_dt_platform
@@ -88,6 +89,13 @@ references:
     year: "2026"
     howpublished: outputs_v20a_vv/platform_readiness/platform_readiness_report.json
     note: Software and publication maturity audit.
+  - key: hpm_dt_evidence_candidate
+    type: misc
+    author: HPM-DT Team
+    title: External Evidence Package Verification and Validation Candidate Scoring Audit
+    year: "2026"
+    howpublished: outputs_v20a_vv/data_import_v30/evidence_package_vv_candidate.json
+    note: Candidate-only audit for provenance, normalized residual, uncertainty coverage, and non-rewrite scoring policy.
 
 reproduction_registry:
   - id: REP-PF-001
