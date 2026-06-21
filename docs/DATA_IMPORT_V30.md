@@ -18,6 +18,7 @@ GET  /api/data-import/model-comparison
 GET  /api/data-import/evidence-chain
 GET  /api/data-import/evidence-package/template
 POST /api/data-import/evidence-package
+POST /api/data-import/evidence-package/vv-candidate
 GET  /api/data-import/vv-audit
 GET  /api/data-import/samples/{sample_id}
 POST /api/data-import/inspect
@@ -106,6 +107,17 @@ Measurement Campaign 样例会把 `x_mm/y_mm/z_mm` 按 `reference_frequency_ghz`
 
 证据包审计会扫描禁用字段，包括真实作用距离、器件阈值、真实毁伤概率和作战效能字段。该入口用于学术数据血缘和复现实验管理，不用于输出现实效应参数。
 
+## 证据包 V&V 候选评分
+
+当前版本新增 `POST /api/data-import/evidence-package/vv-candidate`，把通过审计的授权证据包接入外部数据 V&V 候选评分链路：
+
+- 先复用 `evidence-package` 审计，只有证据包本身通过安全字段、哈希、授权、源链、相位参考和绝对标定元数据检查后，才把其中的“真实源链与相位参考”作为候选评分门槛输入；
+- 再复用 `model_comparison_report.json`，继续检查标定后相对 RMSE、2σ 覆盖率、样本数和模型误差对比执行状态；
+- 输出 `evidence_package_vv_candidate.json`，其中包含证据包摘要、门槛表、风险信号、关键残差指标和候选评分状态；
+- 候选评分报告不会直接改写 V2.0A 正式可信度评分，即使候选门槛全部满足，也需要人工复核和项目配置替换。
+
+用当前内置演示测量批次抽查时，授权证据包可以把“真实源链与相位参考已接入”门槛置为 true，但代理模型残差仍明显不满足正式门槛：标定后相对 RMSE 约 79.98%，2σ 覆盖率为 0%。因此它证明链路已接通，不证明真实数据质量已经达到发文结论要求。
+
 ## 外部数据 V&V 可信度审计
 
 当前版本新增 `external_data_vv_audit.json`，把模型误差对比报告进一步传播为 V&V 风险审计：
@@ -137,5 +149,5 @@ Measurement Campaign 样例会把 `x_mm/y_mm/z_mm` 按 `reference_frequency_ghz`
 ## 下一步
 
 - 使用真实源链、相位参考和授权实验/仿真数据替换当前代理激励预览；
-- 把外部数据 V&V 审计推进为正式可信度评分输入；
+- 用证据包 V&V 候选评分筛掉残差、覆盖率和安全字段不达标的数据包，再把通过候选门槛的数据包提交人工复核；
 - 把外部数据误差审计结果接入三维工作台结果查看。

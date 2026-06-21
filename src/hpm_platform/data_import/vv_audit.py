@@ -17,6 +17,7 @@ import numpy as np
 from hpm_platform.data_import.evidence_chain import (
     evidence_source_chain_ready,
     generate_evidence_chain_report,
+    inspect_evidence_package,
 )
 from hpm_platform.data_import.importers import DataImportService, DEFAULT_OUTPUT
 from hpm_platform.data_import.model_comparison import generate_model_comparison_report
@@ -24,6 +25,7 @@ from hpm_platform.validation.vv_metrics import bounded_score, grade_from_score
 
 
 EXTERNAL_VV_OUTPUT_NAME = "external_data_vv_audit.json"
+EVIDENCE_PACKAGE_VV_CANDIDATE_OUTPUT_NAME = "evidence_package_vv_candidate.json"
 MIN_AUDIT_SAMPLES = 3
 TARGET_2SIGMA_COVERAGE_PERCENT = 95.0
 TARGET_RELATIVE_RMSE_PERCENT = 10.0
@@ -69,6 +71,96 @@ def generate_external_data_vv_audit(
             base_credibility_score=base_credibility_score,
             output_file=report_path,
         )
+
+    report_path.write_text(json.dumps(audit, ensure_ascii=False, indent=2), encoding="utf-8")
+    return audit
+
+
+def generate_evidence_package_vv_candidate(
+    project_path: str | Path,
+    package_path: str | Path,
+    output_dir: str | Path = DEFAULT_OUTPUT,
+    service: DataImportService | None = None,
+    *,
+    base_credibility_score: float | None = None,
+    maximum_evaluations: int = 24,
+) -> dict[str, Any]:
+    """Generate a V&V candidate report from an audited evidence package."""
+    output_root = Path(output_dir)
+    report_path = output_root / "data_import_v30" / EVIDENCE_PACKAGE_VV_CANDIDATE_OUTPUT_NAME
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    data_import = service or DataImportService(output_root)
+    package_audit = inspect_evidence_package(package_path, output_root)
+    package_candidate = bool(package_audit.get("可作为正式证据配置候选"))
+    evidence_report = package_audit.get("证据链审计") if package_candidate else None
+    comparison: dict[str, Any] = {}
+
+    try:
+        comparison = generate_model_comparison_report(
+            project_path,
+            output_root,
+            data_import,
+            maximum_evaluations=maximum_evaluations,
+        )
+        audit = build_external_data_vv_audit(
+            comparison,
+            evidence_report=evidence_report,
+            base_credibility_score=base_credibility_score,
+            output_file=report_path,
+        )
+    except Exception as exc:  # pragma: no cover - defensive report shape.
+        audit = _blocked_audit(
+            blockers=[str(exc)],
+            comparison=comparison,
+            evidence_report=evidence_report,
+            base_credibility_score=base_credibility_score,
+            output_file=report_path,
+        )
+
+    computed_formal_ready = bool(audit.get("可纳入正式可信度评分"))
+    candidate_gate_ready = bool(package_candidate and computed_formal_ready)
+    strategy = audit.get("正式评分策略") if isinstance(audit.get("正式评分策略"), dict) else {}
+    strategy["候选门槛满足"] = candidate_gate_ready
+    strategy["是否改写正式评分"] = False
+    strategy["说明"] = (
+        "证据包 V&V 候选评分只把通过审计的授权证据包接入残差、覆盖率和真实源链门槛；"
+        "候选满足后仍需人工复核与项目配置替换，不能自动改写 V2.0A 正式可信度评分。"
+    )
+    audit.update(
+        {
+            "版本": "V3.0-evidence-package-vv-candidate-v1",
+            "名称": "外部数据证据包 V&V 候选评分审计",
+            "通过": candidate_gate_ready,
+            "候选门槛满足": candidate_gate_ready,
+            "候选评分状态": "候选门槛通过，待人工复核" if candidate_gate_ready else "存在阻断项，尚不能进入正式评分",
+            "可纳入正式可信度评分": False,
+            "证据包路径": str(Path(package_path).resolve()),
+            "证据包可作为正式证据配置候选": package_candidate,
+            "证据包审计": _package_summary(package_audit),
+            "正式评分策略": strategy,
+            "候选评分说明": (
+                "该报告连接 evidence-package 审计与外部数据 V&V 门槛，"
+                "允许每阵元功率元数据和实测标定点作为可复查证据进入候选评分。"
+            ),
+            "安全边界": (
+                "证据包 V&V 候选评分只审计授权数据血缘、归一化残差、不确定度覆盖和每阵元功率元数据；"
+                "不输出真实作用距离、器件阈值、毁伤概率或作战效能，也不自动改写正式可信度评分。"
+            ),
+        }
+    )
+    audit["门槛"] = list(audit.get("门槛", [])) + [
+        {"项目": "证据包审计通过并可作为正式证据配置候选", "通过": package_candidate},
+        {"项目": "证据包候选报告不自动改写正式评分", "通过": True},
+    ]
+    if not package_candidate:
+        package_blockers = [
+            str(item.get("项目"))
+            for item in package_audit.get("阻断项", ())
+            if isinstance(item, dict)
+        ]
+        audit["风险信号"] = list(audit.get("风险信号", [])) + [
+            "证据包审计未通过，未满足项目：" + ("；".join(package_blockers) if package_blockers else "存在未命名阻断项")
+        ]
 
     report_path.write_text(json.dumps(audit, ensure_ascii=False, indent=2), encoding="utf-8")
     return audit
@@ -181,7 +273,7 @@ def _blocked_audit(
     *,
     blockers: list[str],
     comparison: dict[str, Any],
-    evidence_report: dict[str, Any],
+    evidence_report: dict[str, Any] | None,
     base_credibility_score: float | None,
     output_file: Path,
 ) -> dict[str, Any]:
@@ -282,7 +374,13 @@ def _risk_signals(
 
 def _evidence_summary(evidence_report: dict[str, Any] | None) -> dict[str, Any]:
     if not evidence_report:
-        return {"通过": False, "说明": "未生成外部数据证据链审计。"}
+        return {
+            "通过": False,
+            "真实源链与相位参考已接入": False,
+            "可纳入正式可信度评分证据": False,
+            "阻断项": [],
+            "说明": "未生成外部数据证据链审计。",
+        }
     return {
         "版本": evidence_report.get("版本"),
         "通过": bool(evidence_report.get("通过")),
@@ -294,6 +392,34 @@ def _evidence_summary(evidence_report: dict[str, Any] | None) -> dict[str, Any]:
             if isinstance(item, dict)
         ],
         "输出文件": evidence_report.get("输出文件"),
+    }
+
+
+def _package_summary(package_audit: dict[str, Any]) -> dict[str, Any]:
+    absolute = package_audit.get("绝对标定元数据审计")
+    if not isinstance(absolute, dict):
+        absolute = {}
+    return {
+        "版本": package_audit.get("版本"),
+        "通过": bool(package_audit.get("通过")),
+        "可作为正式证据配置候选": bool(package_audit.get("可作为正式证据配置候选")),
+        "可直接改写可信度评分": bool(package_audit.get("可直接改写可信度评分")),
+        "数据集ID": package_audit.get("数据集ID"),
+        "包路径": package_audit.get("包路径"),
+        "包类型": package_audit.get("包类型"),
+        "manifest": package_audit.get("manifest"),
+        "包内文件数量": package_audit.get("包内文件数量"),
+        "匹配原始数据哈希数": len(package_audit.get("匹配原始数据哈希", []) or []),
+        "缺失原始数据哈希数": len(package_audit.get("缺失原始数据哈希", []) or []),
+        "安全字段命中": list(package_audit.get("安全字段命中", []) or []),
+        "绝对标定元数据审计": {
+            "存在": bool(absolute.get("存在")),
+            "通过": bool(absolute.get("通过")),
+            "阵元数": absolute.get("阵元数"),
+            "实测标定点文件": absolute.get("实测标定点文件"),
+            "阵元功率文件": absolute.get("阵元功率文件"),
+        },
+        "输出文件": package_audit.get("输出文件"),
     }
 
 

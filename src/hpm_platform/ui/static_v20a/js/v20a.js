@@ -338,6 +338,21 @@ async function 审计数据证据包() {
     提示(错误.message);
   }
 }
+async function 生成数据证据包候选评分() {
+  const path = $("数据导入路径").value.trim();
+  if (!path) {
+    提示("请输入证据包 ZIP 或目录路径");
+    return;
+  }
+  try {
+    const 数据 = await 请求("/api/data-import/evidence-package/vv-candidate", {method: "POST", body: JSON.stringify({path})});
+    $("数据导入结果").textContent = JSON.stringify(数据, null, 2);
+    提示(数据.候选门槛满足 ? "证据包候选评分门槛通过，待人工复核" : "证据包候选评分仍存在阻断项");
+  } catch (错误) {
+    $("数据导入结果").textContent = 错误.message;
+    提示(错误.message);
+  }
+}
 async function 生成数据证据包模板() {
   try {
     const 数据 = await 请求("/api/data-import/evidence-package/template");
@@ -651,6 +666,7 @@ window.addEventListener("DOMContentLoaded", () => {
   $("数据导入检查路径").addEventListener("click", 解析数据路径);
   $("数据导入生成证据包模板").addEventListener("click", 生成数据证据包模板);
   $("数据导入审计证据包").addEventListener("click", 审计数据证据包);
+  $("数据导入证据包候选评分").addEventListener("click", 生成数据证据包候选评分);
   $("数据导入样例").addEventListener("click", event => {
     const button = event.target.closest(".数据样例解析");
     if (button) 解析数据样例(button.dataset.sampleId);

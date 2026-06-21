@@ -12,6 +12,7 @@ from hpm_platform.data_import import (
     generate_calibration_bridge_report,
     generate_evidence_chain_report,
     generate_evidence_package_template,
+    generate_evidence_package_vv_candidate,
     generate_external_data_vv_audit,
     generate_model_comparison_report,
     inspect_evidence_package,
@@ -97,6 +98,19 @@ class V20AValidationService:
     def data_import_evidence_package_template(self) -> dict[str, Any]:
         with self._lock:
             return generate_evidence_package_template(self.output_dir)
+
+    def data_import_evidence_package_vv_candidate(self, path: str | Path) -> dict[str, Any]:
+        with self._lock:
+            base_score = None
+            if self._payload is not None:
+                base_score = self._payload.get("score", {}).get("可信度评分")
+            return generate_evidence_package_vv_candidate(
+                self.project_path,
+                path,
+                self.output_dir,
+                self.data_import,
+                base_credibility_score=base_score,
+            )
 
     def data_import_vv_audit(self) -> dict[str, Any]:
         with self._lock:

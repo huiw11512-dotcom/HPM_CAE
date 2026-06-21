@@ -10,6 +10,7 @@ from hpm_platform.data_import import (
     generate_calibration_bridge_report,
     generate_evidence_chain_report,
     generate_evidence_package_template,
+    generate_evidence_package_vv_candidate,
     generate_external_data_vv_audit,
     generate_model_comparison_report,
     inspect_evidence_package,
@@ -277,6 +278,49 @@ def test_v30_evidence_package_accepts_authorized_zip_candidate(tmp_path):
     assert Path(report["CSV"]).exists()
 
 
+def test_v30_evidence_package_vv_candidate_connects_package_to_scoring_gate(tmp_path):
+    service = DataImportService(tmp_path)
+    package_path = _make_evidence_package(tmp_path)
+    report = generate_evidence_package_vv_candidate(
+        ROOT / "configs" / "cae_project_v14.yaml",
+        package_path,
+        tmp_path,
+        service,
+        base_credibility_score=91.58,
+    )
+
+    assert report["版本"] == "V3.0-evidence-package-vv-candidate-v1"
+    assert report["证据包可作为正式证据配置候选"] is True
+    assert report["证据包审计"]["可作为正式证据配置候选"] is True
+    assert report["证据包审计"]["绝对标定元数据审计"]["通过"] is True
+    assert report["证据链审计"]["真实源链与相位参考已接入"] is True
+    assert any(item["项目"] == "真实源链与相位参考已接入" and item["通过"] is True for item in report["门槛"])
+    assert any(item["项目"] == "证据包审计通过并可作为正式证据配置候选" and item["通过"] is True for item in report["门槛"])
+    assert report["可纳入正式可信度评分"] is False
+    assert report["正式评分策略"]["是否改写正式评分"] is False
+    assert "候选门槛满足" in report["正式评分策略"]
+    assert Path(report["输出文件"]).exists()
+
+
+def test_v30_evidence_package_vv_candidate_does_not_trust_blocked_package_source_chain(tmp_path):
+    service = DataImportService(tmp_path)
+    package_path = _make_evidence_package(tmp_path, forbidden_field=True)
+    report = generate_evidence_package_vv_candidate(
+        ROOT / "configs" / "cae_project_v14.yaml",
+        package_path,
+        tmp_path,
+        service,
+        base_credibility_score=91.58,
+    )
+
+    assert report["证据包可作为正式证据配置候选"] is False
+    assert report["证据链审计"]["真实源链与相位参考已接入"] is False
+    assert any(item["项目"] == "真实源链与相位参考已接入" and item["通过"] is False for item in report["门槛"])
+    assert any(item["项目"] == "证据包审计通过并可作为正式证据配置候选" and item["通过"] is False for item in report["门槛"])
+    assert any("证据包审计未通过" in item for item in report["风险信号"])
+    assert report["正式评分策略"]["是否改写正式评分"] is False
+
+
 def test_v30_evidence_package_blocks_forbidden_research_boundary_fields(tmp_path):
     package_path = _make_evidence_package(tmp_path, forbidden_field=True)
     report = inspect_evidence_package(package_path, tmp_path)
@@ -333,6 +377,7 @@ def test_v30_data_import_api_and_frontend_assets(tmp_path):
         evidence_chain = client.get("/api/data-import/evidence-chain")
         evidence_template = client.get("/api/data-import/evidence-package/template")
         evidence_package = client.post("/api/data-import/evidence-package", json={"path": str(evidence_package_path)})
+        evidence_candidate = client.post("/api/data-import/evidence-package/vv-candidate", json={"path": str(evidence_package_path)})
         vv_audit = client.get("/api/data-import/vv-audit")
         sample = client.get("/api/data-import/samples/V30-TOUCHSTONE-S2P")
         by_path = client.post("/api/data-import/inspect", json={"path": sample.json()["源文件"]})
@@ -362,6 +407,11 @@ def test_v30_data_import_api_and_frontend_assets(tmp_path):
     assert evidence_package.json()["通过"] is True
     assert evidence_package.json()["绝对标定元数据审计"]["通过"] is True
     assert evidence_package.json()["可直接改写可信度评分"] is False
+    assert evidence_candidate.status_code == 200
+    assert evidence_candidate.json()["证据包可作为正式证据配置候选"] is True
+    assert evidence_candidate.json()["证据链审计"]["真实源链与相位参考已接入"] is True
+    assert evidence_candidate.json()["可纳入正式可信度评分"] is False
+    assert evidence_candidate.json()["正式评分策略"]["是否改写正式评分"] is False
     assert vv_audit.status_code == 200
     assert vv_audit.json()["可纳入正式可信度评分"] is False
     assert vv_audit.json()["证据链审计"]["通过"] is False
@@ -381,6 +431,7 @@ def test_v30_data_import_api_and_frontend_assets(tmp_path):
     assert 'data-testid="data-import-evidence-chain"' in html
     assert 'data-testid="data-import-evidence-package-template"' in html
     assert 'data-testid="data-import-evidence-package"' in html
+    assert 'data-testid="data-import-evidence-package-vv-candidate"' in html
     assert 'data-testid="data-import-vv-audit"' in html
     assert "/api/data-import/catalog" in js
     assert "/api/data-import/calibration-bridge" in js
@@ -388,6 +439,7 @@ def test_v30_data_import_api_and_frontend_assets(tmp_path):
     assert "/api/data-import/evidence-chain" in js
     assert "/api/data-import/evidence-package/template" in js
     assert "/api/data-import/evidence-package" in js
+    assert "/api/data-import/evidence-package/vv-candidate" in js
     assert "/api/data-import/vv-audit" in js
     assert "渲染数据导入标定准备" in js
     assert "渲染数据导入标定桥接" in js

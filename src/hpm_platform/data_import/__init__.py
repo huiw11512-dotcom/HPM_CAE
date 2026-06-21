@@ -14,7 +14,7 @@ from hpm_platform.data_import.evidence_chain import (
 )
 from hpm_platform.data_import.importers import DataImportService, ImportedDataset, inspect_dataset
 from hpm_platform.data_import.model_comparison import generate_model_comparison_report
-from hpm_platform.data_import.vv_audit import generate_external_data_vv_audit
+from hpm_platform.data_import.vv_audit import generate_evidence_package_vv_candidate, generate_external_data_vv_audit
 
 __all__ = [
     "DataImportService",
@@ -24,6 +24,7 @@ __all__ = [
     "generate_calibration_bridge_report",
     "generate_evidence_chain_report",
     "generate_evidence_package_template",
+    "generate_evidence_package_vv_candidate",
     "generate_external_data_vv_audit",
     "generate_model_comparison_report",
     "inspect_evidence_package",
