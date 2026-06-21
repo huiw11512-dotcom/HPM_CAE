@@ -42,6 +42,9 @@ main { min-height: calc(100vh - 48px); }
 .paper-factory-status { min-height: 180px; background: #fff; }
 .paper-factory-checks { list-style: none; padding: 0; margin: 0; display: grid; gap: .45rem; }
 .paper-factory-checks li { display: flex; align-items: center; gap: .5rem; color: #374151; }
+.paper-factory-submission { padding: .85rem 1rem; }
+.submission-score { border: 1px solid #dbe3ef; border-left: 4px solid #2563eb; border-radius: 6px; background: #f8fafc; padding: .75rem .85rem; }
+.submission-score .display-6 { line-height: 1.1; color: #111827; letter-spacing: 0; }
 .workbench3d-layout { display: grid; grid-template-columns: minmax(220px, 280px) minmax(420px, 1fr) minmax(260px, 340px); gap: 12px; align-items: stretch; }
 .workbench3d-side, .workbench3d-main { background: #fff; border: 1px solid #d8dee9; border-radius: 8px; box-shadow: 0 1px 2px rgba(15,23,42,.06); overflow: hidden; }
 .workbench3d-side-title { height: 42px; display: flex; align-items: center; padding: 0 .9rem; border-bottom: 1px solid #e5e7eb; font-weight: 700; color: #1f2937; background: #f9fafb; }

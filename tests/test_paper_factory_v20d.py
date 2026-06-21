@@ -166,7 +166,10 @@ def test_v20d_frontend_assets_register_paper_factory_controls():
     assert 'data-testid="paper-factory-status"' in html
     assert 'data-testid="paper-factory-output"' in html
     assert 'data-testid="paper-factory-acceptance"' in html
+    assert 'data-testid="paper-factory-submission"' in html
     assert "/api/paper-factory/status" in js
     assert "/api/paper-factory/generate" in js
     assert "/download/paper-factory.zip" in js
     assert "论文工厂验收" in js
+    assert "渲染投稿准备度" in js
+    assert "投稿准备度审计" in js

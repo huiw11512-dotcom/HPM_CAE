@@ -100,6 +100,48 @@ function 渲染论文工厂状态(数据) {
       状态: 项.通过 ? "通过" : "待补齐"
     })));
   }
+  渲染投稿准备度(数据.投稿准备度审计 || null);
+}
+function 渲染投稿准备度(审计) {
+  const 容器 = $("论文工厂投稿准备度");
+  if (!容器) return;
+  if (!审计) {
+    容器.innerHTML = "<div class='text-muted small'>尚未生成投稿准备度审计。</div>";
+    return;
+  }
+  const 分数 = Number(审计["投稿准备度/%"] || 0).toFixed(2);
+  const 通过 = Boolean(审计.投稿门槛通过);
+  const 阻断项 = (审计.阻断项 || []).slice(0, 8);
+  const 计数 = 审计.关键计数 || {};
+  const 行 = 阻断项.length ? 阻断项.map(项 => `<tr>
+    <td><span class="badge bg-${项.严重度 === "P0" ? "danger" : "warning"}">${转义文本(项.严重度 || "P1")}</span></td>
+    <td>${转义文本(项.项目 || "")}</td>
+    <td>${转义文本(项.证据 || "")}</td>
+  </tr>`).join("") : "<tr><td colspan='3' class='text-muted'>暂无阻断项</td></tr>";
+  容器.innerHTML = `
+    <div class="row g-3 align-items-stretch">
+      <div class="col-12 col-lg-4">
+        <div class="submission-score h-100">
+          <div class="small text-muted">投稿准备度</div>
+          <div class="display-6 fw-bold">${分数}%</div>
+          <span class="badge bg-${通过 ? "success" : "danger"}">${通过 ? "投稿门槛通过" : "投稿前阻断"}</span>
+        </div>
+      </div>
+      <div class="col-12 col-lg-8">
+        <div class="row g-2 small">
+          <div class="col-6 col-md-3"><strong>${转义文本(计数.外部引用DOI数量 ?? 0)}</strong><br><span class="text-muted">外部 DOI</span></div>
+          <div class="col-6 col-md-3"><strong>${转义文本(计数.正式复现实验编号数量 ?? 0)}</strong><br><span class="text-muted">复现实验编号</span></div>
+          <div class="col-6 col-md-3"><strong>${转义文本(计数.签名目标模板数量 ?? 0)}</strong><br><span class="text-muted">签名模板</span></div>
+          <div class="col-6 col-md-3"><strong>${阻断项.length}</strong><br><span class="text-muted">阻断项</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="table-responsive mt-3">
+      <table class="table table-sm table-striped align-middle mb-0">
+        <thead><tr><th>级别</th><th>项目</th><th>证据</th></tr></thead>
+        <tbody>${行}</tbody>
+      </table>
+    </div>`;
 }
 function 渲染数据导入验收(数据) {
   const 验收 = 数据.验收 || 数据;
