@@ -11,6 +11,48 @@ latex:
   require_compiler_for_preview: false
   require_bibliography: true
 
+templates:
+  min_templates: 3
+  entries:
+    - id: ieee_conference
+      name: IEEE会议论文模板
+      kind: ieee_conference
+      filename: HPM_DT_V20D_IEEE会议论文模板.tex
+      documentclass: "\\documentclass[conference]{IEEEtran}"
+      audience: IEEE conference or workshop paper
+      required_sections:
+        - Introduction
+        - Method
+        - Results
+        - Reproducibility
+        - Limitations
+        - Conclusion
+    - id: journal_article
+      name: 期刊论文模板
+      kind: journal_article
+      filename: HPM_DT_V20D_期刊论文模板.tex
+      documentclass: "\\documentclass[UTF8]{ctexart}"
+      audience: 中文期刊或扩展版技术论文
+      required_sections:
+        - 引言
+        - 方法
+        - 结果
+        - 讨论
+        - 可复现性
+        - 结论
+    - id: thesis_chapter
+      name: 学位论文章节模板
+      kind: thesis_chapter
+      filename: HPM_DT_V20D_学位论文章节模板.tex
+      documentclass: "\\documentclass[UTF8]{ctexrep}"
+      audience: 学位论文方法与实验章节
+      required_sections:
+        - 平台架构
+        - 验证方法
+        - 实验结果
+        - 统计审计
+        - 本章小结
+
 statistics:
   min_vv_cases: 6
   min_figures: 3

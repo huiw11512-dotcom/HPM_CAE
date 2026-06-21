@@ -93,8 +93,8 @@ PLATFORM_LAYER_STATUS = (
         "英文": "Publication Layer",
         "职责": "实验、统计、图表、LaTeX、IEEE模板、论文自动生成",
         "当前状态": "V2.0D Paper Factory 预览接入中",
-        "当前证据": "已有 HTML 报告、论文图包、LaTeX 表格、论文提纲、Notebook，以及 V2.0D 自动论文草稿、IEEE骨架、BibTeX 引用库、文献复现注册表、统计审计、LaTeX 编译审计、图表清单、补充材料索引和论文包 ZIP。",
-        "下一步": "补外部 DOI 绑定、真实授权数据统计显著性报告、期刊/学位论文多模板和本机 PDF 编译归档。",
+        "当前证据": "已有 HTML 报告、论文图包、LaTeX 表格、论文提纲、Notebook，以及 V2.0D 自动论文草稿、IEEE骨架、IEEE/期刊/学位论文多模板、BibTeX 引用库、文献复现注册表、统计审计、模板审计、LaTeX 编译审计、图表清单、补充材料索引和论文包 ZIP。",
+        "下一步": "补外部 DOI 绑定、真实授权数据统计显著性报告、目标期刊模板插件和本机 PDF 编译归档。",
     },
 )
 
@@ -124,8 +124,8 @@ PLATFORM_MILESTONE_STATUS = (
         "阶段": "V2.0D",
         "名称": "论文自动生产线 Paper Factory",
         "状态": "预览接入中",
-        "验收证据": "已有 PaperFactoryService、生成 API、下载端点、UI 入口、Markdown 论文草稿、IEEE LaTeX 骨架、BibTeX 引用库、文献复现注册表、统计审计、LaTeX 编译审计、图表清单、补充材料索引和可复现论文包 ZIP。",
-        "下一门槛": "补实验设计器、外部 DOI 绑定、真实授权数据证据链、期刊/学位论文多模板和本机 PDF 编译归档。",
+        "验收证据": "已有 PaperFactoryService、生成 API、下载端点、UI 入口、Markdown 论文草稿、IEEE LaTeX 骨架、IEEE/期刊/学位论文多模板、BibTeX 引用库、文献复现注册表、统计审计、模板审计、LaTeX 编译审计、图表清单、补充材料索引和可复现论文包 ZIP。",
+        "下一门槛": "补实验设计器、外部 DOI 绑定、真实授权数据证据链、目标期刊模板插件和本机 PDF 编译归档。",
     },
     {
         "阶段": "V3.0",

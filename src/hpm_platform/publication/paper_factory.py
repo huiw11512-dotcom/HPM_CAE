@@ -34,9 +34,11 @@ class PaperFactoryBundle:
     manifest: Path
     draft_markdown: Path
     ieee_latex: Path
+    templates_dir: Path
     bibliography: Path
     reproduction_registry: Path
     statistics_audit: Path
+    template_audit: Path
     latex_compile_audit: Path
     figure_manifest: Path
     supplement_index: Path
@@ -48,9 +50,11 @@ class PaperFactoryBundle:
             "manifest": str(self.manifest),
             "draft_markdown": str(self.draft_markdown),
             "ieee_latex": str(self.ieee_latex),
+            "templates_dir": str(self.templates_dir),
             "bibliography": str(self.bibliography),
             "reproduction_registry": str(self.reproduction_registry),
             "statistics_audit": str(self.statistics_audit),
+            "template_audit": str(self.template_audit),
             "latex_compile_audit": str(self.latex_compile_audit),
             "figure_manifest": str(self.figure_manifest),
             "supplement_index": str(self.supplement_index),
@@ -82,6 +86,8 @@ class PaperFactoryService:
                         {"项目": "引用库", "通过": False},
                         {"项目": "文献复现注册表", "通过": False},
                         {"项目": "统计审计", "通过": False},
+                        {"项目": "多模板导出", "通过": False},
+                        {"项目": "模板审计", "通过": False},
                         {"项目": "LaTeX 编译审计", "通过": False},
                         {"项目": "图表清单", "通过": False},
                         {"项目": "补充材料索引", "通过": False},
@@ -111,9 +117,11 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
     bundle_dir = out / DEFAULT_BUNDLE_DIRNAME
     figures_dir = bundle_dir / "figures"
     tables_dir = bundle_dir / "tables"
+    templates_dir = bundle_dir / "templates"
     bundle_dir.mkdir(parents=True, exist_ok=True)
     _reset_generated_dir(figures_dir)
     _reset_generated_dir(tables_dir)
+    _reset_generated_dir(templates_dir)
 
     context = _paper_context(result, out, title=title, config=config)
     copied_figures = _copy_figures(context["figures"], figures_dir)
@@ -127,6 +135,8 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
     reproduction_path = bundle_dir / "HPM_DT_V20D_文献复现注册表.csv"
     statistics_path = bundle_dir / "HPM_DT_V20D_统计审计.json"
     statistics_csv_path = bundle_dir / "HPM_DT_V20D_统计审计.csv"
+    template_audit_path = bundle_dir / "HPM_DT_V20D_模板审计.json"
+    template_audit_csv_path = bundle_dir / "HPM_DT_V20D_模板审计.csv"
     latex_audit_path = bundle_dir / "HPM_DT_V20D_LaTeX编译审计.json"
     latex_log_path = bundle_dir / "HPM_DT_V20D_LaTeX编译审计.log"
     figure_manifest_path = bundle_dir / "HPM_DT_V20D_图表清单.csv"
@@ -141,6 +151,10 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
     _write_statistics_csv(statistics_csv_path, statistics_audit)
     draft_path.write_text(_markdown_draft(context), encoding="utf-8")
     latex_path.write_text(_ieee_latex_skeleton(context), encoding="utf-8")
+    template_rows = _write_latex_templates(templates_dir, context, config)
+    template_audit = _template_audit(template_rows, config)
+    template_audit_path.write_text(json.dumps(template_audit, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_template_audit_csv(template_audit_csv_path, template_audit)
     latex_audit = _latex_compile_audit(latex_path, config)
     latex_audit_path.write_text(json.dumps(latex_audit, ensure_ascii=False, indent=2), encoding="utf-8")
     latex_log_path.write_text(str(latex_audit.get("日志", "")), encoding="utf-8")
@@ -153,6 +167,7 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
         bibliography_path=bibliography_path,
         reproduction_path=reproduction_path,
         statistics_audit=statistics_audit,
+        template_audit=template_audit,
         latex_audit=latex_audit,
         figure_manifest_path=figure_manifest_path,
         supplement_path=supplement_path,
@@ -175,6 +190,9 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
             "文献复现注册表": str(reproduction_path.resolve()),
             "统计审计JSON": str(statistics_path.resolve()),
             "统计审计CSV": str(statistics_csv_path.resolve()),
+            "模板目录": str(templates_dir.resolve()),
+            "模板审计JSON": str(template_audit_path.resolve()),
+            "模板审计CSV": str(template_audit_csv_path.resolve()),
             "LaTeX编译审计": str(latex_audit_path.resolve()),
             "LaTeX编译日志": str(latex_log_path.resolve()),
             "图表清单": str(figure_manifest_path.resolve()),
@@ -185,12 +203,15 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
         "表格数量": len(copied_tables),
         "引用数量": len(config.get("references", ()) or ()),
         "复现条目数": len(_reproduction_registry_rows(config, context, out)),
+        "模板数量": len(template_rows),
+        "模板清单": template_rows,
         "统计审计": statistics_audit,
+        "模板审计": template_audit,
         "LaTeX编译审计": {key: value for key, value in latex_audit.items() if key != "日志"},
         "验收清单": acceptance,
         "安全边界": context["safety_boundary"],
         "配置": str(config.get("__path__", DEFAULT_CONFIG)),
-        "下一门槛": "接入多模板、外部文献 DOI、真实数据论文证据链和期刊/学位论文模板。",
+        "下一门槛": "接入外部文献 DOI、真实数据论文证据链、本机 PDF 编译归档和论文模板插件协议。",
     }
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     _archive_bundle(bundle_dir, archive_path)
@@ -206,9 +227,11 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
         manifest=manifest_path,
         draft_markdown=draft_path,
         ieee_latex=latex_path,
+        templates_dir=templates_dir,
         bibliography=bibliography_path,
         reproduction_registry=reproduction_path,
         statistics_audit=statistics_path,
+        template_audit=template_audit_path,
         latex_compile_audit=latex_audit_path,
         figure_manifest=figure_manifest_path,
         supplement_index=supplement_path,
@@ -489,6 +512,191 @@ def _latex_compile_command(compiler: str, tex_name: str) -> list[str]:
     return [name, "-interaction=nonstopmode", tex_name]
 
 
+def _template_definitions(config: Mapping[str, Any]) -> list[dict[str, Any]]:
+    template_cfg = _as_mapping(config.get("templates"))
+    entries = template_cfg.get("entries", ()) or ()
+    templates: list[dict[str, Any]] = []
+    for item in entries:
+        if not isinstance(item, Mapping):
+            continue
+        template = {
+            "id": _safe_bib_key(item.get("id") or f"template_{len(templates)+1}"),
+            "name": str(item.get("name") or f"论文模板{len(templates)+1}"),
+            "kind": str(item.get("kind") or "journal_article"),
+            "filename": str(item.get("filename") or f"HPM_DT_V20D_模板{len(templates)+1}.tex"),
+            "documentclass": str(item.get("documentclass") or "\\documentclass[UTF8]{ctexart}"),
+            "audience": str(item.get("audience") or "科研论文草稿"),
+            "required_sections": [str(section) for section in item.get("required_sections", ()) or ()],
+        }
+        templates.append(template)
+    return templates or _default_template_definitions()
+
+
+def _default_template_definitions() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": "ieee_conference",
+            "name": "IEEE会议论文模板",
+            "kind": "ieee_conference",
+            "filename": "HPM_DT_V20D_IEEE会议论文模板.tex",
+            "documentclass": "\\documentclass[conference]{IEEEtran}",
+            "audience": "IEEE conference or workshop paper",
+            "required_sections": ["Introduction", "Method", "Results", "Reproducibility", "Limitations", "Conclusion"],
+        },
+        {
+            "id": "journal_article",
+            "name": "期刊论文模板",
+            "kind": "journal_article",
+            "filename": "HPM_DT_V20D_期刊论文模板.tex",
+            "documentclass": "\\documentclass[UTF8]{ctexart}",
+            "audience": "中文期刊或扩展版技术论文",
+            "required_sections": ["引言", "方法", "结果", "讨论", "可复现性", "结论"],
+        },
+        {
+            "id": "thesis_chapter",
+            "name": "学位论文章节模板",
+            "kind": "thesis_chapter",
+            "filename": "HPM_DT_V20D_学位论文章节模板.tex",
+            "documentclass": "\\documentclass[UTF8]{ctexrep}",
+            "audience": "学位论文方法与实验章节",
+            "required_sections": ["平台架构", "验证方法", "实验结果", "统计审计", "本章小结"],
+        },
+    ]
+
+
+def _write_latex_templates(templates_dir: Path, context: Mapping[str, Any], config: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for template in _template_definitions(config):
+        filename = _safe_template_filename(template.get("filename"), f"{template['id']}.tex")
+        path = templates_dir / filename
+        path.write_text(_latex_template_document(context, template), encoding="utf-8")
+        rows.append(
+            {
+                "模板ID": template["id"],
+                "模板名称": template["name"],
+                "类型": template["kind"],
+                "面向场景": template["audience"],
+                "文件": str(path.resolve()),
+                "包内文件": str(path.relative_to(templates_dir.parent)),
+                "要求章节": "；".join(template.get("required_sections", ())),
+            }
+        )
+    return rows
+
+
+def _latex_template_document(context: Mapping[str, Any], template: Mapping[str, Any]) -> str:
+    if template.get("kind") == "ieee_conference":
+        return _ieee_latex_skeleton(context)
+    return _chinese_latex_template(context, template)
+
+
+def _chinese_latex_template(context: Mapping[str, Any], template: Mapping[str, Any]) -> str:
+    score = _as_mapping(context.get("score"))
+    summary = _as_mapping(context.get("summary"))
+    kind = str(template.get("kind", "journal_article"))
+    heading = "chapter" if kind == "thesis_chapter" else "section"
+    subheading = "section" if kind == "thesis_chapter" else "subsection"
+    documentclass = str(template.get("documentclass") or "\\documentclass[UTF8]{ctexart}")
+    required_sections = list(template.get("required_sections", ()) or ())
+    section_blocks = []
+    for section in required_sections:
+        section_blocks.append(f"\\{heading}{{{_tex(section)}}}\n{_template_section_text(section, context, subheading)}")
+    sections = "\n\n".join(section_blocks)
+    return f"""% V2.0D Paper Factory {template.get('name', '论文模板')}。预览稿以结构可审计为主。
+{documentclass}
+\\usepackage{{graphicx}}
+\\usepackage{{booktabs}}
+\\usepackage{{amsmath}}
+\\usepackage{{hyperref}}
+\\begin{{document}}
+
+\\title{{{_tex(context['title'])}}}
+\\author{{HPM-DT 自动论文生产线}}
+\\date{{{_tex(context['generated_utc'])}}}
+\\maketitle
+
+\\begin{{abstract}}
+本文档是面向{_tex(template.get('audience', '科研论文草稿'))}的 V2.0D Paper Factory 模板。当前 V\\&V 共运行 {summary.get('总测试数', 0)} 类用例，通过 {summary.get('通过数', 0)} 类，可信度评分为 {score.get('可信度评分', 'NA')}，等级为 {score.get('当前等级', 'NA')}。
+\\end{{abstract}}
+
+{sections}
+
+\\bibliographystyle{{IEEEtran}}
+\\bibliography{{HPM_DT_V20D_引用库}}
+
+\\end{{document}}
+"""
+
+
+def _template_section_text(section: str, context: Mapping[str, Any], subheading: str) -> str:
+    summary = _as_mapping(context.get("summary"))
+    score = _as_mapping(context.get("score"))
+    if section in {"引言", "平台架构"}:
+        return "HPM-DT 面向归一化高功率微波数字孪生研究，强调软件链路可验证、证据可追溯和论文材料可复现。"
+    if section in {"方法", "验证方法"}:
+        return "平台复用 V2.0A 解析验证、算法基准、后端一致性、不确定度和敏感性分析结果，不为论文临时修改核心求解器。"
+    if section in {"结果", "实验结果"}:
+        return f"当前自动验收总数为 {summary.get('总测试数', 0)}，通过 {summary.get('通过数', 0)}，可信度评分为 {score.get('可信度评分', 'NA')}。"
+    if section in {"统计审计"}:
+        return "统计审计覆盖 V&V 用例数、图表数量、表格数量、不确定度汇总和敏感性排序；真实实验显著性仍需授权数据闭环。"
+    if section in {"讨论"}:
+        return f"本模板仅组织归一化科研结果。安全边界：{_tex(context.get('safety_boundary', ''))}"
+    if section in {"可复现性"}:
+        return f"\\{subheading}{{材料清单}}\n论文草稿、模板、引用库、复现注册表、统计审计、图表清单和补充材料均由 Paper Factory 自动生成。"
+    if section in {"结论", "本章小结"}:
+        return "多模板导出证明发文材料生产已经从单一草稿进入模板矩阵阶段；正式投稿前仍需外部 DOI、授权数据证据链和 PDF 编译归档。"
+    return "本节由 Paper Factory 生成占位结构，等待用户补充面向具体期刊或学位论文格式的人工论述。"
+
+
+def _template_audit(template_rows: list[dict[str, Any]], config: Mapping[str, Any]) -> dict[str, Any]:
+    template_cfg = _as_mapping(config.get("templates"))
+    min_templates = int(_number(template_cfg.get("min_templates", 3)))
+    audited: list[dict[str, Any]] = []
+    for row in template_rows:
+        path = Path(str(row.get("文件", "")))
+        text = path.read_text(encoding="utf-8") if path.exists() else ""
+        section_checks = [
+            _audit_check(f"章节存在:{section}", f"{{{section}}}" in text, row.get("包内文件", ""))
+            for section in str(row.get("要求章节", "")).split("；")
+            if section
+        ]
+        structural_checks = [
+            _audit_check("文件存在", path.exists(), row.get("文件", "")),
+            _audit_check("documentclass存在", "\\documentclass" in text, row.get("包内文件", "")),
+            _audit_check("正文环境闭合", "\\begin{document}" in text and "\\end{document}" in text, row.get("包内文件", "")),
+            _audit_check("引用库绑定", "\\bibliography{" in text or not _as_mapping(config.get("latex")).get("require_bibliography", True), row.get("包内文件", "")),
+            *section_checks,
+        ]
+        passed = all(item["通过"] for item in structural_checks)
+        audited.append(
+            {
+                **row,
+                "通过": passed,
+                "结构审计通过": passed,
+                "检查项": structural_checks,
+            }
+        )
+    count_check = _audit_check("模板数量达标", len(audited) >= min_templates, f"{len(audited)}/{min_templates}")
+    all_check = _audit_check("模板结构全部通过", all(item["通过"] for item in audited), "逐模板章节、正文和引用入口审计")
+    return {
+        "版本": config.get("version", "V2.0D-paper-factory-v1"),
+        "模板数量": len(audited),
+        "要求模板数量": min_templates,
+        "模板审计通过": count_check["通过"] and all_check["通过"],
+        "检查项": [count_check, all_check],
+        "模板": audited,
+        "说明": "预览阶段完成多模板结构审计；实际 PDF 编译归档仍取决于本机 LaTeX 工具链和目标期刊模板。",
+    }
+
+
+def _write_template_audit_csv(path: Path, audit: Mapping[str, Any]) -> None:
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["模板ID", "模板名称", "类型", "面向场景", "通过", "结构审计通过", "包内文件", "文件"])
+        writer.writeheader()
+        for row in audit.get("模板", ()) or ():
+            writer.writerow({key: row.get(key, "") for key in writer.fieldnames})
+
+
 def _markdown_draft(context: Mapping[str, Any]) -> str:
     summary = context["summary"]
     score = context["score"]
@@ -681,9 +889,11 @@ def _supplement_index(context: Mapping[str, Any]) -> str:
 - 完整测试报告：`tables/*完整测试报告.txt`
 - 论文草稿：`HPM_DT_V20D_论文草稿.md`
 - IEEE 骨架：`HPM_DT_V20D_IEEE骨架.tex`
+- 多模板目录：`templates/`
 - 引用库：`HPM_DT_V20D_引用库.bib`
 - 文献复现注册表：`HPM_DT_V20D_文献复现注册表.csv`
 - 统计审计：`HPM_DT_V20D_统计审计.json`
+- 模板审计：`HPM_DT_V20D_模板审计.json`
 - LaTeX 编译审计：`HPM_DT_V20D_LaTeX编译审计.json`
 """
 
@@ -695,6 +905,7 @@ def _acceptance(
     bibliography_path: Path,
     reproduction_path: Path,
     statistics_audit: Mapping[str, Any],
+    template_audit: Mapping[str, Any],
     latex_audit: Mapping[str, Any],
     figure_manifest_path: Path,
     supplement_path: Path,
@@ -707,6 +918,8 @@ def _acceptance(
         {"项目": "引用库", "通过": bibliography_path.exists() and "@misc" in bibliography_path.read_text(encoding="utf-8")},
         {"项目": "文献复现注册表", "通过": reproduction_path.exists() and reproduction_path.stat().st_size > 100},
         {"项目": "统计审计", "通过": bool(statistics_audit.get("统计审计通过"))},
+        {"项目": "多模板导出", "通过": int(_number(template_audit.get("模板数量"))) >= int(_number(template_audit.get("要求模板数量", 3)))},
+        {"项目": "模板审计", "通过": bool(template_audit.get("模板审计通过"))},
         {"项目": "LaTeX 编译审计", "通过": bool(latex_audit.get("通过"))},
         {"项目": "图表清单", "通过": figure_manifest_path.exists() and len(figures) >= 3},
         {"项目": "补充材料索引", "通过": supplement_path.exists() and len(tables) >= 3},
@@ -771,6 +984,15 @@ def _safe_bib_key(value: Any) -> str:
 
 def _bibtex_value(value: Any) -> str:
     return str(value).replace("\\", "\\textbackslash{}").replace("{", "\\{").replace("}", "\\}")
+
+
+def _safe_template_filename(value: Any, fallback: str) -> str:
+    text = str(value or fallback).strip() or fallback
+    name = Path(text).name
+    if not name.lower().endswith(".tex"):
+        name = f"{name}.tex"
+    stem = _safe_stem(Path(name).stem)
+    return f"{stem}.tex"
 
 
 def _safe_stem(stem: str) -> str:

@@ -22,6 +22,8 @@ def test_platform_readiness_config_lives_under_configs():
     assert "引用库存在" in paper_gates
     assert "文献复现注册表存在" in paper_gates
     assert "统计审计通过" in paper_gates
+    assert "多模板导出达标" in paper_gates
+    assert "模板审计通过" in paper_gates
     assert "LaTeX编译审计通过" in paper_gates
 
 

@@ -20,6 +20,7 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     draft = bundle.draft_markdown.read_text(encoding="utf-8")
     latex = bundle.ieee_latex.read_text(encoding="utf-8")
     bibliography = bundle.bibliography.read_text(encoding="utf-8")
+    template_audit = json.loads(bundle.template_audit.read_text(encoding="utf-8"))
     latex_audit = json.loads(bundle.latex_compile_audit.read_text(encoding="utf-8"))
 
     assert manifest["版本"] == "V2.0D-preview"
@@ -28,7 +29,9 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     assert manifest["表格数量"] >= 3
     assert manifest["引用数量"] >= 3
     assert manifest["复现条目数"] >= 6
+    assert manifest["模板数量"] >= 3
     assert manifest["统计审计"]["统计审计通过"] is True
+    assert manifest["模板审计"]["模板审计通过"] is True
     assert manifest["LaTeX编译审计"]["结构审计通过"] is True
     assert "摘要" in draft
     assert "安全边界" in draft
@@ -36,7 +39,10 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     assert "\\documentclass[conference]{IEEEtran}" in latex
     assert "\\bibliography{HPM_DT_V20D_引用库}" in latex
     assert "@misc{hpm_dt_platform" in bibliography
+    assert template_audit["模板审计通过"] is True
+    assert {row["类型"] for row in template_audit["模板"]} >= {"ieee_conference", "journal_article", "thesis_chapter"}
     assert latex_audit["结构审计通过"] is True
+    assert bundle.templates_dir.exists()
     assert bundle.archive.exists()
 
     with zipfile.ZipFile(bundle.archive) as zf:
@@ -46,7 +52,9 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     assert "HPM_DT_V20D_引用库.bib" in names
     assert "HPM_DT_V20D_文献复现注册表.csv" in names
     assert "HPM_DT_V20D_统计审计.json" in names
+    assert "HPM_DT_V20D_模板审计.json" in names
     assert "HPM_DT_V20D_LaTeX编译审计.json" in names
+    assert any(name.startswith("templates/") and name.endswith(".tex") for name in names)
     assert "paper_factory_manifest.json" in names
     assert any(name.startswith("figures/") for name in names)
     assert any(name.startswith("tables/") for name in names)
@@ -57,6 +65,8 @@ def test_v20d_paper_factory_config_lives_under_configs():
 
     assert config["version"] == "V2.0D-paper-factory-v1"
     assert config["latex"]["require_compiler_for_preview"] is False
+    assert config["templates"]["min_templates"] == 3
+    assert {item["kind"] for item in config["templates"]["entries"]} >= {"ieee_conference", "journal_article", "thesis_chapter"}
     assert len(config["references"]) >= 3
     assert "真实作用距离" in config["safety_boundary"]["no_output_items"]
 
@@ -73,7 +83,9 @@ def test_v20d_service_status_reflects_generation(tmp_path):
     assert status["状态"] == "已生成"
     assert Path(status["产物"]["论文包ZIP"]).exists()
     assert Path(status["产物"]["引用库"]).exists()
+    assert Path(status["产物"]["模板审计JSON"]).exists()
     assert status["统计审计"]["统计审计通过"] is True
+    assert status["模板审计"]["模板审计通过"] is True
 
 
 def test_v20d_api_generates_and_downloads_paper_bundle(tmp_path):
@@ -89,6 +101,7 @@ def test_v20d_api_generates_and_downloads_paper_bundle(tmp_path):
     assert generated.json()["通过"] is True
     assert "论文草稿" in generated.json()["产物"]
     assert "引用库" in generated.json()["产物"]
+    assert "模板审计JSON" in generated.json()["产物"]
     assert "LaTeX编译审计" in generated.json()["产物"]
     assert status_after.json()["状态"] == "已生成"
     assert download.status_code == 200
