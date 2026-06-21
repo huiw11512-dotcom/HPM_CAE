@@ -67,6 +67,25 @@ statistics:
   require_sensitivity: true
   require_evidence_candidate: true
 
+submission_readiness:
+  min_ready_score: 80
+  required_external_doi_count: 1
+  required_formal_reproduction_id_count: 1
+  require_evidence_candidate_gate: true
+  require_pdf_archive: true
+  required_pdf_filename: HPM_DT_V20D_论文定稿.pdf
+  required_signed_template_count: 1
+  weights:
+    core_bundle: 15
+    audit_chain: 15
+    evidence_candidate_present: 10
+    evidence_candidate_gate: 15
+    external_doi: 15
+    formal_reproduction_id: 15
+    pdf_archive: 10
+    target_template_signature: 5
+    safety_boundary: 5
+
 references:
   - key: hpm_dt_platform
     type: misc

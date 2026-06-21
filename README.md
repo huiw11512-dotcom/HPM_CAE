@@ -85,6 +85,7 @@ http://127.0.0.1:7860
 - 新增 `configs/paper_factory_v20d.yaml`，统一管理论文标题、引用库、复现注册表、统计审计门槛、LaTeX 编译器偏好和安全边界；
 - 自动生成 Markdown 论文草稿、IEEE LaTeX 骨架、IEEE/期刊/学位论文多模板、插件模板、BibTeX 引用库、文献复现注册表、统计审计 JSON/CSV、模板审计、LaTeX 编译审计、图表清单、补充材料索引和可复现论文包 ZIP；
 - Paper Factory 已读取最新 `evidence_package_vv_candidate.json`，并把证据包 V&V 候选评分写入论文草稿、补充材料、复现注册表、统计审计和 manifest；候选未过门槛时只作为风险附注，不改写正式可信度评分；
+- 新增投稿准备度审计 `HPM_DT_V20D_投稿准备度审计.json/csv`，把外部 DOI、正式复现实验编号、证据包候选门槛、PDF 归档和目标期刊模板签名变成机器可读的 P0/P1 发文阻断项；
 - 新增 `/api/paper-factory/status`、`/api/paper-factory/generate` 和 `/download/paper-factory.zip`；
 - V2.0A 工作台“论文报告导出”页新增论文草稿包生成、下载控件和论文生产审计表；
 - 论文包保留模型安全边界，不把归一化代理结果写成真实毁伤概率、真实作用距离或器件阈值。

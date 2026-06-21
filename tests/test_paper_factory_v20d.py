@@ -35,6 +35,7 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     bibliography = bundle.bibliography.read_text(encoding="utf-8")
     registry = bundle.reproduction_registry.read_text(encoding="utf-8-sig")
     supplement = bundle.supplement_index.read_text(encoding="utf-8")
+    submission = json.loads(bundle.submission_readiness.read_text(encoding="utf-8"))
     template_audit = json.loads(bundle.template_audit.read_text(encoding="utf-8"))
     latex_audit = json.loads(bundle.latex_compile_audit.read_text(encoding="utf-8"))
 
@@ -54,6 +55,13 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     assert manifest["证据包候选评分"]["存在"] is True
     assert manifest["证据包候选评分"]["候选门槛满足"] is False
     assert manifest["证据包候选评分"]["正式评分改写"] is False
+    assert manifest["投稿准备度审计"]["投稿门槛通过"] is False
+    assert manifest["投稿准备度审计"]["关键计数"]["外部引用DOI数量"] == 0
+    assert manifest["投稿准备度审计"]["关键计数"]["正式复现实验编号数量"] == 0
+    assert any(item["项目"] == "外部引用 DOI 达标" and item["通过"] is False for item in manifest["投稿准备度审计"]["检查项"])
+    assert any(item["项目"] == "PDF 编译归档存在" and item["通过"] is False for item in manifest["投稿准备度审计"]["检查项"])
+    assert submission["版本"] == "V2.0D-submission-readiness-v1"
+    assert submission["投稿准备度/%"] < 80
     assert "摘要" in draft
     assert "安全边界" in draft
     assert "证据包 V&V 候选评分" in draft
@@ -71,6 +79,7 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     assert any(row["来源插件"] == "hpm.publication.paper_template_pack" for row in template_audit["模板"])
     assert latex_audit["结构审计通过"] is True
     assert bundle.templates_dir.exists()
+    assert bundle.submission_readiness.exists()
     assert bundle.archive.exists()
 
     with zipfile.ZipFile(bundle.archive) as zf:
@@ -82,6 +91,8 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     assert "HPM_DT_V20D_统计审计.json" in names
     assert "HPM_DT_V20D_模板审计.json" in names
     assert "HPM_DT_V20D_LaTeX编译审计.json" in names
+    assert "HPM_DT_V20D_投稿准备度审计.json" in names
+    assert "HPM_DT_V20D_投稿准备度审计.csv" in names
     assert any(name.startswith("templates/") and name.endswith(".tex") for name in names)
     assert "paper_factory_manifest.json" in names
     assert any(name.startswith("figures/") for name in names)
@@ -98,6 +109,9 @@ def test_v20d_paper_factory_config_lives_under_configs():
     assert "hpm.publication.paper_template_pack" in config["templates"]["plugin_templates"]["plugin_ids"]
     assert {item["kind"] for item in config["templates"]["entries"]} >= {"ieee_conference", "journal_article", "thesis_chapter"}
     assert config["statistics"]["require_evidence_candidate"] is True
+    assert config["submission_readiness"]["required_external_doi_count"] == 1
+    assert config["submission_readiness"]["required_formal_reproduction_id_count"] == 1
+    assert config["submission_readiness"]["require_pdf_archive"] is True
     assert len(config["references"]) >= 4
     assert "hpm_dt_evidence_candidate" in {item["key"] for item in config["references"]}
     assert "真实作用距离" in config["safety_boundary"]["no_output_items"]
@@ -116,7 +130,9 @@ def test_v20d_service_status_reflects_generation(tmp_path):
     assert Path(status["产物"]["论文包ZIP"]).exists()
     assert Path(status["产物"]["引用库"]).exists()
     assert Path(status["产物"]["模板审计JSON"]).exists()
+    assert Path(status["产物"]["投稿准备度审计JSON"]).exists()
     assert status["统计审计"]["统计审计通过"] is True
+    assert status["投稿准备度审计"]["投稿门槛通过"] is False
     assert status["模板审计"]["模板审计通过"] is True
 
 
@@ -135,6 +151,8 @@ def test_v20d_api_generates_and_downloads_paper_bundle(tmp_path):
     assert "引用库" in generated.json()["产物"]
     assert "模板审计JSON" in generated.json()["产物"]
     assert "LaTeX编译审计" in generated.json()["产物"]
+    assert "投稿准备度审计JSON" in generated.json()["产物"]
+    assert generated.json()["投稿准备度审计"]["投稿门槛通过"] is False
     assert status_after.json()["状态"] == "已生成"
     assert download.status_code == 200
     assert download.content[:2] == b"PK"

@@ -43,6 +43,7 @@ class PaperFactoryBundle:
     latex_compile_audit: Path
     figure_manifest: Path
     supplement_index: Path
+    submission_readiness: Path
     archive: Path
 
     def as_dict(self) -> dict[str, Any]:
@@ -59,6 +60,7 @@ class PaperFactoryBundle:
             "latex_compile_audit": str(self.latex_compile_audit),
             "figure_manifest": str(self.figure_manifest),
             "supplement_index": str(self.supplement_index),
+            "submission_readiness": str(self.submission_readiness),
             "archive": str(self.archive),
         }
 
@@ -92,6 +94,7 @@ class PaperFactoryService:
                         {"项目": "LaTeX 编译审计", "通过": False},
                         {"项目": "图表清单", "通过": False},
                         {"项目": "补充材料索引", "通过": False},
+                        {"项目": "投稿准备度审计", "通过": False},
                         {"项目": "可复现论文包 ZIP", "通过": False},
                     ],
                 }
@@ -142,6 +145,8 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
     latex_log_path = bundle_dir / "HPM_DT_V20D_LaTeX编译审计.log"
     figure_manifest_path = bundle_dir / "HPM_DT_V20D_图表清单.csv"
     supplement_path = bundle_dir / "HPM_DT_V20D_补充材料索引.md"
+    submission_path = bundle_dir / "HPM_DT_V20D_投稿准备度审计.json"
+    submission_csv_path = bundle_dir / "HPM_DT_V20D_投稿准备度审计.csv"
     manifest_path = bundle_dir / "paper_factory_manifest.json"
     archive_path = bundle_dir / "HPM_DT_V20D_paper_factory_bundle.zip"
 
@@ -161,6 +166,24 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
     latex_log_path.write_text(str(latex_audit.get("日志", "")), encoding="utf-8")
     _write_figure_manifest(figure_manifest_path, copied_figures)
     supplement_path.write_text(_supplement_index(context), encoding="utf-8")
+    _archive_bundle(bundle_dir, archive_path)
+    submission_audit = _submission_readiness_audit(
+        context=context,
+        config=config,
+        draft_path=draft_path,
+        latex_path=latex_path,
+        bibliography_path=bibliography_path,
+        reproduction_path=reproduction_path,
+        statistics_audit=statistics_audit,
+        template_audit=template_audit,
+        latex_audit=latex_audit,
+        figure_manifest_path=figure_manifest_path,
+        supplement_path=supplement_path,
+        template_rows=template_rows,
+        archive_path=archive_path,
+    )
+    submission_path.write_text(json.dumps(submission_audit, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_submission_readiness_csv(submission_csv_path, submission_audit)
 
     acceptance = _acceptance(
         draft_path=draft_path,
@@ -172,6 +195,7 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
         latex_audit=latex_audit,
         figure_manifest_path=figure_manifest_path,
         supplement_path=supplement_path,
+        submission_path=submission_path,
         figures=copied_figures,
         tables=copied_tables,
     )
@@ -198,6 +222,8 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
             "LaTeX编译日志": str(latex_log_path.resolve()),
             "图表清单": str(figure_manifest_path.resolve()),
             "补充材料索引": str(supplement_path.resolve()),
+            "投稿准备度审计JSON": str(submission_path.resolve()),
+            "投稿准备度审计CSV": str(submission_csv_path.resolve()),
             "论文包ZIP": str(archive_path.resolve()),
         },
         "图表数量": len(copied_figures),
@@ -210,10 +236,11 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
         "模板审计": template_audit,
         "LaTeX编译审计": {key: value for key, value in latex_audit.items() if key != "日志"},
         "证据包候选评分": _candidate_manifest_summary(_as_mapping(context.get("evidence_candidate")), out),
+        "投稿准备度审计": submission_audit,
         "验收清单": acceptance,
         "安全边界": context["safety_boundary"],
         "配置": str(config.get("__path__", DEFAULT_CONFIG)),
-        "下一门槛": "接入外部文献 DOI、真实数据论文证据链、本机 PDF 编译归档和论文模板插件协议。",
+        "下一门槛": "清零投稿准备度审计中的 P0/P1 阻断项：外部 DOI、正式复现实验编号、真实数据论文证据链、本机 PDF 编译归档和目标期刊模板签名。",
     }
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     _archive_bundle(bundle_dir, archive_path)
@@ -237,6 +264,7 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
         latex_compile_audit=latex_audit_path,
         figure_manifest=figure_manifest_path,
         supplement_index=supplement_path,
+        submission_readiness=submission_path,
         archive=archive_path,
     )
 
@@ -573,6 +601,204 @@ def _write_statistics_csv(path: Path, audit: Mapping[str, Any]) -> None:
         writer = csv.DictWriter(handle, fieldnames=["项目", "通过", "证据"])
         writer.writeheader()
         writer.writerows(audit.get("检查项", ()) or ())
+
+
+def _submission_readiness_audit(
+    *,
+    context: Mapping[str, Any],
+    config: Mapping[str, Any],
+    draft_path: Path,
+    latex_path: Path,
+    bibliography_path: Path,
+    reproduction_path: Path,
+    statistics_audit: Mapping[str, Any],
+    template_audit: Mapping[str, Any],
+    latex_audit: Mapping[str, Any],
+    figure_manifest_path: Path,
+    supplement_path: Path,
+    template_rows: list[dict[str, Any]],
+    archive_path: Path,
+) -> dict[str, Any]:
+    submission_cfg = _as_mapping(config.get("submission_readiness"))
+    weights = _as_mapping(submission_cfg.get("weights"))
+    output_dir = Path(str(context.get("output_dir", DEFAULT_OUTPUT)))
+    candidate_summary = _candidate_manifest_summary(_as_mapping(context.get("evidence_candidate")), output_dir)
+    required_doi_count = int(_number(submission_cfg.get("required_external_doi_count", 1)))
+    required_reproduction_ids = int(_number(submission_cfg.get("required_formal_reproduction_id_count", 1)))
+    required_signed_templates = int(_number(submission_cfg.get("required_signed_template_count", 1)))
+    min_score = _number(submission_cfg.get("min_ready_score", 80.0))
+    require_pdf_archive = bool(submission_cfg.get("require_pdf_archive", True))
+    require_evidence_candidate_gate = bool(submission_cfg.get("require_evidence_candidate_gate", True))
+    pdf_filename = str(submission_cfg.get("required_pdf_filename") or "HPM_DT_V20D_论文定稿.pdf")
+    pdf_path = archive_path.parent / Path(pdf_filename).name
+    external_doi_count = _external_doi_count(config)
+    formal_reproduction_id_count = _formal_reproduction_id_count(config)
+    signed_template_count = _signed_template_count(config, template_rows)
+    core_paths = [draft_path, latex_path, bibliography_path, reproduction_path, figure_manifest_path, supplement_path, archive_path]
+    checks = [
+        _submission_check(
+            "核心论文材料齐备",
+            all(path.exists() and path.stat().st_size > 0 for path in core_paths),
+            "草稿、LaTeX、引用库、复现注册表、图表清单、补充材料和ZIP均可读",
+            _submission_weight(weights, "core_bundle", 15),
+            "P2",
+        ),
+        _submission_check(
+            "统计与模板审计通过",
+            bool(statistics_audit.get("统计审计通过"))
+            and bool(template_audit.get("模板审计通过"))
+            and bool(latex_audit.get("结构审计通过")),
+            "统计审计、模板审计和 LaTeX 结构审计均通过",
+            _submission_weight(weights, "audit_chain", 15),
+            "P2",
+        ),
+        _submission_check(
+            "证据包候选评分进入论文材料",
+            bool(candidate_summary["存在"]) and candidate_summary["正式评分改写"] is False,
+            candidate_summary["输出文件"],
+            _submission_weight(weights, "evidence_candidate_present", 10),
+            "P1",
+            "候选评分可以作为风险附注，但不能自动改写正式可信度评分。",
+        ),
+        _submission_check(
+            "证据包候选门槛满足",
+            bool(candidate_summary["候选门槛满足"]) or not require_evidence_candidate_gate,
+            candidate_summary["候选评分状态"],
+            _submission_weight(weights, "evidence_candidate_gate", 15),
+            "P0",
+        ),
+        _submission_check(
+            "外部引用 DOI 达标",
+            external_doi_count >= required_doi_count,
+            f"{external_doi_count}/{required_doi_count} 个 DOI",
+            _submission_weight(weights, "external_doi", 15),
+            "P0",
+        ),
+        _submission_check(
+            "正式复现实验编号达标",
+            formal_reproduction_id_count >= required_reproduction_ids,
+            f"{formal_reproduction_id_count}/{required_reproduction_ids} 个正式编号",
+            _submission_weight(weights, "formal_reproduction_id", 15),
+            "P0",
+        ),
+        _submission_check(
+            "PDF 编译归档存在",
+            (pdf_path.exists() and pdf_path.stat().st_size > 0) or (not require_pdf_archive),
+            str(pdf_path.resolve()),
+            _submission_weight(weights, "pdf_archive", 10),
+            "P1",
+        ),
+        _submission_check(
+            "目标期刊模板签名达标",
+            signed_template_count >= required_signed_templates,
+            f"{signed_template_count}/{required_signed_templates} 个签名模板",
+            _submission_weight(weights, "target_template_signature", 5),
+            "P1",
+        ),
+        _submission_check(
+            "安全边界声明完整",
+            "真实作用距离" in str(_as_mapping(config.get("safety_boundary")).get("no_output_items", ""))
+            and "安全边界" in (draft_path.read_text(encoding="utf-8") if draft_path.exists() else ""),
+            _as_mapping(config.get("safety_boundary")).get("description", context.get("safety_boundary", "")),
+            _submission_weight(weights, "safety_boundary", 5),
+            "P2",
+        ),
+    ]
+    total_weight = sum(_number(item.get("权重")) for item in checks) or 1.0
+    passed_weight = sum(_number(item.get("权重")) for item in checks if item.get("通过"))
+    score = round(100.0 * passed_weight / total_weight, 2)
+    blockers = [item for item in checks if not item["通过"] and item.get("严重度") in {"P0", "P1"}]
+    return {
+        "版本": "V2.0D-submission-readiness-v1",
+        "名称": "Paper Factory 投稿准备度审计",
+        "投稿准备度/%": score,
+        "最低投稿准备度/%": min_score,
+        "投稿门槛通过": bool(score >= min_score and not any(item.get("严重度") == "P0" for item in blockers)),
+        "状态": "可进入投稿前人工复核" if score >= min_score and not blockers else "投稿前阻断项未清零",
+        "检查项": checks,
+        "阻断项": blockers,
+        "关键计数": {
+            "外部引用DOI数量": external_doi_count,
+            "要求外部引用DOI数量": required_doi_count,
+            "正式复现实验编号数量": formal_reproduction_id_count,
+            "要求正式复现实验编号数量": required_reproduction_ids,
+            "签名目标模板数量": signed_template_count,
+            "要求签名目标模板数量": required_signed_templates,
+        },
+        "证据包候选评分": candidate_summary,
+        "PDF归档": str(pdf_path.resolve()),
+        "下一步": [
+            "绑定外部文献 DOI 或正式复现实验编号，并在 reproduction_registry 中登记。",
+            "用真实授权数据把证据包候选评分推进到源链、相位参考、残差和 2σ 覆盖率门槛内。",
+            "安装 LaTeX 工具链或提供已编译 PDF，并把目标期刊模板签名纳入配置。",
+        ],
+        "安全边界": _as_mapping(config.get("safety_boundary")).get("description", context.get("safety_boundary", "")),
+    }
+
+
+def _submission_weight(weights: Mapping[str, Any], key: str, default: float) -> float:
+    value = _number(weights.get(key, default))
+    return value if value > 0 else default
+
+
+def _submission_check(
+    name: str,
+    passed: bool,
+    evidence: Any,
+    weight: float,
+    severity: str,
+    note: str = "",
+) -> dict[str, Any]:
+    return {
+        "项目": name,
+        "通过": bool(passed),
+        "证据": str(evidence),
+        "权重": float(weight),
+        "严重度": severity,
+        "说明": note,
+    }
+
+
+def _write_submission_readiness_csv(path: Path, audit: Mapping[str, Any]) -> None:
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["项目", "通过", "权重", "严重度", "证据", "说明"])
+        writer.writeheader()
+        for row in audit.get("检查项", ()) or ():
+            writer.writerow({key: row.get(key, "") for key in writer.fieldnames})
+
+
+def _external_doi_count(config: Mapping[str, Any]) -> int:
+    count = 0
+    for item in config.get("references", ()) or ():
+        if not isinstance(item, Mapping):
+            continue
+        doi = str(item.get("doi") or "").strip()
+        howpublished = str(item.get("howpublished") or "").lower()
+        if doi or "doi.org/" in howpublished:
+            count += 1
+    return count
+
+
+def _formal_reproduction_id_count(config: Mapping[str, Any]) -> int:
+    count = 0
+    for item in config.get("reproduction_registry", ()) or ():
+        if not isinstance(item, Mapping):
+            continue
+        formal_id = str(item.get("formal_reproduction_id") or item.get("experiment_id") or "").strip()
+        if formal_id:
+            count += 1
+    return count
+
+
+def _signed_template_count(config: Mapping[str, Any], template_rows: list[dict[str, Any]]) -> int:
+    signatures = {
+        str(item.get("id") or item.get("template_id") or "").strip()
+        for item in _as_mapping(config.get("templates")).get("signatures", ()) or ()
+        if isinstance(item, Mapping) and str(item.get("signature") or "").strip()
+    }
+    if signatures:
+        return sum(1 for row in template_rows if str(row.get("模板ID", "")).strip() in signatures)
+    return 0
 
 
 def _latex_compile_audit(latex_path: Path, config: Mapping[str, Any]) -> dict[str, Any]:
@@ -1113,6 +1339,7 @@ def _acceptance(
     latex_audit: Mapping[str, Any],
     figure_manifest_path: Path,
     supplement_path: Path,
+    submission_path: Path,
     figures: list[dict[str, Any]],
     tables: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -1132,6 +1359,7 @@ def _acceptance(
         {"项目": "图表清单", "通过": figure_manifest_path.exists() and len(figures) >= 3},
         {"项目": "补充材料索引", "通过": supplement_path.exists() and len(tables) >= 3},
         {"项目": "证据包候选评分写入论文材料", "通过": "证据包 V&V 候选评分" in draft_text and "外部数据证据包候选评分" in supplement_text},
+        {"项目": "投稿准备度审计", "通过": submission_path.exists() and submission_path.stat().st_size > 100},
         {"项目": "安全边界声明", "通过": "安全边界" in draft_text},
     ]
 
