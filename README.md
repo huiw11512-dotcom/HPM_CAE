@@ -1,5 +1,7 @@
 # HPM-DT 高功率微波数字孪生 CAE 平台（全 Python、全中文）
 
+An open-source Chinese CAE platform for high-power microwave phased arrays, digital twin modeling, field control, effect evaluation, and verification & validation.
+
 HPM-DT（High-Power Microwave Digital Twin）的长期目标，是构建一个面向高功率微波相控阵、效应分析与数字孪生研究的全中文开源科研级 CAE 平台。它不是一个算法仓库、单个论文项目或几个 Python 脚本，而是持续演进的高功率微波数字孪生 CAE 平台。
 
 V2.0A 只是当前阶段里程碑：它完成可信度验证体系；当前工作已经开始推进 V2.0B 三维 CAE 编辑器原型和 V2.0C 插件市场预览。V1.4 的 FastAPI + Bootstrap 5 Dashboard + Plotly 离线工作台、插件式传播后端、模型适用性诊断和参数标定能力全部保留。
