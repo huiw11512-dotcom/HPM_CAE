@@ -1,0 +1,113 @@
+version: NorthStar-readiness-v1
+
+thresholds:
+  accept: 85
+  demo: 70
+  preview: 55
+  vv_a_score: 85
+  min_vv_cases: 6
+  min_plugin_categories: 3
+  min_plugins: 3
+  min_paper_figures: 3
+  min_paper_tables: 3
+  min_paper_artifacts: 5
+
+caps:
+  publication_readiness_if_p0: 68
+  platform_maturity_if_p0: 82
+
+summary_weights:
+  use_readiness:
+    可信度验证: 0.20
+    三维CAE工作台: 0.30
+    真实数据接入: 0.15
+    插件生态: 0.10
+    论文生产: 0.10
+    工程化与复现: 0.10
+    研究安全边界: 0.05
+  publication_readiness:
+    可信度验证: 0.25
+    真实数据接入: 0.20
+    论文生产: 0.25
+    工程化与复现: 0.15
+    研究安全边界: 0.15
+  platform_maturity:
+    可信度验证: 0.18
+    三维CAE工作台: 0.20
+    真实数据接入: 0.17
+    插件生态: 0.12
+    论文生产: 0.13
+    工程化与复现: 0.12
+    研究安全边界: 0.08
+
+dimension_weights:
+  可信度验证:
+    base_score: 0.45
+    gates:
+      V&V用例存在: 0.20
+      V&V全部通过: 0.30
+      可信度评分达到A级门槛: 0.35
+      不确定度与敏感性可读: 0.15
+  三维CAE工作台:
+    gates:
+      三维场景可读: 0.15
+      资产台账通过: 0.15
+      数据库审计通过: 0.10
+      复现审计通过: 0.12
+      命名审计通过: 0.08
+      绝对量纲标定可读: 0.15
+      导入标定桥接入账: 0.15
+      求解结果资产存在: 0.10
+  真实数据接入:
+    gates:
+      多格式导入目录通过: 0.15
+      标定准备度通过: 0.18
+      CalibrationSamples桥接通过: 0.17
+      模型误差对比通过: 0.17
+      外部数据V&V审计存在: 0.13
+      可纳入正式可信度评分: 0.20
+  插件生态:
+    gates:
+      插件验收通过: 0.35
+      至少三类插件: 0.25
+      目录可读: 0.20
+      白名单钩子存在: 0.20
+  论文生产:
+    gates:
+      Paper Factory已生成: 0.35
+      核心论文产物存在: 0.25
+      图表数量达标: 0.15
+      表格数量达标: 0.10
+      论文安全边界写入: 0.15
+  工程化与复现:
+    gates:
+      资产索引JSON存在: 0.20
+      资产数据库存在: 0.20
+      谱系审计存在: 0.20
+      论文包ZIP存在: 0.20
+      全量测试报告存在: 0.20
+  研究安全边界:
+    gates:
+      明确不输出真实作用距离: 0.25
+      明确不输出器件阈值: 0.25
+      明确不输出真实毁伤概率: 0.25
+      外部数据未改写正式评分: 0.25
+
+layer_floor_scores:
+  感知层: 55
+  防护层: 58
+  控场层: 62
+  效应层: 45
+
+safety_boundary:
+  description: 本报告只评估软件链路、科研证据链和论文材料成熟度。
+  no_output_items:
+    - 真实作用距离
+    - 器件阈值
+    - 真实毁伤概率
+    - 作战效能结论
+
+next_actions:
+  - 优先把 V3.0 Measurement Campaign 的真实源链、相位参考、仪器校准证书和授权数据血缘接入外部数据 V&V。
+  - 把当前 Paper Factory 草稿扩展为文献复现注册表、引用库、统计显著性表和 LaTeX 编译验收。
+  - 继续补齐三维 Workbench 的尺寸/旋转 Gizmo、正式工程数据库和任务调度器。

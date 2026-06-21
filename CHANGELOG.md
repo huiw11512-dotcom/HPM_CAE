@@ -1,5 +1,13 @@
 # 版本记录
 
+## 未发布 — 2026-06-21
+
+- 新增平台成熟度与发文准备度主链路：`src/hpm_platform/readiness.py` 汇总 V&V、三维 Workbench、数据导入、插件市场、Paper Factory 和工程复现证据。
+- 新增配置文件 `configs/platform_readiness.yaml`，统一管理成熟度权重、验收门槛和安全边界，避免硬编码评分口径。
+- 新增 `/api/platform/readiness` 和 UI“平台成熟度”页面，直接展示使用准备度、发文准备度、主链路接通状态、八层成熟度和关键阻断项。
+- 新增根目录项目管理文件 `VISION.md`、`ROADMAP.md`、`ARCHITECTURE.md`、`PROJECT_AUDIT.md`、`STATUS.md`。
+- 新增 `tests/test_platform_readiness.py` 回归测试，覆盖配置、API、报告产物、前端入口和安全边界。
+
 ## V2.0A — 2026-06-21
 
 - 将项目顶层定位提升为 HPM-DT（High-Power Microwave Digital Twin）长期 CAE 平台，明确 V2.0A 只是可信度层阶段里程碑。

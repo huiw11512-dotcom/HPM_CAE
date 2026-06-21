@@ -95,6 +95,13 @@ def create_app(
     async def north_star() -> dict[str, Any]:
         return service.north_star_payload()
 
+    @app.get("/api/platform/readiness")
+    async def platform_readiness() -> dict[str, Any]:
+        try:
+            return service.platform_readiness()
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"生成平台成熟度与发文准备度报告失败：{exc}") from exc
+
     @app.get("/api/plugins/catalog")
     async def plugin_catalog() -> dict[str, Any]:
         return service.plugins.catalog()

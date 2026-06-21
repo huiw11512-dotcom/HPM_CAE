@@ -25,6 +25,8 @@ function 画图(id, 图形) {
 }
 function 状态颜色(状态) {
   if (["通过","提示"].includes(状态)) return 状态 === "提示" ? "secondary" : "success";
+  if (["可验收","已接通"].includes(状态)) return "success";
+  if (["可演示","预览可用"].includes(状态)) return "warning";
   if (["关注","谨慎"].includes(状态)) return "warning";
   return "danger";
 }
@@ -288,6 +290,69 @@ async function 载入论文工厂状态() {
     $("论文工厂状态").innerHTML = `<div class="alert alert-danger m-3">${转义文本(错误.message)}</div>`;
   }
 }
+function 渲染平台成熟度(数据) {
+  if (!$("平台成熟度状态")) return;
+  $("平台成熟度状态").className = 数据["使用准备度/%"] >= 70 ? "alert alert-success" : "alert alert-warning";
+  $("平台成熟度状态").textContent = `${数据.结论} 使用准备度 ${格式化(数据["使用准备度/%"])}%，发文准备度 ${格式化(数据["发文准备度/%"])}%。`;
+  const 卡片 = [
+    {标签: "使用准备度", 数值: `${格式化(数据["使用准备度/%"])}%`, 状态: 数据["使用准备度/%"] >= 85 ? "可验收" : "可演示"},
+    {标签: "发文准备度", 数值: `${格式化(数据["发文准备度/%"])}%`, 状态: 数据["发文准备度/%"] >= 70 ? "可演示" : "预览可用"},
+    {标签: "平台成熟度", 数值: `${格式化(数据["平台成熟度/%"])}%`, 状态: 数据["平台成熟度/%"] >= 70 ? "可演示" : "预览可用"},
+    {标签: "阻断项", 数值: (数据.关键阻断项 || []).length, 状态: (数据.关键阻断项 || []).some(x => x.优先级 === "P0") ? "待补齐" : "关注"}
+  ];
+  $("平台成熟度卡片").innerHTML = 卡片.map(项 => `
+    <div class="col-12 col-sm-6 col-xl-3"><div class="metric-card h-100 p-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="text-muted">${项.标签}</div><span class="badge bg-${状态颜色(项.状态)}">${项.状态}</span>
+      </div>
+      <div class="value mt-2">${项.数值}</div>
+    </div></div>`).join("");
+  渲染表格($("平台成熟度维度"), (数据.维度 || []).map(项 => ({
+    维度: 项.维度,
+    得分: 项.得分,
+    状态: 项.状态,
+    证据: 项.证据摘要,
+    阻断项: (项.阻断项 || []).join("；") || "无"
+  })));
+  渲染表格($("平台八层成熟度"), (数据.八层成熟度 || []).map(项 => ({
+    层级: 项.层级,
+    得分: 项.得分,
+    状态: 项.状态,
+    下一步: 项.下一步
+  })));
+  渲染表格($("平台成熟度主链路"), (数据.主链路 || []).map(项 => ({
+    步骤: 项.步骤,
+    状态: 项.状态,
+    通过: 项.通过,
+    证据: 项.证据
+  })));
+  const 阻断项 = 数据.关键阻断项 || [];
+  渲染表格($("平台成熟度阻断项"), 阻断项.length ? 阻断项 : [{优先级: "无", 维度: "全部", 阻断项: "当前无P0/P1阻断项", 证据: "平台成熟度报告"}]);
+  $("平台成熟度输出").textContent = [
+    `报告JSON: ${数据.产物?.json || "未生成"}`,
+    `维度CSV: ${数据.产物?.csv || "未生成"}`,
+    `配置: ${数据.配置 || "configs/platform_readiness.yaml"}`,
+    "",
+    "下一步建议:",
+    ...(数据.下一步建议 || []).map((x, i) => `${i + 1}. ${x}`),
+    "",
+    `安全边界: ${数据.安全边界?.说明 || ""}`,
+    `不输出项: ${(数据.安全边界?.不输出项 || []).join("、")}`
+  ].join("\n");
+}
+async function 载入平台成熟度() {
+  if (!$("平台成熟度状态")) return;
+  忙碌(true, "正在生成平台成熟度与发文准备度报告…");
+  try {
+    渲染平台成熟度(await 请求("/api/platform/readiness"));
+  } catch (错误) {
+    $("平台成熟度状态").className = "alert alert-danger";
+    $("平台成熟度状态").textContent = 错误.message;
+    提示(错误.message);
+  } finally {
+    忙碌(false);
+  }
+}
 async function 生成论文包() {
   忙碌(true, "正在生成 V2.0D 论文草稿包…");
   try {
@@ -425,6 +490,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (button) 解析数据样例(button.dataset.sampleId);
   });
   $("插件刷新").addEventListener("click", 载入插件市场);
+  $("平台成熟度刷新").addEventListener("click", 载入平台成熟度);
   $("插件目录").addEventListener("click", event => {
     const toggle = event.target.closest(".插件启停");
     if (toggle) {
@@ -439,4 +505,5 @@ window.addEventListener("DOMContentLoaded", () => {
   载入插件市场();
   载入数据导入();
   载入论文工厂状态();
+  载入平台成熟度();
 });

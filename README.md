@@ -50,7 +50,15 @@ http://127.0.0.1:7860
 - 新增 FastAPI + Bootstrap 5 “可信度验证中心”，包含总览卡片、交互图、同步运行按钮和下载端点；
 - 生成中文 HTML 报告、JSON/CSV/LaTeX 表格、论文图包、中文技术说明、论文提纲和已执行 Notebook；
 - 生成三张中文 SVG/PNG 示意图：可信度验证体系总架构、解析解对比机理、传播后端退化验证；
-- 当前快速验收：6/6 V&V 用例通过，可信度评分 91.58/A，全量 pytest 134 项通过。
+- 当前快速验收：6/6 V&V 用例通过，可信度评分 91.58/A，全量 pytest 138 项通过。
+
+## 平台成熟度与发文准备度
+
+- 新增 `configs/platform_readiness.yaml`，统一管理使用准备度、发文准备度、平台成熟度的权重、门槛和安全边界；
+- 新增 `src/hpm_platform/readiness.py`，汇总 V&V、三维 Workbench、真实数据接入、插件市场、Paper Factory 和工程复现证据；
+- 新增 `/api/platform/readiness` 和“平台成熟度”页面，输出主链路接通状态、八层成熟度、关键阻断项和下一步建议；
+- 生成 `outputs_v20a_vv/platform_readiness/platform_readiness_report.json` 与 `platform_readiness_dimensions.csv`；
+- 该报告只评估软件链路、科研证据链和论文材料成熟度，不输出真实毁伤概率、真实作用距离或器件阈值。
 
 ## V2.0B 三维 CAE 编辑器原型
 
@@ -125,7 +133,14 @@ http://127.0.0.1:7860
 ```text
 docs/HPM_DT_NORTH_STAR.md                         HPM-DT 最高层目标
 docs/HPM_DT_ROADMAP.md                            V2.x/V3.0/V4.0 长期路线图
+VISION.md                                         根目录项目愿景
+ROADMAP.md                                        根目录阶段路线图
+ARCHITECTURE.md                                   八层架构与主控链路
+PROJECT_AUDIT.md                                  工程规则与风险审计
+STATUS.md                                         当前版本状态、技术债务和架构风险
 AGENTS.md                                         Codex/开发者协作最高目标
+configs/platform_readiness.yaml                   平台成熟度配置
+src/hpm_platform/readiness.py                     平台成熟度与发文准备度评估
 run_vv_v20a.py                                    V2.0A 命令行可信度验证
 run_ui_v20a.py                                    V2.0A 可信度验证中心
 run_ui_v14.py                                      V1.4 中文工作台

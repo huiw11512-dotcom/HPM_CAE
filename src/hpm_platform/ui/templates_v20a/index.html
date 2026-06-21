@@ -33,6 +33,7 @@
         <ul class="nav flex-column" id="主导航">
           <li class="nav-item"><a class="nav-link active" href="#" data-page="验证总览"><i class="bi bi-speedometer2"></i> 验证总览</a></li>
           <li class="nav-item"><a class="nav-link" href="#" data-page="平台愿景"><i class="bi bi-diagram-3"></i> 平台愿景</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="平台成熟度" data-testid="nav-platform-readiness"><i class="bi bi-clipboard2-check"></i> 平台成熟度</a></li>
           <li class="nav-item"><a class="nav-link" href="#" data-page="三维CAE编辑器" data-testid="nav-workbench3d"><i class="bi bi-box"></i> 三维CAE编辑器</a></li>
           <li class="nav-item"><a class="nav-link" href="#" data-page="插件市场" data-testid="nav-plugin-marketplace"><i class="bi bi-puzzle"></i> 插件市场</a></li>
           <li class="nav-item"><a class="nav-link" href="#" data-page="数据导入" data-testid="nav-data-import"><i class="bi bi-database-down"></i> 数据导入</a></li>
@@ -123,6 +124,49 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="页面 d-none" data-page-section="平台成熟度">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <div><h1 class="h2 mb-1">平台成熟度与发文准备度</h1><p class="text-muted mb-0">汇总 V&V、三维 Workbench、真实数据接入、插件、论文工厂和工程复现证据</p></div>
+          <div class="btn-toolbar gap-2">
+            <button class="btn btn-outline-primary" id="平台成熟度刷新" data-testid="platform-readiness-refresh"><i class="bi bi-arrow-clockwise"></i> 刷新评估</button>
+          </div>
+        </div>
+        <div id="平台成熟度状态" class="alert alert-info" data-testid="platform-readiness-status">正在生成平台成熟度报告。</div>
+        <div class="row g-3 mb-3" id="平台成熟度卡片" data-testid="platform-readiness-cards"></div>
+        <div class="row g-3">
+          <div class="col-12 col-xl-6">
+            <div class="chart-panel h-100">
+              <div class="panel-title">成熟度维度</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="平台成熟度维度" data-testid="platform-readiness-dimensions"></table></div>
+            </div>
+          </div>
+          <div class="col-12 col-xl-6">
+            <div class="chart-panel h-100">
+              <div class="panel-title">八层架构成熟度</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="平台八层成熟度" data-testid="platform-readiness-layers"></table></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-panel">
+              <div class="panel-title">主链路接通状态</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="平台成熟度主链路" data-testid="platform-readiness-workflow"></table></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-panel">
+              <div class="panel-title">关键阻断项</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="平台成熟度阻断项" data-testid="platform-readiness-blockers"></table></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-panel">
+              <div class="panel-title">报告产物与下一步</div>
+              <pre id="平台成熟度输出" class="输出路径" data-testid="platform-readiness-output">尚未生成平台成熟度报告。</pre>
             </div>
           </div>
         </div>

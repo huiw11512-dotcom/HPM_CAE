@@ -15,6 +15,7 @@ from hpm_platform.data_import import (
 from hpm_platform.north_star import platform_north_star_payload
 from hpm_platform.plugins import PluginMarketplaceService
 from hpm_platform.publication import PaperFactoryService
+from hpm_platform.readiness import build_platform_readiness_report, load_readiness_config
 from hpm_platform.ui.workbench3d import Workbench3DService
 from hpm_platform.validation.vv_runner import load_last_vv_result, run_vv
 
@@ -99,6 +100,49 @@ class V20AValidationService:
             self.data_import_model_comparison()
             self.data_import_vv_audit()
             return self.workbench3d.imported_calibration_bridge()
+
+    def platform_readiness(self) -> dict[str, Any]:
+        """Generate a North Star platform maturity and publication-readiness report."""
+
+        with self._lock:
+            vv_payload = self.overview()
+            bridge = self.data_import_calibration_bridge()
+            comparison = self.data_import_model_comparison()
+            external_audit = self.data_import_vv_audit()
+            imported_bridge = self.ensure_workbench_imported_calibration_bridge()
+            scene = self.workbench3d.scene()
+            assets = self.workbench3d.list_assets()
+            if not any(item.get("类型") == "求解结果" for item in assets.get("资产", ()) if isinstance(item, dict)):
+                self.workbench3d.submit_solve_job("平台成熟度基线求解")
+                assets = self.workbench3d.list_assets()
+            paper_status = self.paper_factory.status()
+            if not paper_status.get("通过"):
+                paper_status = self.paper_factory.generate()
+            data_catalog = self.data_import.catalog()
+            readiness_config = load_readiness_config()
+            return build_platform_readiness_report(
+                output_dir=self.output_dir,
+                north_star=self.north_star_payload(),
+                vv=vv_payload,
+                workbench={
+                    "scene": scene,
+                    "assets": assets,
+                    "imported_calibration": imported_bridge,
+                },
+                data_import={
+                    "catalog": data_catalog,
+                    "readiness": self.data_import.calibration_readiness(),
+                    "bridge": bridge,
+                    "model_comparison": comparison,
+                    "vv_audit": external_audit,
+                },
+                plugins={
+                    "catalog": self.plugins.catalog(),
+                    "acceptance": self.plugins.acceptance_summary(),
+                },
+                paper_factory=paper_status,
+                readiness_config=readiness_config,
+            )
 
     def _ui_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
         summary = payload["summary"]

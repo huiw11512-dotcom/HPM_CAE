@@ -15,10 +15,29 @@
   ],
   "语言": "Python",
   "Python要求": ">=3.10",
-  "自动测试": "134 项全部通过",
+  "自动测试": "138 项全部通过",
   "主入口": "run_ui_v20a.py",
   "主配置": "configs/cae_project_v14.yaml",
+  "成熟度配置": "configs/platform_readiness.yaml",
   "主报告": "outputs_v20a_vv/v20A_可信度验证报告.html",
+  "平台成熟度评估": "src/hpm_platform/readiness.py",
+  "平台成熟度技术说明": "docs/PLATFORM_READINESS.md",
+  "平台管理API": [
+    "/api/platform/north-star",
+    "/api/platform/readiness"
+  ],
+  "平台成熟度报告": [
+    "outputs_v20a_vv/platform_readiness/platform_readiness_report.json",
+    "outputs_v20a_vv/platform_readiness/platform_readiness_dimensions.csv"
+  ],
+  "项目管理文件": [
+    "VISION.md",
+    "ROADMAP.md",
+    "ARCHITECTURE.md",
+    "CHANGELOG.md",
+    "PROJECT_AUDIT.md",
+    "STATUS.md"
+  ],
   "V2.0B三维工作台": "src/hpm_platform/ui/workbench3d.py",
   "V2.0B前端入口": "src/hpm_platform/ui/static_v20a/js/workbench3d.js",
   "V2.0B技术说明": "docs/CAE_WORKBENCH_V20B.md",
