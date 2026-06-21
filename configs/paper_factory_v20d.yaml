@@ -1,0 +1,73 @@
+version: V2.0D-paper-factory-v1
+default_title: HPM-DT：面向高功率微波数字孪生 CAE 平台的可信度验证与论文自动生产线
+
+citation_style: IEEE
+latex:
+  preferred_compilers:
+    - xelatex
+    - latexmk
+    - pdflatex
+  compile_timeout_s: 25
+  require_compiler_for_preview: false
+  require_bibliography: true
+
+statistics:
+  min_vv_cases: 6
+  min_figures: 3
+  min_tables: 3
+  require_uncertainty: true
+  require_sensitivity: true
+
+references:
+  - key: hpm_dt_platform
+    type: misc
+    author: HPM-DT Team
+    title: HPM-DT High-Power Microwave Digital Twin CAE Platform
+    year: "2026"
+    howpublished: Local reproducible software bundle
+    note: Normalized research CAE platform; not a full-wave solver or damage predictor.
+  - key: hpm_dt_vv_report
+    type: misc
+    author: HPM-DT Team
+    title: V2.0A Verification and Validation Report
+    year: "2026"
+    howpublished: outputs_v20a_vv/v20A_可信度验证报告.html
+    note: Machine-generated V&V evidence package.
+  - key: hpm_dt_readiness
+    type: misc
+    author: HPM-DT Team
+    title: Platform Readiness and Publication-Readiness Audit
+    year: "2026"
+    howpublished: outputs_v20a_vv/platform_readiness/platform_readiness_report.json
+    note: Software and publication maturity audit.
+
+reproduction_registry:
+  - id: REP-PF-001
+    type: platform_evidence
+    topic: 可信度验证体系
+    reference_key: hpm_dt_vv_report
+    evidence: outputs_v20a_vv/v20A_验证结果.json
+    status: automated
+    blocker: 论文定稿前仍需绑定外部文献 DOI 或正式复现实验编号。
+  - id: REP-PF-002
+    type: platform_evidence
+    topic: 平台成熟度与发文准备度
+    reference_key: hpm_dt_readiness
+    evidence: outputs_v20a_vv/platform_readiness/platform_readiness_report.json
+    status: automated
+    blocker: 真实外部数据源链和相位参考仍未进入正式评分。
+  - id: REP-PF-003
+    type: software_artifact
+    topic: HPM-DT 平台软件包
+    reference_key: hpm_dt_platform
+    evidence: PROJECT_MANIFEST.json
+    status: automated
+    blocker: 软著/课题归档前需冻结版本号和发布包校验和。
+
+safety_boundary:
+  description: Paper Factory 只组织已经验证的归一化科研结果，不生成真实作用距离、器件阈值或真实毁伤概率。
+  no_output_items:
+    - 真实作用距离
+    - 器件阈值
+    - 真实毁伤概率
+    - 作战效能结论

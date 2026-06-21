@@ -18,6 +18,11 @@ def test_platform_readiness_config_lives_under_configs():
     assert "use_readiness" in config["summary_weights"]
     assert config["caps"]["publication_readiness_if_p0"] == 68
     assert "真实作用距离" in config["safety_boundary"]["no_output_items"]
+    paper_gates = config["dimension_weights"]["论文生产"]["gates"]
+    assert "引用库存在" in paper_gates
+    assert "文献复现注册表存在" in paper_gates
+    assert "统计审计通过" in paper_gates
+    assert "LaTeX编译审计通过" in paper_gates
 
 
 def test_platform_readiness_api_generates_report_artifacts_and_blockers(tmp_path):
@@ -74,6 +79,7 @@ def test_platform_readiness_frontend_and_manifest_register_entrypoints():
     assert "渲染平台成熟度" in js
     assert "platform_readiness.yaml" in manifest
     assert "external_data_evidence.yaml" in manifest
+    assert "paper_factory_v20d.yaml" in manifest
 
 
 def test_required_project_management_files_exist_and_state_safety_scope():

@@ -74,7 +74,7 @@ def build_platform_readiness_report(
     platform_maturity = _weighted_dimension_score(dimensions, config, "platform_maturity")
     layer_maturity = _layer_maturity(north_star, dimensions, config)
     workflow = _workflow_status(vv, workbench, data_import, paper_factory)
-    blockers = _blockers(dimensions, data_import)
+    blockers = _blockers(dimensions, data_import, paper_factory)
     capped_scores = _apply_score_caps(
         {
             "使用准备度/%": use_readiness,
@@ -233,18 +233,24 @@ def _paper_dimension(paper: Mapping[str, Any], config: Mapping[str, Any]) -> dic
     artifacts = _mapping(paper.get("产物"))
     artifact_paths = [Path(str(value)) for value in artifacts.values() if value]
     existing = sum(1 for path in artifact_paths if path.exists())
+    statistics_audit = _mapping(paper.get("统计审计"))
+    latex_audit = _mapping(paper.get("LaTeX编译审计"))
     checks = [
         _check("Paper Factory已生成", bool(paper.get("通过")), paper.get("状态", "未知")),
         _check("核心论文产物存在", existing >= _threshold(config, "min_paper_artifacts", 5), f"{existing}/{len(artifact_paths)} 个产物存在"),
         _check("图表数量达标", int(_number(paper.get("图表数量"))) >= _threshold(config, "min_paper_figures", 3), f"{paper.get('图表数量', 0)} 张图"),
         _check("表格数量达标", int(_number(paper.get("表格数量"))) >= _threshold(config, "min_paper_tables", 3), f"{paper.get('表格数量', 0)} 张表"),
+        _check("引用库存在", Path(str(artifacts.get("引用库", ""))).exists(), artifacts.get("引用库", "未生成")),
+        _check("文献复现注册表存在", Path(str(artifacts.get("文献复现注册表", ""))).exists(), artifacts.get("文献复现注册表", "未生成")),
+        _check("统计审计通过", bool(statistics_audit.get("统计审计通过")), statistics_audit.get("统计显著性状态", "未生成")),
+        _check("LaTeX编译审计通过", bool(latex_audit.get("结构审计通过")), latex_audit.get("说明", "未生成")),
         _check("论文安全边界写入", bool(paper.get("安全边界")), "草稿包保留模型边界"),
     ]
     return _dimension(
         "论文生产",
         _weighted_checks(checks, _check_weights(config, "论文生产", checks)),
         checks,
-        "Markdown 草稿、IEEE LaTeX 骨架、图表清单、补充材料和可复现论文包。",
+        "Markdown 草稿、IEEE LaTeX 骨架、BibTeX 引用库、复现注册表、统计审计、LaTeX 审计、图表清单、补充材料和可复现论文包。",
         f"状态 {paper.get('状态', '未知')}。",
         config,
     )
@@ -315,7 +321,7 @@ def _workflow_status(
         ("接入真实数据", bool(bridge.get("通过")), "Measurement Campaign 可桥接为 CalibrationSamples"),
         ("正式数据纳入评分", bool(audit.get("可纳入正式可信度评分")), "当前仍待真实源链/相位参考"),
         ("自动生成图表", int(_number(paper.get("图表数量"))) >= 3, "Paper Factory 图表清单可生成"),
-        ("自动生成论文", bool(paper.get("通过")), "Markdown/LaTeX/补充材料/ZIP 可生成"),
+        ("自动生成论文", bool(paper.get("通过")), "Markdown/LaTeX/BibTeX/复现注册/统计审计/ZIP 可生成"),
     ]
     return [
         {
@@ -363,7 +369,7 @@ def _layer_maturity(north_star: Mapping[str, Any], dimensions: list[dict[str, An
     return rows
 
 
-def _blockers(dimensions: list[dict[str, Any]], data_import: Mapping[str, Any]) -> list[dict[str, Any]]:
+def _blockers(dimensions: list[dict[str, Any]], data_import: Mapping[str, Any], paper_factory: Mapping[str, Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for dimension in dimensions:
         for check in dimension["检查项"]:
@@ -386,21 +392,28 @@ def _blockers(dimensions: list[dict[str, Any]], data_import: Mapping[str, Any]) 
                 "证据": "外部数据 V&V 审计",
             }
         )
-    rows.extend(
-        [
+    paper_artifacts = _mapping(_mapping(paper_factory).get("产物"))
+    missing_paper_items = [
+        label
+        for label in ("引用库", "文献复现注册表", "统计审计JSON", "LaTeX编译审计")
+        if not Path(str(paper_artifacts.get(label, ""))).exists()
+    ]
+    if missing_paper_items:
+        rows.append(
             {
                 "优先级": "P1",
                 "维度": "论文生产",
-                "阻断项": "缺少文献复现注册表、引用库和 LaTeX 编译验收",
-                "证据": "Paper Factory 仍为 preview",
-            },
-            {
-                "优先级": "P1",
-                "维度": "三维CAE工作台",
-                "阻断项": "完整尺寸/旋转 Gizmo、多用户调度器和正式工程数据库仍未完成",
-                "证据": "Workbench 文档门槛",
-            },
-        ]
+                "阻断项": "缺少 " + "、".join(missing_paper_items),
+                "证据": "Paper Factory 产物审计",
+            }
+        )
+    rows.append(
+        {
+            "优先级": "P1",
+            "维度": "三维CAE工作台",
+            "阻断项": "完整尺寸/旋转 Gizmo、多用户调度器和正式工程数据库仍未完成",
+            "证据": "Workbench 文档门槛",
+        }
     )
     dedup: dict[tuple[str, str, str], dict[str, Any]] = {}
     for row in rows:
@@ -412,7 +425,7 @@ def _next_actions(blockers: list[dict[str, Any]], use_readiness: float, publicat
     cfg = _mapping(config or {})
     actions = [str(item) for item in cfg.get("next_actions", ())] or [
         "优先把 V3.0 Measurement Campaign 的真实源链、相位参考、仪器校准证书和授权数据血缘接入外部数据 V&V。",
-        "把当前 Paper Factory 草稿扩展为文献复现注册表、引用库、统计显著性表和 LaTeX 编译验收。",
+        "把 Paper Factory 的外部 DOI、正式复现实验编号、真实授权数据证据链和多模板定稿补齐。",
         "继续补齐三维 Workbench 的尺寸/旋转 Gizmo、正式工程数据库和任务调度器。",
     ]
     if use_readiness >= 70:
