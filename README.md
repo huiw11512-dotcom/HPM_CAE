@@ -71,9 +71,9 @@ http://127.0.0.1:7860
 ## V2.0C 插件市场预览
 
 - 新增 `src/hpm_platform/plugins/registry.py`，支持本地 JSON manifest、语义版本校验、参数 Schema、依赖声明和安全边界声明；
-- 新增 `plugins/builtin/` 三类内置插件：传播后端、感知基准、V&V 报告模板；
+- 新增 `plugins/builtin/` 四类内置插件：传播后端、感知基准、数据导入证据链、V&V 报告模板；
 - 新增 `/api/plugins/catalog`、`/api/plugins/acceptance`、`/api/plugins/{plugin_id}/enable`、`/api/plugins/{plugin_id}/run`；
-- 插件运行限制在平台白名单 `builtin_hook` 内，不从 manifest 导入任意 Python 模块；
+- 插件运行限制在平台白名单 `builtin_hook` 内，不从 manifest 导入任意 Python 模块；数据导入插件复用 V3.0 证据链审计，不输出真实源功率、现实作用距离、器件阈值或毁伤概率；
 - V2.0A 工作台新增“插件市场”页面，显示目录、启停状态、参数 Schema 验收和运行审计结果。
 
 ## V2.0D Paper Factory 预览

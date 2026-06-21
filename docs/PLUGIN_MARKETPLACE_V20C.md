@@ -23,6 +23,7 @@ POST /api/plugins/{plugin_id}/run
 |---|---|---|---|
 | `hpm.propagation.hybrid_scene` | `propagation_backend` | Physics Layer | `field_backend_summary` |
 | `hpm.perception.music_esprit_benchmark` | `perception_algorithm` | Perception Layer | `perception_benchmark_summary` |
+| `hpm.data_import.evidence_chain` | `data_import_adapter` | CAE Layer | `data_import_summary` |
 | `hpm.publication.vv_report_pack` | `report_template` | Publication Layer | `report_template_summary` |
 
 ## Manifest 字段
@@ -58,7 +59,8 @@ POST /api/plugins/{plugin_id}/run
 
 ## 下一步
 
-- 增加保护算法、控场算法和数据导入插件类型；
+- 增加保护算法和控场算法插件类型；
+- 把 V3.0 数据导入插件从证据链摘要扩展到可配置导入适配器验收；
 - 把插件运行绑定到三维工作台求解链路；
 - 为每个插件建立 V&V 夹具和回归测试；
 - 设计外部插件签名、隔离执行和版本兼容策略；

@@ -192,6 +192,7 @@
   "V2.0C插件目录": "plugins/builtin",
   "V2.0C技术说明": "docs/PLUGIN_MARKETPLACE_V20C.md",
   "V2.0C内置插件": [
+    "plugins/builtin/data_import_evidence_chain.json",
     "plugins/builtin/field_backend_hybrid_scene.json",
     "plugins/builtin/perception_music_esprit.json",
     "plugins/builtin/report_template_vv_pack.json"

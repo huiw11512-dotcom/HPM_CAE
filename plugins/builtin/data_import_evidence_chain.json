@@ -1,0 +1,52 @@
+{
+  "id": "hpm.data_import.evidence_chain",
+  "name": "外部数据证据链适配器",
+  "version": "2.0.0",
+  "category": "data_import_adapter",
+  "layer": "CAE Layer",
+  "summary": "把 V3.0 数据导入目录、标定准备度和外部数据证据链审计作为插件市场能力注册。",
+  "provider": "HPM-DT 内置",
+  "entry_point": {
+    "kind": "builtin_hook",
+    "target": "data_import_summary"
+  },
+  "parameters_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "report_type": {
+        "type": "string",
+        "default": "evidence_chain",
+        "enum": ["catalog", "readiness", "evidence_chain", "full"],
+        "description": "要审计的数据导入报告类型。"
+      },
+      "evidence_config": {
+        "type": "string",
+        "default": "configs/external_data_evidence.yaml",
+        "description": "外部数据证据链配置文件路径。"
+      }
+    }
+  },
+  "dependencies": [
+    "hpm_platform.data_import.importers",
+    "hpm_platform.data_import.evidence_chain"
+  ],
+  "enabled_by_default": true,
+  "safety": {
+    "execution": "builtin_hook_only",
+    "scope": "外部数据格式、单位、坐标、血缘、证据链和相位参考审计",
+    "blocked_outputs": ["真实源功率", "真实作用距离", "器件阈值", "毁伤概率"]
+  },
+  "acceptance_tests": [
+    "manifest 可解析",
+    "参数 Schema 可暴露",
+    "数据导入目录可审计",
+    "证据链报告可生成"
+  ],
+  "sample_project": "configs/external_data_evidence.yaml",
+  "tags": ["数据导入", "证据链", "V2.0C", "V3.0"],
+  "settings": {
+    "report_type": "evidence_chain",
+    "evidence_config": "configs/external_data_evidence.yaml"
+  }
+}

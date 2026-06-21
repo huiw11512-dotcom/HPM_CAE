@@ -16,6 +16,7 @@ import re
 import threading
 from typing import Any, Callable, Mapping
 
+from hpm_platform.data_import import DataImportService, generate_evidence_chain_report
 from hpm_platform.physics.field_backends import available_field_backends, get_field_backend
 
 
@@ -27,11 +28,13 @@ PLUGIN_CATEGORIES = {
     "perception_algorithm",
     "protection_algorithm",
     "field_control_algorithm",
+    "data_import_adapter",
     "report_template",
 }
 ENTRY_POINT_KINDS = {"builtin_hook"}
 BUILTIN_HOOKS = {
     "field_backend_summary",
+    "data_import_summary",
     "perception_benchmark_summary",
     "report_template_summary",
 }
@@ -190,6 +193,7 @@ class PluginMarketplaceService:
         }
         self._hooks: dict[str, Callable[[PluginManifest, Mapping[str, Any]], dict[str, Any]]] = {
             "field_backend_summary": self._run_field_backend_summary,
+            "data_import_summary": self._run_data_import_summary,
             "perception_benchmark_summary": self._run_perception_benchmark_summary,
             "report_template_summary": self._run_report_template_summary,
         }
@@ -248,10 +252,11 @@ class PluginMarketplaceService:
             categories = self.registry.categories()
             enabled_count = sum(1 for plugin in plugins if self._enabled.get(plugin.plugin_id, False))
             manifests_valid = all(plugin.entry_point.target in BUILTIN_HOOKS for plugin in plugins)
+            data_import_registered = any(plugin.category == "data_import_adapter" for plugin in plugins)
             return {
                 "阶段": "V2.0C",
                 "名称": "插件系统与 Plugin Marketplace",
-                "通过": manifests_valid and len(categories) >= 3 and enabled_count >= 3,
+                "通过": manifests_valid and len(categories) >= 4 and enabled_count >= 4 and data_import_registered,
                 "插件总数": len(plugins),
                 "启用插件数": enabled_count,
                 "类别总数": len(categories),
@@ -259,7 +264,8 @@ class PluginMarketplaceService:
                 "白名单钩子": sorted(BUILTIN_HOOKS),
                 "验收清单": [
                     {"项目": "manifest 解析与版本校验", "通过": manifests_valid},
-                    {"项目": "至少三类插件可注册", "通过": len(categories) >= 3},
+                    {"项目": "至少四类插件可注册", "通过": len(categories) >= 4},
+                    {"项目": "数据导入插件可注册", "通过": data_import_registered},
                     {"项目": "插件启用/禁用状态可控", "通过": True},
                     {"项目": "参数 Schema 可由 API 暴露", "通过": all(bool(plugin.parameters_schema) for plugin in plugins)},
                     {"项目": "插件运行限制在白名单钩子内", "通过": manifests_valid},
@@ -302,6 +308,37 @@ class PluginMarketplaceService:
             "后端": {"后端标识": backend.backend_id, "后端名称": backend.display_name, "说明": backend.description},
             "可用后端": available,
             "下一步接口": "后续可把该插件绑定到三维工作台求解按钮和插件级 V&V。",
+        }
+
+    def _run_data_import_summary(self, plugin: PluginManifest, parameters: Mapping[str, Any]) -> dict[str, Any]:
+        report_type = str(parameters.get("report_type") or plugin.settings.get("report_type") or "evidence_chain")
+        config_path = str(parameters.get("evidence_config") or plugin.settings.get("evidence_config") or "")
+        data_import = DataImportService(self.output_dir)
+        catalog = data_import.catalog()
+        readiness = data_import.calibration_readiness()
+        evidence = None
+        if report_type in {"evidence_chain", "full"}:
+            evidence = generate_evidence_chain_report(
+                self.output_dir,
+                config_path=config_path or None,
+            )
+        return {
+            "执行摘要": "V3.0 数据导入插件已完成白名单运行审计。",
+            "报告类型": report_type,
+            "样例数": catalog.get("样例数", 0),
+            "支持格式": catalog.get("支持格式", []),
+            "标定准备度": readiness.get("总体得分"),
+            "标定准备通过": bool(readiness.get("通过")),
+            "证据链": {
+                "生成": evidence is not None,
+                "通过": bool(evidence and evidence.get("通过")),
+                "真实源链与相位参考已接入": bool(evidence and evidence.get("真实源链与相位参考已接入")),
+                "输出文件": evidence.get("输出文件") if evidence else None,
+            },
+            "输出边界": (
+                "仅审计格式、单位、坐标、数据血缘、证据链和相位参考元数据；"
+                "不输出真实源功率、现实作用距离、器件阈值或毁伤概率。"
+            ),
         }
 
     def _run_perception_benchmark_summary(self, plugin: PluginManifest, parameters: Mapping[str, Any]) -> dict[str, Any]:

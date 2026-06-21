@@ -6,6 +6,7 @@
 - 新增配置文件 `configs/platform_readiness.yaml`，统一管理成熟度权重、验收门槛和安全边界，避免硬编码评分口径。
 - 新增 `/api/platform/readiness` 和 UI“平台成熟度”页面，直接展示使用准备度、发文准备度、主链路接通状态、八层成熟度和关键阻断项。
 - 新增 `configs/external_data_evidence.yaml`、`src/hpm_platform/data_import/evidence_chain.py` 与 `/api/data-import/evidence-chain`，审计外部数据授权、源链、相位参考、校准证书、原始数据哈希和不确定度模型。
+- 新增 `hpm.data_import.evidence_chain` 内置数据导入插件，V2.0C 插件市场支持 `data_import_adapter` 类别和 `data_import_summary` 白名单钩子。
 - 新增根目录项目管理文件 `VISION.md`、`ROADMAP.md`、`ARCHITECTURE.md`、`PROJECT_AUDIT.md`、`STATUS.md`。
 - 新增 `tests/test_platform_readiness.py` 回归测试，覆盖配置、API、报告产物、前端入口和安全边界。
 

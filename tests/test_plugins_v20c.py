@@ -18,11 +18,12 @@ def test_v20c_registry_loads_builtin_plugin_manifests():
     categories = set(registry.categories())
 
     assert ids == {
+        "hpm.data_import.evidence_chain",
         "hpm.propagation.hybrid_scene",
         "hpm.perception.music_esprit_benchmark",
         "hpm.publication.vv_report_pack",
     }
-    assert {"propagation_backend", "perception_algorithm", "report_template"} <= categories
+    assert {"propagation_backend", "perception_algorithm", "data_import_adapter", "report_template"} <= categories
     for plugin in plugins:
         assert plugin.version == "2.0.0"
         assert plugin.entry_point.kind == "builtin_hook"
@@ -37,8 +38,9 @@ def test_v20c_marketplace_runs_allowlisted_plugins_and_enforces_enable_state(tmp
     acceptance = service.acceptance_summary()
 
     assert catalog["版本"] == "V2.0C-preview"
-    assert catalog["插件总数"] == 3
+    assert catalog["插件总数"] == 4
     assert acceptance["通过"] is True
+    assert any(item["项目"] == "数据导入插件可注册" and item["通过"] for item in acceptance["验收清单"])
 
     propagation = service.run_plugin("hpm.propagation.hybrid_scene")
     assert propagation["成功"] is True
@@ -50,6 +52,12 @@ def test_v20c_marketplace_runs_allowlisted_plugins_and_enforces_enable_state(tmp
     report = service.run_plugin("hpm.publication.vv_report_pack", {"format": "latex"})
     assert report["参数"]["format"] == "latex"
     assert report["结果"]["目标产物"].endswith("v20A_论文表格.tex")
+
+    data_import = service.run_plugin("hpm.data_import.evidence_chain", {"report_type": "evidence_chain"})
+    assert data_import["成功"] is True
+    assert data_import["结果"]["样例数"] == 7
+    assert data_import["结果"]["证据链"]["生成"] is True
+    assert data_import["结果"]["证据链"]["真实源链与相位参考已接入"] is False
 
     disabled = service.set_enabled("hpm.propagation.hybrid_scene", False)
     assert disabled["已启用"] is False
@@ -66,17 +74,23 @@ def test_v20c_api_exposes_plugin_marketplace(tmp_path):
             "/api/plugins/hpm.propagation.hybrid_scene/run",
             json={"parameters": {"backend_id": "free_space_green"}},
         )
+        data_import_run = client.post(
+            "/api/plugins/hpm.data_import.evidence_chain/run",
+            json={"parameters": {"report_type": "full"}},
+        )
         disabled = client.post("/api/plugins/hpm.propagation.hybrid_scene/enable", json={"enabled": False})
         rejected = client.post("/api/plugins/hpm.propagation.hybrid_scene/run", json={"parameters": {}})
 
     assert catalog.status_code == 200
-    assert catalog.json()["插件总数"] == 3
+    assert catalog.json()["插件总数"] == 4
     assert acceptance.status_code == 200
     assert acceptance.json()["通过"] is True
     assert detail.status_code == 200
     assert detail.json()["参数Schema"]["type"] == "object"
     assert run.status_code == 200
     assert run.json()["结果"]["后端"]["后端标识"] == "free_space_green"
+    assert data_import_run.status_code == 200
+    assert data_import_run.json()["结果"]["证据链"]["生成"] is True
     assert disabled.status_code == 200
     assert disabled.json()["已启用"] is False
     assert rejected.status_code == 400
