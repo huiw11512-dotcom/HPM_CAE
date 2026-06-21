@@ -11,6 +11,7 @@
 - 新增 Workbench 材料代理审计：`/api/workbench3d/materials/audit` 输出 `MAT-AUDIT-001`，并让平台主链路“设置材料”由可编辑提升为可审计、可入账。
 - 新增 `configs/external_data_evidence.yaml`、`src/hpm_platform/data_import/evidence_chain.py` 与 `/api/data-import/evidence-chain`，审计外部数据授权、源链、相位参考、校准证书、原始数据哈希和不确定度模型。
 - 新增 `/api/data-import/evidence-package` 与工作台“审计证据包”入口，支持本机 ZIP/目录证据包 manifest 解析、原始数据 SHA256 匹配和安全字段拦截，输出 `evidence_package_audit.json/csv`。
+- 新增 `/api/data-import/evidence-package/template` 与工作台“生成模板”入口，输出含每阵元功率 CSV、实测标定点 CSV、manifest 和填写说明的证据包模板。
 - 新增 `hpm.data_import.evidence_chain` 内置数据导入插件，V2.0C 插件市场支持 `data_import_adapter` 类别和 `data_import_summary` 白名单钩子。
 - 新增根目录项目管理文件 `VISION.md`、`ROADMAP.md`、`ARCHITECTURE.md`、`PROJECT_AUDIT.md`、`STATUS.md`。
 - 新增 `tests/test_platform_readiness.py` 回归测试，覆盖配置、API、报告产物、前端入口和安全边界。

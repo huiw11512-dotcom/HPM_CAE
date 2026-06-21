@@ -11,6 +11,7 @@ from hpm_platform.data_import import (
     DataImportService,
     generate_calibration_bridge_report,
     generate_evidence_chain_report,
+    generate_evidence_package_template,
     generate_external_data_vv_audit,
     generate_model_comparison_report,
     inspect_evidence_package,
@@ -92,6 +93,10 @@ class V20AValidationService:
     def data_import_evidence_package(self, path: str | Path) -> dict[str, Any]:
         with self._lock:
             return inspect_evidence_package(path, self.output_dir)
+
+    def data_import_evidence_package_template(self) -> dict[str, Any]:
+        with self._lock:
+            return generate_evidence_package_template(self.output_dir)
 
     def data_import_vv_audit(self) -> dict[str, Any]:
         with self._lock:

@@ -16,6 +16,7 @@ GET  /api/data-import/calibration-readiness
 GET  /api/data-import/calibration-bridge
 GET  /api/data-import/model-comparison
 GET  /api/data-import/evidence-chain
+GET  /api/data-import/evidence-package/template
 POST /api/data-import/evidence-package
 GET  /api/data-import/vv-audit
 GET  /api/data-import/samples/{sample_id}
@@ -93,6 +94,15 @@ Measurement Campaign 样例会把 `x_mm/y_mm/z_mm` 按 `reference_frequency_ghz`
 - manifest 必须通过授权、真实源链、相位参考、校准证书、不确定度模型和安全边界门槛；
 - 审计会输出 `evidence_package_audit.json/csv`，并标记“可作为正式证据配置候选”；
 - 审计不会直接改写可信度评分，正式纳入仍需要外部 V&V 残差、覆盖率和人工复核同时通过。
+
+当前版本同时新增 `GET /api/data-import/evidence-package/template`，生成可填写模板 ZIP：
+
+- `external_data_evidence.yaml`：授权、源链、相位参考、校准、不确定度和原始数据哈希 manifest；
+- `raw/element_powers_template.csv`：每阵元输入功率元数据模板；
+- `raw/calibration_points_template.csv`：实测标定点模板；
+- `README_证据包填写说明.md`：说明如何替换真实授权数据并重新计算 SHA256。
+
+模板默认不会通过正式门槛。用户需要替换为授权数据、重算哈希，并把 `absolute_calibration.status`、源链、相位参考、校准证书和不可变归档声明补齐后，才可能成为正式证据配置候选。
 
 证据包审计会扫描禁用字段，包括真实作用距离、器件阈值、真实毁伤概率和作战效能字段。该入口用于学术数据血缘和复现实验管理，不用于输出现实效应参数。
 

@@ -56,4 +56,4 @@ outputs_v20a_vv/platform_readiness/platform_readiness_dimensions.csv
 - 发文准备度：面向论文草稿、图表、统计、复现材料和数据证据链的成熟度。
 - 平台成熟度：面向 HPM-DT 八层长期架构的综合成熟度。
 
-当前 V3.0 外部数据如果缺真实源链、相位参考、校准证书和授权测量数据闭环，只能作为预评分附注，不能改写正式可信度评分。相关证据从 `configs/external_data_evidence.yaml` 读取，并输出 `evidence_chain_report.json/csv`。用户也可以通过 `/api/data-import/evidence-package` 提交本机 ZIP/目录证据包，生成 `evidence_package_audit.json/csv`；该入口只把证据包标记为正式配置候选，不会绕过 V&V 残差和人工复核门槛。
+当前 V3.0 外部数据如果缺真实源链、相位参考、校准证书和授权测量数据闭环，只能作为预评分附注，不能改写正式可信度评分。相关证据从 `configs/external_data_evidence.yaml` 读取，并输出 `evidence_chain_report.json/csv`。用户也可以通过 `/api/data-import/evidence-package/template` 生成含每阵元功率和实测标定点 CSV 的证据包模板，再通过 `/api/data-import/evidence-package` 提交本机 ZIP/目录证据包，生成 `evidence_package_audit.json/csv`；该入口只把证据包标记为正式配置候选，不会绕过 V&V 残差和人工复核门槛。

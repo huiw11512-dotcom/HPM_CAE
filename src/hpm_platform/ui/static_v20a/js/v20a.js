@@ -338,6 +338,17 @@ async function 审计数据证据包() {
     提示(错误.message);
   }
 }
+async function 生成数据证据包模板() {
+  try {
+    const 数据 = await 请求("/api/data-import/evidence-package/template");
+    $("数据导入路径").value = 数据.输出文件 || "";
+    $("数据导入结果").textContent = JSON.stringify(数据, null, 2);
+    提示("证据包模板已生成");
+  } catch (错误) {
+    $("数据导入结果").textContent = 错误.message;
+    提示(错误.message);
+  }
+}
 async function 载入论文工厂状态() {
   if (!$("论文工厂状态")) return;
   try {
@@ -638,6 +649,7 @@ window.addEventListener("DOMContentLoaded", () => {
   $("下载论文包").addEventListener("click", () => { window.location.href = "/download/paper-factory.zip"; });
   $("数据导入刷新").addEventListener("click", 载入数据导入);
   $("数据导入检查路径").addEventListener("click", 解析数据路径);
+  $("数据导入生成证据包模板").addEventListener("click", 生成数据证据包模板);
   $("数据导入审计证据包").addEventListener("click", 审计数据证据包);
   $("数据导入样例").addEventListener("click", event => {
     const button = event.target.closest(".数据样例解析");

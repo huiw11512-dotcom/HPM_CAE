@@ -11,6 +11,9 @@ evidence_package:
     - external_data_evidence.yml
     - external_data_evidence.json
     - EXTERNAL_DATA_EVIDENCE.yaml
+  template:
+    element_count: 64
+    calibration_point_count: 3
   min_files: 2
   max_files: 500
   max_bytes: 50000000

@@ -25,6 +25,7 @@ EVIDENCE_OUTPUT_NAME = "evidence_chain_report.json"
 EVIDENCE_CSV_NAME = "evidence_chain_checks.csv"
 EVIDENCE_PACKAGE_OUTPUT_NAME = "evidence_package_audit.json"
 EVIDENCE_PACKAGE_CSV_NAME = "evidence_package_checks.csv"
+EVIDENCE_PACKAGE_TEMPLATE_NAME = "evidence_package_template.zip"
 
 
 def load_evidence_chain_config(config_path: str | Path | None = None) -> dict[str, Any]:
@@ -94,6 +95,7 @@ def inspect_evidence_package(
     matched_hashes = sorted(item for item in declared_hashes if item in package_hashes)
     missing_hashes = sorted(item for item in declared_hashes if item not in package_hashes)
     forbidden_hits = _scan_forbidden_tokens(manifest, forbidden_tokens)
+    absolute_calibration_audit = _audit_absolute_calibration_manifest(manifest, package_hashes)
 
     checks = [
         _check("证据包路径存在", package.exists(), str(package.resolve()), "P0"),
@@ -120,6 +122,15 @@ def inspect_evidence_package(
             "P0",
         ),
     ]
+    if absolute_calibration_audit["存在"]:
+        checks.append(
+            _check(
+                "绝对标定元数据可复查",
+                bool(absolute_calibration_audit["通过"]),
+                f"阻断项={len(absolute_calibration_audit['阻断项'])}",
+                "P1",
+            )
+        )
     passed = all(item["通过"] for item in checks)
 
     output_root = Path(output_dir)
@@ -148,6 +159,7 @@ def inspect_evidence_package(
         "匹配原始数据哈希": matched_hashes,
         "缺失原始数据哈希": missing_hashes,
         "安全字段命中": forbidden_hits,
+        "绝对标定元数据审计": absolute_calibration_audit,
         "包内文件": package_files,
         "输出文件": str(report_path.resolve()),
         "CSV": str(csv_path.resolve()),
@@ -157,6 +169,65 @@ def inspect_evidence_package(
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     _write_checks_csv(csv_path, checks)
     return report
+
+
+def generate_evidence_package_template(
+    output_dir: str | Path = DEFAULT_OUTPUT,
+    *,
+    config_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Generate a fillable evidence package template for authorized datasets."""
+
+    config = load_evidence_chain_config(config_path)
+    rules = _mapping(config.get("evidence_package"))
+    template = _mapping(rules.get("template"))
+    element_count = int(_number(template.get("element_count"), 64))
+    calibration_point_count = int(_number(template.get("calibration_point_count"), 3))
+    if element_count <= 0:
+        raise ValueError("证据包模板 element_count 必须为正数")
+    if calibration_point_count <= 0:
+        raise ValueError("证据包模板 calibration_point_count 必须为正数")
+
+    output_root = Path(output_dir)
+    report_dir = output_root / "data_import_v30"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    package_path = report_dir / EVIDENCE_PACKAGE_TEMPLATE_NAME
+
+    element_powers_csv = _element_powers_template_csv(element_count)
+    calibration_points_csv = _calibration_points_template_csv(calibration_point_count)
+    element_hash = hashlib.sha256(element_powers_csv.encode("utf-8")).hexdigest()
+    calibration_hash = hashlib.sha256(calibration_points_csv.encode("utf-8")).hexdigest()
+    manifest = _evidence_template_manifest(
+        config,
+        element_count=element_count,
+        element_powers_hash=element_hash,
+        calibration_points_hash=calibration_hash,
+    )
+    manifest_text = yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False)
+    readme_text = _evidence_package_template_readme(element_count, calibration_point_count)
+
+    with zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("external_data_evidence.yaml", manifest_text)
+        archive.writestr("raw/element_powers_template.csv", element_powers_csv)
+        archive.writestr("raw/calibration_points_template.csv", calibration_points_csv)
+        archive.writestr("README_证据包填写说明.md", readme_text)
+
+    return {
+        "版本": "V3.0-evidence-package-template-v1",
+        "名称": "外部数据正式证据包模板",
+        "输出文件": str(package_path.resolve()),
+        "manifest": "external_data_evidence.yaml",
+        "阵元功率模板": "raw/element_powers_template.csv",
+        "实测标定点模板": "raw/calibration_points_template.csv",
+        "阵元数": element_count,
+        "标定点数": calibration_point_count,
+        "阵元功率模板SHA256": element_hash,
+        "实测标定点模板SHA256": calibration_hash,
+        "验收说明": "填写真实授权数据后必须重新计算 raw_data_hashes、element_powers_hash 和 calibration_points_hash，再提交 evidence-package 审计。",
+        "可直接纳入正式评分": False,
+        "安全边界": SAFETY_BOUNDARY,
+        "生成时间UTC": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 def build_evidence_chain_report(
@@ -403,6 +474,145 @@ def _declared_raw_hashes(manifest: Mapping[str, Any]) -> list[str]:
     if not isinstance(hashes, (list, tuple, set)):
         return []
     return [str(item).strip().lower() for item in hashes if str(item).strip()]
+
+
+def _audit_absolute_calibration_manifest(manifest: Mapping[str, Any], package_hashes: set[str]) -> dict[str, Any]:
+    evidence = _mapping(manifest.get("evidence"))
+    calibration = _mapping(evidence.get("absolute_calibration"))
+    if not calibration:
+        return {"存在": False, "通过": False, "验收清单": [], "阻断项": []}
+
+    status = str(calibration.get("status", "")).strip().lower()
+    element_hash = str(calibration.get("element_powers_hash", "")).strip().lower()
+    points_hash = str(calibration.get("calibration_points_hash", "")).strip().lower()
+    element_count = int(_number(calibration.get("element_count"), 0))
+    usage = str(calibration.get("usage", "")).strip().lower()
+    checks = [
+        _check("绝对标定状态已验证", status == "verified", f"status={status or '未声明'}", "P1"),
+        _check("阵元功率文件哈希匹配", bool(element_hash) and element_hash in package_hashes, f"element_powers_hash={element_hash or '未声明'}", "P1"),
+        _check("实测标定点文件哈希匹配", bool(points_hash) and points_hash in package_hashes, f"calibration_points_hash={points_hash or '未声明'}", "P1"),
+        _check("阵元数量已声明", element_count > 0, f"element_count={element_count}", "P1"),
+        _check(
+            "绝对量纲用途限定为元数据",
+            usage in {"metadata_only", "calibration_metadata"},
+            f"usage={usage or '未声明'}",
+            "P1",
+        ),
+    ]
+    return {
+        "存在": True,
+        "通过": all(item["通过"] for item in checks),
+        "状态": status or "未声明",
+        "阵元数": element_count,
+        "阵元功率文件": calibration.get("element_powers_file"),
+        "实测标定点文件": calibration.get("calibration_points_file"),
+        "验收清单": checks,
+        "阻断项": [item for item in checks if not item["通过"]],
+        "安全边界": "绝对标定段只审计阵元功率和实测标定点的数据血缘，不输出作用距离、器件阈值或毁伤概率。",
+    }
+
+
+def _element_powers_template_csv(element_count: int) -> str:
+    rows = ["element_id,row,col,power_w,phase_deg,enabled,notes"]
+    side = int(round(element_count ** 0.5))
+    for index in range(element_count):
+        row = index // side if side * side == element_count else index
+        col = index % side if side * side == element_count else 0
+        rows.append(f"E{index + 1:03d},{row},{col},0.0,0.0,true,replace_with_authorized_measurement")
+    return "\n".join(rows) + "\n"
+
+
+def _calibration_points_template_csv(count: int) -> str:
+    rows = [
+        "point_id,distance_m,x_lambda,y_lambda,z_lambda,normalized_model_amplitude,measured_field_v_per_m,uncertainty_percent,source_file,notes"
+    ]
+    for index in range(count):
+        rows.append(
+            f"LAB-{index + 1:03d},0.0,0.0,0.0,0.0,0.0,0.0,5.0,raw/near_field_measurement.csv,replace_with_authorized_measurement"
+        )
+    return "\n".join(rows) + "\n"
+
+
+def _evidence_template_manifest(
+    config: Mapping[str, Any],
+    *,
+    element_count: int,
+    element_powers_hash: str,
+    calibration_points_hash: str,
+) -> dict[str, Any]:
+    return {
+        "version": str(config.get("version", "V3.0-evidence-chain-v1")),
+        "dataset_id": "REPLACE-WITH-AUTHORIZED-DATASET-ID",
+        "thresholds": dict(_mapping(config.get("thresholds"))),
+        "evidence": {
+            "authorization": {
+                "approved_for_research": False,
+                "approval_id": "REPLACE-WITH-AUTHORIZATION-ID",
+                "owner": "REPLACE-WITH-DATA-OWNER",
+                "usage_scope": "algorithm validation and paper reproduction",
+            },
+            "source_chain": {
+                "status": "replace_with_verified",
+                "source_type": "measurement_campaign",
+                "instrument_chain_id": "REPLACE-WITH-INSTRUMENT-CHAIN-ID",
+                "source_chain_hash": "REPLACE-WITH-SHA256",
+                "traceability_note": "replace with authorized source-chain note",
+            },
+            "phase_reference": {
+                "status": "replace_with_verified",
+                "reference_type": "locked_measurement_reference",
+                "locked_reference": False,
+                "reference_uncertainty_deg": None,
+                "phase_reference_hash": "REPLACE-WITH-SHA256",
+            },
+            "calibration": {
+                "status": "replace_with_verified",
+                "certificate_id": "REPLACE-WITH-CALIBRATION-CERTIFICATE-ID",
+                "certificate_sha256": "REPLACE-WITH-SHA256",
+                "valid_for_dataset": False,
+            },
+            "uncertainty_model": {
+                "status": "replace_with_verified",
+                "amplitude_sigma_declared": False,
+                "phase_sigma_declared": False,
+                "coverage_statement": "replace with measurement uncertainty statement",
+            },
+            "raw_data_lineage": {
+                "raw_data_hashes": [element_powers_hash, calibration_points_hash],
+                "processing_script_hash": "REPLACE-WITH-SHA256",
+                "immutable_archive": False,
+            },
+            "absolute_calibration": {
+                "status": "template",
+                "usage": "metadata_only",
+                "element_count": element_count,
+                "power_unit": "W",
+                "element_powers_file": "raw/element_powers_template.csv",
+                "element_powers_hash": element_powers_hash,
+                "calibration_points_file": "raw/calibration_points_template.csv",
+                "calibration_points_hash": calibration_points_hash,
+            },
+        },
+        "safety_boundary": "This package audits provenance, per-element power metadata, calibration points and uncertainty only; it must not include real effect distance, device threshold, damage probability or operational effectiveness fields.",
+    }
+
+
+def _evidence_package_template_readme(element_count: int, calibration_point_count: int) -> str:
+    return f"""# HPM-DT 外部数据正式证据包模板
+
+本模板用于整理授权测量/仿真数据证据链。它不是正式数据本身，默认不会通过正式评分门槛。
+
+## 必填内容
+
+- `external_data_evidence.yaml`：填写研究授权、源链、相位参考、校准证书、不确定度模型和原始数据哈希。
+- `raw/element_powers_template.csv`：替换为 {element_count} 个阵元的输入功率元数据。
+- `raw/calibration_points_template.csv`：替换为至少 {calibration_point_count} 个实测标定点。
+- 重新计算所有原始数据文件的 SHA256，并写入 `raw_data_hashes`、`element_powers_hash` 和 `calibration_points_hash`。
+
+## 安全边界
+
+证据包只用于算法验证、论文复现和数字孪生数据血缘审计。不要填写真实作用距离、器件阈值、毁伤概率或作战效能字段；平台会在审计时拦截这些字段。
+"""
 
 
 def _scan_forbidden_tokens(value: Any, tokens: list[str], path: str = "$") -> list[str]:

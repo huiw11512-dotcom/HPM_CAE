@@ -131,7 +131,7 @@ PLATFORM_MILESTONE_STATUS = (
         "阶段": "V3.0",
         "名称": "真实数据接入",
         "状态": "预览接入中",
-        "验收证据": "已有 DataImportService、CST/HFSS 导出包识别、Measurement Campaign 测量批次识别、CSV/Touchstone/NPZ/HDF5 格式识别、单位/坐标列审计、工程元数据预览、仪器链/校准/不确定度审计、mm 到 lambda 坐标规范化预览、标定准备度报告、CalibrationSamples 标定桥接预览、代理模型误差对比预览、外部数据 V&V 预评分审计、正式证据包审计、样例目录、路径解析 API 和工作台数据导入页面。",
+        "验收证据": "已有 DataImportService、CST/HFSS 导出包识别、Measurement Campaign 测量批次识别、CSV/Touchstone/NPZ/HDF5 格式识别、单位/坐标列审计、工程元数据预览、仪器链/校准/不确定度审计、mm 到 lambda 坐标规范化预览、标定准备度报告、CalibrationSamples 标定桥接预览、代理模型误差对比预览、外部数据 V&V 预评分审计、每阵元功率/实测标定点证据包模板、正式证据包审计、样例目录、路径解析 API 和工作台数据导入页面。",
         "下一门槛": "把通过审计的授权证据包接入真实源链/相位参考、正式可信度评分纳入和授权外部数据标定报告。",
     },
     {

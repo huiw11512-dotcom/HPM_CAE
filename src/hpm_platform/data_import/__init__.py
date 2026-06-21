@@ -8,6 +8,7 @@ from hpm_platform.data_import.calibration_bridge import (
 from hpm_platform.data_import.evidence_chain import (
     evidence_source_chain_ready,
     generate_evidence_chain_report,
+    generate_evidence_package_template,
     inspect_evidence_package,
     load_evidence_chain_config,
 )
@@ -22,6 +23,7 @@ __all__ = [
     "evidence_source_chain_ready",
     "generate_calibration_bridge_report",
     "generate_evidence_chain_report",
+    "generate_evidence_package_template",
     "generate_external_data_vv_audit",
     "generate_model_comparison_report",
     "inspect_evidence_package",

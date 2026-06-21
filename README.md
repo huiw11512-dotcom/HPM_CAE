@@ -51,7 +51,7 @@ http://127.0.0.1:7860
 - 新增 FastAPI + Bootstrap 5 “可信度验证中心”，包含总览卡片、交互图、同步运行按钮和下载端点；
 - 生成中文 HTML 报告、JSON/CSV/LaTeX 表格、论文图包、中文技术说明、论文提纲和已执行 Notebook；
 - 生成三张中文 SVG/PNG 示意图：可信度验证体系总架构、解析解对比机理、传播后端退化验证；
-- 当前快速验收：6/6 V&V 用例通过，可信度评分 91.58/A，全量 pytest 143 项通过。
+- 当前快速验收：6/6 V&V 用例通过，可信度评分 91.58/A，全量 pytest 144 项通过。
 
 ## 平台成熟度与发文准备度
 
@@ -92,14 +92,14 @@ http://127.0.0.1:7860
 - 新增 `src/hpm_platform/data_import/importers.py`，支持 CST/HFSS 导出包、测量数据批次、CSV、Touchstone、NPZ、HDF5 的格式识别和元数据审计；
 - 新增 `configs/external_data_evidence.yaml` 与 `src/hpm_platform/data_import/evidence_chain.py`，登记外部数据授权、真实源链、相位参考、校准证书、原始数据哈希和不确定度模型证据；
 - 自动生成内置样例：近场 CSV、S2P Touchstone、复场 NPZ、HDF5 样例/签名桩、CST 导出包、HFSS/AEDT 导出包和 Measurement Campaign 测量批次；
-- 新增 `/api/data-import/catalog`、`/api/data-import/acceptance`、`/api/data-import/calibration-readiness`、`/api/data-import/calibration-bridge`、`/api/data-import/model-comparison`、`/api/data-import/evidence-chain`、`/api/data-import/evidence-package`、`/api/data-import/vv-audit`、`/api/data-import/samples/{sample_id}`、`/api/data-import/inspect`；
+- 新增 `/api/data-import/catalog`、`/api/data-import/acceptance`、`/api/data-import/calibration-readiness`、`/api/data-import/calibration-bridge`、`/api/data-import/model-comparison`、`/api/data-import/evidence-chain`、`/api/data-import/evidence-package/template`、`/api/data-import/evidence-package`、`/api/data-import/vv-audit`、`/api/data-import/samples/{sample_id}`、`/api/data-import/inspect`；
 - V2.0A 工作台新增“数据导入”页面，可查看样例、验收清单、单位/坐标列、标定准备度和解析结果；
 - 新增导入数据标定准备度报告，可预览 `mm -> lambda` 坐标规范化、归一化复场样本数、不确定度字段和校准状态；
 - 新增导入数据标定桥接报告，把 Measurement Campaign 归一化复场样本构造成 `CalibrationSamples`，并用当前工程生成的代理激励运行标定 smoke preview；
 - 三维 Workbench 已自动读取导入数据桥接、模型误差对比和外部数据 V&V 审计，生成 `IMP-CAL-001` 资产与 `imported_calibration_bridge.json/csv`，在绝对量纲标定卡片和资产台账中显示样本数、相对 RMSE、2σ 覆盖率和正式评分门槛状态；
 - 新增导入数据模型误差对比报告，输出代理模型复场残差、RMSE 改善、p95 残差和基于测量 1-sigma 字段的 1σ/2σ 覆盖率；
 - 新增外部数据证据链与相位参考审计，输出 `evidence_chain_report.json/csv`；默认演示配置不通过正式门槛，用户替换为授权测量链、相位参考和校准证书后才可能进入正式 V&V 门槛；
-- 新增外部数据正式证据包审计，支持从本机 ZIP/目录读取 manifest、校验原始数据 SHA256、拦截真实作用距离/器件阈值/毁伤概率字段，并输出 `evidence_package_audit.json/csv`；
+- 新增外部数据正式证据包模板和审计，支持生成每阵元功率/实测标定点 CSV 模板，从本机 ZIP/目录读取 manifest、校验原始数据 SHA256、审计绝对标定元数据段、拦截真实作用距离/器件阈值/毁伤概率字段，并输出 `evidence_package_audit.json/csv`；
 - 新增外部数据 V&V 可信度审计，把模型残差和测量不确定度传播为预评分、风险信号和正式纳入门槛；当前源链/相位参考未接入时不改写 V2.0A 核心评分；
 - 导入层只做数据血缘、单位、坐标系、校准状态、不确定度、复数值和安全边界审计，不把外部数据直接解释为真实毁伤或作用距离结论。
 
@@ -130,7 +130,7 @@ http://127.0.0.1:7860
 | 参数标定前相对 RMSE | 41.99% |
 | 参数标定后相对 RMSE | 0.24% |
 | 联合归一化控制判据 | 通过 |
-| 自动测试 | 143 项全部通过 |
+| 自动测试 | 144 项全部通过 |
 
 标定算例含 0.25% 归一化复场噪声；结果用于软件验收和方法展示，不等同于全波或实物验证。
 
