@@ -40,14 +40,36 @@ def test_platform_readiness_api_generates_report_artifacts_and_blockers(tmp_path
     assert Path(payload["产物"]["csv"]).exists()
 
 
+def test_mission_control_api_summarizes_visible_main_workflow(tmp_path):
+    with TestClient(create_app(ROOT / "configs" / "cae_project_v14.yaml", tmp_path)) as client:
+        response = client.get("/api/platform/mission-control")
+
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert payload["版本"] == "MissionControl-v1"
+    assert payload["总览"]["可信度评分"] >= 85
+    assert payload["总览"]["插件数"] >= 4
+    assert payload["总览"]["数据样例数"] >= 7
+    assert any(item["入口"] == "插件市场" for item in payload["快速动作"])
+    assert any(item["入口"] == "三维CAE编辑器" for item in payload["可用入口"])
+    assert any(item["步骤"] == "正式数据纳入评分" and item["通过"] is False for item in payload["主链路"])
+    assert "真实作用距离" in payload["安全边界"]["不输出项"]
+
+
 def test_platform_readiness_frontend_and_manifest_register_entrypoints():
     html = (ROOT / "src" / "hpm_platform" / "ui" / "templates_v20a" / "index.html").read_text(encoding="utf-8")
     js = (ROOT / "src" / "hpm_platform" / "ui" / "static_v20a" / "js" / "v20a.js").read_text(encoding="utf-8")
     manifest = (ROOT / "PROJECT_MANIFEST.json").read_text(encoding="utf-8")
 
+    assert 'data-testid="nav-mission-control"' in html
+    assert 'data-testid="mission-control-workflow"' in html
+    assert 'data-testid="mission-control-actions"' in html
     assert 'data-testid="nav-platform-readiness"' in html
     assert 'data-testid="platform-readiness-dimensions"' in html
     assert 'data-testid="platform-readiness-workflow"' in html
+    assert "/api/platform/mission-control" in js
+    assert "渲染主控台" in js
     assert "/api/platform/readiness" in js
     assert "渲染平台成熟度" in js
     assert "platform_readiness.yaml" in manifest

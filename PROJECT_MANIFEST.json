@@ -15,7 +15,7 @@
   ],
   "语言": "Python",
   "Python要求": ">=3.10",
-  "自动测试": "139 项全部通过",
+  "自动测试": "140 项全部通过",
   "主入口": "run_ui_v20a.py",
   "主配置": "configs/cae_project_v14.yaml",
   "成熟度配置": "configs/platform_readiness.yaml",
@@ -25,8 +25,10 @@
   "平台成熟度技术说明": "docs/PLATFORM_READINESS.md",
   "平台管理API": [
     "/api/platform/north-star",
-    "/api/platform/readiness"
+    "/api/platform/readiness",
+    "/api/platform/mission-control"
   ],
+  "平台主控台": "src/hpm_platform/ui/templates_v20a/index.html#主控台",
   "平台成熟度报告": [
     "outputs_v20a_vv/platform_readiness/platform_readiness_report.json",
     "outputs_v20a_vv/platform_readiness/platform_readiness_dimensions.csv"

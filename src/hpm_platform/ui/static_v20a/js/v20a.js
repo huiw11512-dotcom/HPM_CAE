@@ -325,6 +325,70 @@ async function 载入论文工厂状态() {
     $("论文工厂状态").innerHTML = `<div class="alert alert-danger m-3">${转义文本(错误.message)}</div>`;
   }
 }
+function 渲染主控台(数据) {
+  if (!$("主控台状态")) return;
+  const 总览 = 数据.总览 || {};
+  const 使用准备度 = Number(总览["使用准备度/%"] || 0);
+  const 发文准备度 = Number(总览["发文准备度/%"] || 0);
+  $("主控台状态").className = 使用准备度 >= 70 ? "alert alert-success" : "alert alert-warning";
+  $("主控台状态").textContent = `${数据.结论 || "主链路状态已汇总"} 使用准备度 ${格式化(使用准备度)}%，发文准备度 ${格式化(发文准备度)}%。`;
+  const 卡片 = [
+    {标签: "可信度评分", 数值: `${格式化(总览.可信度评分)} / ${总览.可信度等级 || "—"}`, 说明: "V2.0A V&V", 状态: Number(总览.可信度评分 || 0) >= 85 ? "通过" : "关注"},
+    {标签: "使用准备度", 数值: `${格式化(使用准备度)}%`, 说明: "演示与预实验", 状态: 使用准备度 >= 70 ? "可演示" : "预览可用"},
+    {标签: "发文准备度", 数值: `${格式化(发文准备度)}%`, 说明: "论文材料成熟度", 状态: 发文准备度 >= 70 ? "可演示" : "关注"},
+    {标签: "插件生态", 数值: `${总览.插件数 || 0} / ${总览.插件类别数 || 0}`, 说明: "插件数 / 类别数", 状态: (总览.插件数 || 0) >= 4 ? "通过" : "关注"},
+    {标签: "数据导入", 数值: 总览.数据样例数 || 0, 说明: "内置样例数", 状态: (总览.数据样例数 || 0) > 0 ? "通过" : "关注"},
+    {标签: "论文工厂", 数值: 总览.论文工厂状态 || "未知", 说明: "V2.0D 预览", 状态: (总览.论文工厂状态 || "").includes("已") ? "通过" : "关注"},
+  ];
+  $("主控台卡片").innerHTML = 卡片.map(项 => `
+    <div class="col-12 col-sm-6 col-xl-2"><div class="metric-card h-100 p-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="text-muted">${转义文本(项.标签)}</div><span class="badge bg-${状态颜色(项.状态)}">${转义文本(项.状态)}</span>
+      </div>
+      <div class="value mt-2">${转义文本(项.数值)}</div><div class="hint">${转义文本(项.说明)}</div>
+    </div></div>`).join("");
+  渲染表格($("主控台主链路"), (数据.主链路 || []).map(项 => ({
+    序号: 项.序号,
+    步骤: 项.步骤,
+    状态: 项.状态,
+    入口: 项.入口,
+    通过: 项.通过,
+    证据: 项.证据
+  })));
+  渲染表格($("主控台入口"), (数据.可用入口 || []).map(项 => ({
+    入口: 项.入口,
+    状态: 项.状态,
+    证据: 项.证据
+  })));
+  const 差距 = 数据.近期差距 || [];
+  渲染表格($("主控台差距"), 差距.length ? 差距 : [{优先级: "无", 维度: "全部", 阻断项: "当前没有P0/P1阻断项", 证据: "主控台"}]);
+  $("主控台快速入口").innerHTML = (数据.快速动作 || []).map(项 => `
+    <button class="mission-action" data-action="${转义文本(项.动作)}" data-page="${转义文本(项.入口)}">
+      <strong>${转义文本(项.名称)}</strong>
+      <small>${转义文本(项.说明)}</small>
+    </button>`).join("");
+  const 不输出项 = 数据.安全边界?.不输出项 || [];
+  $("主控台边界").innerHTML = `<strong>模型边界</strong><span>${转义文本(数据.安全边界?.说明 || "保持归一化科研验证边界。")}</span><span>不输出项：${转义文本(不输出项.join("、"))}</span>`;
+  $("主控台产物").textContent = [
+    `更新时间UTC: ${数据.更新时间UTC || "未知"}`,
+    `平台成熟度JSON: ${数据.产物?.平台成熟度JSON || "未生成"}`,
+    `平台成熟度CSV: ${数据.产物?.平台成熟度CSV || "未生成"}`,
+    `论文包ZIP: ${数据.产物?.论文包ZIP || "未生成"}`,
+    "",
+    `安全边界: ${数据.安全边界?.说明 || ""}`,
+    `不输出项: ${不输出项.join("、")}`,
+  ].join("\n");
+}
+async function 载入主控台() {
+  if (!$("主控台状态")) return;
+  try {
+    渲染主控台(await 请求("/api/platform/mission-control"));
+  } catch (错误) {
+    $("主控台状态").className = "alert alert-danger";
+    $("主控台状态").textContent = 错误.message;
+    提示(错误.message);
+  }
+}
 function 渲染平台成熟度(数据) {
   if (!$("平台成熟度状态")) return;
   $("平台成熟度状态").className = 数据["使用准备度/%"] >= 70 ? "alert alert-success" : "alert alert-warning";
@@ -454,7 +518,7 @@ function 切换页面(页面名) {
 }
 function 初始页面() {
   const 页面名 = decodeURIComponent(window.location.hash.slice(1));
-  return document.querySelector(`[data-page-section="${CSS.escape(页面名)}"]`) ? 页面名 : "验证总览";
+  return document.querySelector(`[data-page-section="${CSS.escape(页面名)}"]`) ? 页面名 : "主控台";
 }
 function 后端记录(用例) {
   const item = (用例 || []).find(x => x["用例编号"] === "VV-06");
@@ -507,9 +571,42 @@ async function 运行VV(mode) {
     忙碌(false);
   }
 }
+async function 执行主控动作(action, page) {
+  if (action === "run_fast_vv") {
+    切换页面("验证总览");
+    await 运行VV("fast");
+    await 载入主控台();
+    return;
+  }
+  if (action === "run_data_import_plugin") {
+    切换页面("插件市场");
+    await 运行插件("hpm.data_import.evidence_chain");
+    await 载入主控台();
+    return;
+  }
+  if (action === "generate_paper") {
+    切换页面("论文报告导出");
+    await 生成论文包();
+    await 载入主控台();
+    return;
+  }
+  if (action === "refresh_readiness") {
+    切换页面("平台成熟度");
+    await 载入平台成熟度();
+    await 载入主控台();
+    return;
+  }
+  切换页面(page || "主控台");
+}
 
 window.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("#主导航 .nav-link").forEach(x => x.addEventListener("click", e => { e.preventDefault(); 切换页面(x.dataset.page); }));
+  $("主控台刷新").addEventListener("click", 载入主控台);
+  $("主控台运行快速VV").addEventListener("click", async () => { await 运行VV("fast"); await 载入主控台(); });
+  $("主控台快速入口").addEventListener("click", event => {
+    const button = event.target.closest(".mission-action");
+    if (button) 执行主控动作(button.dataset.action, button.dataset.page);
+  });
   $("运行快速VV").addEventListener("click", () => 运行VV("fast"));
   $("运行完整VV").addEventListener("click", () => 运行VV("full"));
   $("导出HTML报告").addEventListener("click", () => { window.location.href = "/download/vv-report.html"; });
@@ -536,6 +633,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (run) 运行插件(run.dataset.pluginId);
   });
   切换页面(初始页面());
+  载入主控台();
   载入总览();
   载入插件市场();
   载入数据导入();

@@ -1,6 +1,7 @@
 """V2.0A 可信度验证中心服务层。"""
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 import threading
 import time
@@ -151,6 +152,72 @@ class V20AValidationService:
                 readiness_config=readiness_config,
             )
 
+    def mission_control(self) -> dict[str, Any]:
+        """Return a visible end-to-end platform control-room summary for the UI."""
+
+        with self._lock:
+            readiness = self.platform_readiness()
+            vv_payload = self.overview()
+            plugin_catalog = self.plugins.catalog()
+            data_catalog = self.data_import.catalog()
+            paper_status = self.paper_factory.status()
+            score = vv_payload.get("评分", {})
+            summary = {
+                "可信度评分": score.get("可信度评分", "—"),
+                "可信度等级": score.get("当前等级", "—"),
+                "使用准备度/%": readiness.get("使用准备度/%", 0),
+                "发文准备度/%": readiness.get("发文准备度/%", 0),
+                "平台成熟度/%": readiness.get("平台成熟度/%", 0),
+                "插件数": plugin_catalog.get("插件总数", 0),
+                "插件类别数": plugin_catalog.get("类别总数", 0),
+                "数据样例数": data_catalog.get("样例数", 0),
+                "论文工厂状态": paper_status.get("状态", "未知"),
+            }
+            workflow = []
+            for index, item in enumerate(readiness.get("主链路", ()), start=1):
+                if not isinstance(item, dict):
+                    continue
+                step = str(item.get("步骤", ""))
+                workflow.append(
+                    {
+                        "序号": index,
+                        "步骤": step,
+                        "状态": item.get("状态", "待补齐"),
+                        "通过": bool(item.get("通过")),
+                        "入口": _workflow_entry(step),
+                        "证据": item.get("证据", ""),
+                    }
+                )
+            return {
+                "版本": "MissionControl-v1",
+                "更新时间UTC": datetime.now(timezone.utc).isoformat(),
+                "平台": readiness.get("平台", "HPM-DT"),
+                "结论": readiness.get("结论", ""),
+                "总览": summary,
+                "主链路": workflow,
+                "可用入口": [
+                    {"入口": "三维CAE编辑器", "状态": _entry_state(workflow, "三维CAE编辑器"), "证据": "Three.js 视口、对象树、属性面板与求解档案"},
+                    {"入口": "插件市场", "状态": "已接通" if plugin_catalog.get("插件总数", 0) else "待补齐", "证据": f"{plugin_catalog.get('插件总数', 0)} 个插件，{plugin_catalog.get('类别总数', 0)} 类"},
+                    {"入口": "数据导入", "状态": "已接通" if data_catalog.get("样例数", 0) else "待补齐", "证据": f"{data_catalog.get('样例数', 0)} 个样例，支持 {', '.join(data_catalog.get('支持格式', []) or [])}"},
+                    {"入口": "论文报告导出", "状态": "已接通" if paper_status.get("通过") else "待补齐", "证据": paper_status.get("状态", "未知")},
+                    {"入口": "平台成熟度", "状态": "已接通", "证据": readiness.get("产物", {}).get("json", "平台成熟度报告")},
+                ],
+                "近期差距": list(readiness.get("关键阻断项", ()))[:8],
+                "快速动作": [
+                    {"名称": "运行快速V&V", "入口": "验证总览", "动作": "run_fast_vv", "说明": "刷新可信度评分和图表。"},
+                    {"名称": "打开三维CAE编辑器", "入口": "三维CAE编辑器", "动作": "open_page", "说明": "编辑对象、材料代理和求解预览。"},
+                    {"名称": "运行数据导入证据链插件", "入口": "插件市场", "动作": "run_data_import_plugin", "说明": "检查外部数据证据链与相位参考状态。"},
+                    {"名称": "生成论文草稿包", "入口": "论文报告导出", "动作": "generate_paper", "说明": "输出 Markdown、LaTeX、图表索引和补充材料。"},
+                    {"名称": "刷新平台成熟度", "入口": "平台成熟度", "动作": "refresh_readiness", "说明": "更新使用准备度、发文准备度和阻断项。"},
+                ],
+                "产物": {
+                    "平台成熟度JSON": readiness.get("产物", {}).get("json"),
+                    "平台成熟度CSV": readiness.get("产物", {}).get("csv"),
+                    "论文包ZIP": paper_status.get("产物", {}).get("论文包ZIP") if isinstance(paper_status.get("产物"), dict) else None,
+                },
+                "安全边界": readiness.get("安全边界", {}),
+            }
+
     def _ui_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
         summary = payload["summary"]
         score = payload["score"]
@@ -187,3 +254,22 @@ class V20AValidationService:
             "输出": payload["outputs"],
             "运行日志": list(self.logs[-60:]),
         }
+
+
+def _workflow_entry(step: str) -> str:
+    if any(token in step for token in ("新建", "加载", "拖拽", "设置材料", "运行求解")):
+        return "三维CAE编辑器"
+    if "验证" in step:
+        return "验证总览"
+    if "数据" in step or "评分" in step:
+        return "数据导入"
+    if "图表" in step or "论文" in step:
+        return "论文报告导出"
+    return "平台成熟度"
+
+
+def _entry_state(workflow: list[dict[str, Any]], entry: str) -> str:
+    related = [item for item in workflow if item.get("入口") == entry]
+    if not related:
+        return "待补齐"
+    return "已接通" if any(item.get("通过") for item in related) else "待补齐"

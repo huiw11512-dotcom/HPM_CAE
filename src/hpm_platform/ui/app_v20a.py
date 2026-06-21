@@ -102,6 +102,13 @@ def create_app(
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"生成平台成熟度与发文准备度报告失败：{exc}") from exc
 
+    @app.get("/api/platform/mission-control")
+    async def platform_mission_control() -> dict[str, Any]:
+        try:
+            return service.mission_control()
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"生成主控台状态失败：{exc}") from exc
+
     @app.get("/api/plugins/catalog")
     async def plugin_catalog() -> dict[str, Any]:
         return service.plugins.catalog()

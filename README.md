@@ -4,7 +4,7 @@ An open-source Chinese CAE platform for high-power microwave phased arrays, digi
 
 HPM-DT（High-Power Microwave Digital Twin）的长期目标，是构建一个面向高功率微波相控阵、效应分析与数字孪生研究的全中文开源科研级 CAE 平台。它不是一个算法仓库、单个论文项目或几个 Python 脚本，而是持续演进的高功率微波数字孪生 CAE 平台。
 
-V2.0A 只是当前阶段里程碑：它完成可信度验证体系；当前工作已经开始推进 V2.0B 三维 CAE 编辑器原型和 V2.0C 插件市场预览。V1.4 的 FastAPI + Bootstrap 5 Dashboard + Plotly 离线工作台、插件式传播后端、模型适用性诊断和参数标定能力全部保留。
+V2.0A 只是当前阶段里程碑：它完成可信度验证体系；当前工作已经推进到 V2.0B 三维 CAE 编辑器原型、V2.0C 插件市场预览、V2.0D Paper Factory 预览和 V3.0 数据导入预览。V1.4 的 FastAPI + Bootstrap 5 Dashboard + Plotly 离线工作台、插件式传播后端、模型适用性诊断和参数标定能力全部保留。
 
 > **North Star**：所有版本开发都必须服务于 HPM-DT 长期平台目标，而不是孤立地增加功能。长期架构包括物理建模、感知、防护、控场、效应、可信度、CAE 工作台和论文生产八层。
 
@@ -45,18 +45,20 @@ http://127.0.0.1:7860
 
 ## 当前里程碑：V2.0A 可信度验证体系
 
+- 新增“主控台”首屏和 `/api/platform/mission-control`，把新建/加载工程、三维编辑、求解、自动验证、数据导入、插件市场、图表和论文生产串成可见主链路；
 - 新增 6 类自动 V&V 用例：阵列因子、扫描波束、Green 函数、MUSIC/ESPRIT/PAWR、MVDR/LCMV、传播后端退化；
 - 新增 Monte Carlo 不确定度、OAT 敏感性排序和 0-100 可信度评分；
 - 新增 FastAPI + Bootstrap 5 “可信度验证中心”，包含总览卡片、交互图、同步运行按钮和下载端点；
 - 生成中文 HTML 报告、JSON/CSV/LaTeX 表格、论文图包、中文技术说明、论文提纲和已执行 Notebook；
 - 生成三张中文 SVG/PNG 示意图：可信度验证体系总架构、解析解对比机理、传播后端退化验证；
-- 当前快速验收：6/6 V&V 用例通过，可信度评分 91.58/A，全量 pytest 139 项通过。
+- 当前快速验收：6/6 V&V 用例通过，可信度评分 91.58/A，全量 pytest 140 项通过。
 
 ## 平台成熟度与发文准备度
 
 - 新增 `configs/platform_readiness.yaml`，统一管理使用准备度、发文准备度、平台成熟度的权重、门槛和安全边界；
 - 新增 `src/hpm_platform/readiness.py`，汇总 V&V、三维 Workbench、真实数据接入、插件市场、Paper Factory 和工程复现证据；
 - 新增 `/api/platform/readiness` 和“平台成熟度”页面，输出主链路接通状态、八层成熟度、关键阻断项和下一步建议；
+- 新增 `/api/platform/mission-control` 和“主控台”页面，面向用户直接展示当前可使用入口、主链路状态、近期差距和快速动作；
 - 生成 `outputs_v20a_vv/platform_readiness/platform_readiness_report.json` 与 `platform_readiness_dimensions.csv`；
 - 该报告只评估软件链路、科研证据链和论文材料成熟度，不输出真实毁伤概率、真实作用距离或器件阈值。
 
@@ -126,7 +128,7 @@ http://127.0.0.1:7860
 | 参数标定前相对 RMSE | 41.99% |
 | 参数标定后相对 RMSE | 0.24% |
 | 联合归一化控制判据 | 通过 |
-| 自动测试 | 134 项全部通过 |
+| 自动测试 | 140 项全部通过 |
 
 标定算例含 0.25% 归一化复场噪声；结果用于软件验收和方法展示，不等同于全波或实物验证。
 

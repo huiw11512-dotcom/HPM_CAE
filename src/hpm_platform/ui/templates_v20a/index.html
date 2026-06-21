@@ -31,7 +31,8 @@
     <nav id="侧栏" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
       <div class="position-sticky pt-3">
         <ul class="nav flex-column" id="主导航">
-          <li class="nav-item"><a class="nav-link active" href="#" data-page="验证总览"><i class="bi bi-speedometer2"></i> 验证总览</a></li>
+          <li class="nav-item"><a class="nav-link active" href="#" data-page="主控台" data-testid="nav-mission-control"><i class="bi bi-grid-1x2"></i> 主控台</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="验证总览"><i class="bi bi-speedometer2"></i> 验证总览</a></li>
           <li class="nav-item"><a class="nav-link" href="#" data-page="平台愿景"><i class="bi bi-diagram-3"></i> 平台愿景</a></li>
           <li class="nav-item"><a class="nav-link" href="#" data-page="平台成熟度" data-testid="nav-platform-readiness"><i class="bi bi-clipboard2-check"></i> 平台成熟度</a></li>
           <li class="nav-item"><a class="nav-link" href="#" data-page="三维CAE编辑器" data-testid="nav-workbench3d"><i class="bi bi-box"></i> 三维CAE编辑器</a></li>
@@ -54,7 +55,59 @@
     </nav>
 
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <section class="页面" data-page-section="验证总览">
+      <section class="页面" data-page-section="主控台" data-testid="mission-control-page">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <div><h1 class="h2 mb-1">HPM-DT 主控台</h1><p class="text-muted mb-0">工程、三维编辑、求解、可信度验证、数据导入、插件和论文生产的一条主链路</p></div>
+          <div class="btn-toolbar gap-2">
+            <button class="btn btn-primary" id="主控台运行快速VV" data-testid="mission-control-run-vv"><i class="bi bi-play-fill"></i> 运行快速V&amp;V</button>
+            <button class="btn btn-outline-primary" id="主控台刷新" data-testid="mission-control-refresh"><i class="bi bi-arrow-clockwise"></i> 刷新主控台</button>
+          </div>
+        </div>
+        <div id="主控台状态" class="alert alert-info" data-testid="mission-control-status">正在汇总主链路状态。</div>
+        <div class="mission-hero mb-3">
+          <div>
+            <div class="north-star-kicker">HPM-DT Mission Control</div>
+            <h2>从工程场景到论文草稿的可验证工作流</h2>
+            <p>当前主控台只汇总平台接通状态、证据链、归一化可信度和论文产物；不输出真实毁伤概率、真实作用距离或器件阈值。</p>
+          </div>
+          <div id="主控台边界" class="mission-boundary" data-testid="mission-control-boundary">正在读取安全边界。</div>
+        </div>
+        <div class="row g-3 mb-3" id="主控台卡片" data-testid="mission-control-cards"></div>
+        <div class="row g-3">
+          <div class="col-12 col-xl-8">
+            <div class="chart-panel h-100">
+              <div class="panel-title">主链路接通状态</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="主控台主链路" data-testid="mission-control-workflow"></table></div>
+            </div>
+          </div>
+          <div class="col-12 col-xl-4">
+            <div class="chart-panel h-100">
+              <div class="panel-title">快速入口</div>
+              <div id="主控台快速入口" class="mission-control-actions" data-testid="mission-control-actions"></div>
+            </div>
+          </div>
+          <div class="col-12 col-xl-6">
+            <div class="chart-panel h-100">
+              <div class="panel-title">可用平台入口</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="主控台入口" data-testid="mission-control-entrypoints"></table></div>
+            </div>
+          </div>
+          <div class="col-12 col-xl-6">
+            <div class="chart-panel h-100">
+              <div class="panel-title">离发文与使用还差什么</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="主控台差距" data-testid="mission-control-gaps"></table></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-panel">
+              <div class="panel-title">主控台产物</div>
+              <pre id="主控台产物" class="输出路径" data-testid="mission-control-artifacts">尚未读取主控台产物。</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="页面 d-none" data-page-section="验证总览">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
           <div><h1 class="h2 mb-1">可信度验证总览</h1><p class="text-muted mb-0">解析解、算法基准、后端一致性、不确定度和敏感性统一验收</p></div>
           <div class="btn-toolbar gap-2">

@@ -23,6 +23,16 @@ main { min-height: calc(100vh - 48px); }
 .north-star-panel h2 { font-size: 1.2rem; margin: .25rem 0 .55rem; color: #111827; }
 .north-star-panel p { margin-bottom: .45rem; line-height: 1.8; }
 .north-star-kicker { color: #1d4ed8; font-weight: 700; font-size: .78rem; letter-spacing: 0; }
+.mission-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 420px); gap: 1rem; align-items: stretch; background: #fff; border: 1px solid #dbeafe; border-left: 5px solid #2563eb; border-radius: 8px; padding: 1.1rem 1.25rem; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
+.mission-hero h2 { font-size: 1.2rem; margin: .25rem 0 .55rem; color: #111827; }
+.mission-hero p { margin: 0; color: #4b5563; line-height: 1.75; }
+.mission-boundary { display: grid; align-content: center; gap: .35rem; border: 1px solid #dbe3ef; border-radius: 8px; background: #f8fafc; padding: .8rem .9rem; color: #374151; line-height: 1.65; }
+.mission-boundary strong { color: #111827; }
+.mission-control-actions { display: grid; gap: .55rem; padding: .8rem; }
+.mission-action { display: grid; gap: .18rem; width: 100%; min-height: 68px; border: 1px solid #dbe3ef; border-left: 4px solid #2563eb; border-radius: 8px; background: #fff; color: #1f2937; padding: .55rem .65rem; text-align: left; }
+.mission-action:hover { background: #eef4ff; border-color: #93c5fd; }
+.mission-action strong { font-size: .86rem; color: #111827; }
+.mission-action small { color: #6b7280; line-height: 1.45; overflow-wrap: anywhere; }
 .platform-list { margin: 0; padding: 1rem 1rem 1rem 2.2rem; line-height: 1.9; }
 .图表 { min-height: 480px; width: 100%; }
 .table { font-size: .78rem; }
@@ -220,6 +230,6 @@ main { min-height: calc(100vh - 48px); }
 .busy-card { width: 280px; border-radius: 8px; background: #fff; padding: 1.5rem; text-align: center; box-shadow: 0 20px 45px rgba(15,23,42,.24); }
 .alert { border-radius: 8px; }
 @media (max-width: 1399.98px) { .workbench3d-layout { grid-template-columns: minmax(220px, 260px) 1fr; } .workbench3d-layout .workbench3d-side:last-child { grid-column: 1 / -1; } .workbench3d-main { min-height: 620px; } .workbench3d-viewport { min-height: 574px; } }
-@media (max-width: 1199.98px) { .export-grid { grid-template-columns: repeat(2, minmax(160px, 1fr)); } .图表 { min-height: 420px; } .workbench3d-layout { grid-template-columns: 1fr; } .workbench3d-layout .workbench3d-side:last-child { grid-column: auto; } }
+@media (max-width: 1199.98px) { .export-grid { grid-template-columns: repeat(2, minmax(160px, 1fr)); } .图表 { min-height: 420px; } .mission-hero { grid-template-columns: 1fr; } .workbench3d-layout { grid-template-columns: 1fr; } .workbench3d-layout .workbench3d-side:last-child { grid-column: auto; } }
 @media (max-width: 767.98px) { .workbench3d-solve-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); } .workbench3d-result-diagnostics { grid-template-columns: 1fr; } .workbench3d-validity-diagnostics { grid-template-columns: 1fr; } .workbench3d-validity-checks { grid-template-columns: 1fr; } .workbench3d-object-metrics { grid-template-columns: 1fr; } .workbench3d-solve-job-audit { align-items: stretch; } .workbench3d-solve-job-audit button { margin-left: 0; } .workbench3d-solve-job { grid-template-columns: 1fr; } .workbench3d-solve-job-actions { justify-content: flex-start; } .workbench3d-result-record { grid-template-columns: 1fr; } .workbench3d-result-record-actions { justify-content: flex-start; } .workbench3d-asset-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); } .workbench3d-asset-toolbar input { grid-column: 1 / -1; } .workbench3d-db-records-head, .workbench3d-lineage-head { flex-direction: column; } .workbench3d-db-records-grid, .workbench3d-lineage-list { grid-template-columns: 1fr; } .workbench3d-asset-record { grid-template-columns: 1fr; } .workbench3d-asset-actions { justify-content: flex-start; } }
 @media (max-width: 575.98px) { .export-grid { grid-template-columns: 1fr; } .图表 { min-height: 360px; } .workbench3d-main { min-height: 520px; } .workbench3d-viewport { min-height: 474px; } .workbench3d-readout { flex-direction: column; align-items: flex-start; } .workbench3d-solve-grid { grid-template-columns: 1fr; } .workbench3d-transform-buttons { grid-template-columns: repeat(4, minmax(32px, 1fr)); } }
