@@ -181,6 +181,8 @@ def _data_import_dimension(data_import: Mapping[str, Any], config: Mapping[str, 
     comparison = _mapping(data_import.get("model_comparison"))
     evidence = _mapping(data_import.get("evidence_chain"))
     audit = _mapping(data_import.get("vv_audit"))
+    candidate = _mapping(data_import.get("evidence_package_vv_candidate"))
+    candidate_strategy = _mapping(candidate.get("正式评分策略"))
     formats = set(str(item) for item in catalog.get("支持格式", ()) or ())
     checks = [
         _check("多格式导入目录通过", bool(_mapping(catalog.get("验收")).get("通过")), f"格式 {len(formats)} 类"),
@@ -195,6 +197,18 @@ def _data_import_dimension(data_import: Mapping[str, Any], config: Mapping[str, 
             severity="P0",
         ),
         _check("外部数据V&V审计存在", int(_number(audit.get("样本数"))) > 0, f"样本 {audit.get('样本数', 0)} 个"),
+        _check("证据包V&V候选评分存在", bool(candidate.get("输出文件")), candidate.get("输出文件", "未生成"), severity="P1"),
+        _check(
+            "证据包候选评分门槛满足",
+            bool(candidate.get("候选门槛满足")),
+            candidate.get("候选评分状态", "未生成候选评分"),
+            severity="P0",
+        ),
+        _check(
+            "证据包候选不自动改写评分",
+            candidate_strategy.get("是否改写正式评分") is False,
+            "候选评分只进入人工复核和配置替换，不直接改写正式分数",
+        ),
         _check(
             "可纳入正式可信度评分",
             bool(audit.get("可纳入正式可信度评分")),
@@ -317,6 +331,7 @@ def _workflow_status(
     material_audit = _mapping(workbench.get("material_audit") or assets.get("材料代理审计"))
     bridge = _mapping(data_import.get("bridge"))
     audit = _mapping(data_import.get("vv_audit"))
+    candidate = _mapping(data_import.get("evidence_package_vv_candidate"))
     asset_types = {str(item.get("类型", "")) for item in assets.get("资产", ()) if isinstance(item, Mapping)}
     steps = [
         ("新建/加载工程", bool(scene), "默认工程可由 Workbench scene API 加载"),
@@ -325,6 +340,7 @@ def _workflow_status(
         ("运行求解", "求解结果" in asset_types, "SOL 结果档案进入资产台账"),
         ("自动验证", _number(_mapping(vv.get("摘要")).get("失败数")) == 0, "V&V 用例、评分、不确定度和敏感性可读"),
         ("接入真实数据", bool(bridge.get("通过")), "Measurement Campaign 可桥接为 CalibrationSamples"),
+        ("证据包候选评分", bool(candidate.get("输出文件")), candidate.get("候选评分状态", "尚未生成 evidence_package_vv_candidate.json")),
         ("正式数据纳入评分", bool(audit.get("可纳入正式可信度评分")), "当前仍待真实源链/相位参考"),
         ("自动生成图表", int(_number(paper.get("图表数量"))) >= 3, "Paper Factory 图表清单可生成"),
         ("自动生成论文", bool(paper.get("通过")), "Markdown/多模板LaTeX/BibTeX/复现注册/统计审计/ZIP 可生成"),
@@ -396,6 +412,16 @@ def _blockers(dimensions: list[dict[str, Any]], data_import: Mapping[str, Any], 
                 "维度": "真实数据接入",
                 "阻断项": str(item),
                 "证据": "外部数据 V&V 审计",
+            }
+        )
+    candidate = _mapping(data_import.get("evidence_package_vv_candidate"))
+    for item in candidate.get("风险信号", ()) or ():
+        rows.append(
+            {
+                "优先级": "P0" if any(token in str(item) for token in ("真实源链", "相位参考", "证据包审计未通过")) else "P1",
+                "维度": "真实数据接入",
+                "阻断项": str(item),
+                "证据": "证据包 V&V 候选评分",
             }
         )
     paper_artifacts = _mapping(_mapping(paper_factory).get("产物"))

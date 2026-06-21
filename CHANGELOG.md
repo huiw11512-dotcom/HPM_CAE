@@ -6,6 +6,7 @@
 - 新增配置文件 `configs/platform_readiness.yaml`，统一管理成熟度权重、验收门槛和安全边界，避免硬编码评分口径。
 - 新增 `/api/platform/readiness` 和 UI“平台成熟度”页面，直接展示使用准备度、发文准备度、主链路接通状态、八层成熟度和关键阻断项。
 - 新增 `/api/platform/mission-control` 和 UI“主控台”首屏，把工程、三维编辑、求解、V&V、数据导入、插件和论文生产串成可见主链路。
+- 平台成熟度与主控台已纳入证据包 V&V 候选评分，真实数据接入维度会显示候选报告是否存在、候选门槛是否满足以及是否保持“不自动改写正式评分”。
 - 新增 `configs/paper_factory_v20d.yaml`，Paper Factory 现在自动输出 BibTeX 引用库、文献复现注册表、统计审计、IEEE/期刊/学位论文多模板、插件模板合并、模板审计、LaTeX 编译审计和前端论文生产审计表。
 - 新增 `hpm.publication.paper_template_pack` 内置论文模板包插件，V2.0C `report_template` 插件协议可向 V2.0D Paper Factory 暴露论文模板声明。
 - 新增 Workbench 材料代理审计：`/api/workbench3d/materials/audit` 输出 `MAT-AUDIT-001`，并让平台主链路“设置材料”由可编辑提升为可审计、可入账。

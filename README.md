@@ -59,6 +59,7 @@ http://127.0.0.1:7860
 - 新增 `src/hpm_platform/readiness.py`，汇总 V&V、三维 Workbench、真实数据接入、插件市场、Paper Factory 和工程复现证据；
 - 新增 `/api/platform/readiness` 和“平台成熟度”页面，输出主链路接通状态、八层成熟度、关键阻断项和下一步建议；
 - 新增 `/api/platform/mission-control` 和“主控台”页面，面向用户直接展示当前可使用入口、主链路状态、近期差距和快速动作；
+- 平台成熟度和主控台已纳入证据包 V&V 候选评分，能直接显示授权证据包是否通过源链、相位参考、残差和 2σ 覆盖率门槛；
 - 生成 `outputs_v20a_vv/platform_readiness/platform_readiness_report.json` 与 `platform_readiness_dimensions.csv`；
 - 该报告只评估软件链路、科研证据链和论文材料成熟度，不输出真实毁伤概率、真实作用距离或器件阈值。
 

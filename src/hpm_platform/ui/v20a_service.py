@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import json
 from pathlib import Path
 import threading
 import time
@@ -124,6 +125,23 @@ class V20AValidationService:
                 base_credibility_score=base_score,
             )
 
+    def data_import_latest_evidence_package_vv_candidate(self) -> dict[str, Any]:
+        with self._lock:
+            report_path = self.output_dir / "data_import_v30" / "evidence_package_vv_candidate.json"
+            if report_path.exists():
+                return json.loads(report_path.read_text(encoding="utf-8"))
+            template = generate_evidence_package_template(self.output_dir)
+            base_score = None
+            if self._payload is not None:
+                base_score = self._payload.get("score", {}).get("可信度评分")
+            return generate_evidence_package_vv_candidate(
+                self.project_path,
+                template.get("输出文件", ""),
+                self.output_dir,
+                self.data_import,
+                base_credibility_score=base_score,
+            )
+
     def ensure_workbench_imported_calibration_bridge(self) -> dict[str, Any]:
         with self._lock:
             self.data_import_calibration_bridge()
@@ -140,6 +158,7 @@ class V20AValidationService:
             comparison = self.data_import_model_comparison()
             evidence_chain = self.data_import_evidence_chain()
             external_audit = self.data_import_vv_audit()
+            evidence_candidate = self.data_import_latest_evidence_package_vv_candidate()
             imported_bridge = self.ensure_workbench_imported_calibration_bridge()
             scene = self.workbench3d.scene()
             assets = self.workbench3d.list_assets()
@@ -170,6 +189,7 @@ class V20AValidationService:
                     "model_comparison": comparison,
                     "evidence_chain": evidence_chain,
                     "vv_audit": external_audit,
+                    "evidence_package_vv_candidate": evidence_candidate,
                 },
                 plugins={
                     "catalog": self.plugins.catalog(),
