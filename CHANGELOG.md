@@ -2,6 +2,8 @@
 
 ## 未发布 — 2026-06-21
 
+- 将 V2.0 产品路线从 Verification First 调整为 Scene First：UI 默认首页切换到“场景编辑”，首屏固定 `场景 / 对象 / 任务 / 结果` 主链路，左侧导航重排为项目管理、场景编辑、阵列设计、传播环境、求解设置、结果查看和论文导出，可信度验证移动到工具入口。
+- 更新 North Star、Roadmap、AGENTS、STATUS 和 manifest，把后续路线固定为 V2.0B 三维场景编辑器（Scene First）、V2.0C 任务级仿真框架（Mission First）、V2.0D 论文自动生产线（Publication First）、V2.1 数字孪生任务库和 V3.0 真实数据接入与实验闭环。
 - 新增平台成熟度与发文准备度主链路：`src/hpm_platform/readiness.py` 汇总 V&V、三维 Workbench、数据导入、插件市场、Paper Factory 和工程复现证据。
 - 新增配置文件 `configs/platform_readiness.yaml`，统一管理成熟度权重、验收门槛和安全边界，避免硬编码评分口径。
 - 新增 `/api/platform/readiness` 和 UI“平台成熟度”页面，直接展示使用准备度、发文准备度、主链路接通状态、八层成熟度和关键阻断项。

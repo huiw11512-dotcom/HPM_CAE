@@ -1,4 +1,4 @@
-"""HPM 数字化电磁算法 CAE V2.0A 可信度验证中心。"""
+"""HPM-DT CAE 场景工作台。"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -65,7 +65,7 @@ def create_app(
     download_dir = Path(output_dir or DEFAULT_OUTPUT)
     app = FastAPI(
         title="HPM-DT 高功率微波数字孪生 CAE 平台",
-        description="全中文、本地离线、面向 HPM-DT 长期平台目标的 V2.0A 可信度验证中心",
+        description="全中文、本地离线、面向 HPM-DT 长期平台目标的 Scene First CAE 场景工作台",
         version="2.0A",
         docs_url="/接口文档",
         redoc_url=None,
@@ -89,7 +89,7 @@ def create_app(
 
     @app.get("/api/health")
     async def health() -> dict[str, Any]:
-        return {"状态": "正常", "平台版本": "2.0A", "平台": "HPM-DT", "页面": "可信度验证中心"}
+        return {"状态": "正常", "平台版本": "2.0A", "平台": "HPM-DT", "页面": "CAE场景工作台"}
 
     @app.get("/api/platform/north-star")
     async def north_star() -> dict[str, Any]:

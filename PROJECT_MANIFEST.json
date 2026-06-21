@@ -1,8 +1,19 @@
 {
   "项目": "HPM-DT 高功率微波数字孪生 CAE 平台",
-  "版本": "2.0A+V2.0B-preview+V2.0C-preview+V2.0D-preview+V3.0-preview",
-  "最高层目标": "持续演进为面向高功率微波相控阵、效应分析与数字孪生研究的全中文开源科研级 CAE 平台",
-  "平台定位": "不是算法仓库、单个论文项目或脚本集合，而是高功率微波数字孪生 CAE 平台",
+  "版本": "2.0A+V2.0B-preview+V2.0C-preview+V2.0D-preview+V2.1-roadmap+V3.0-preview",
+  "最高层目标": "持续演进为面向高功率微波相控阵、效应分析与数字孪生研究的全中文开源任务级科研 CAE 平台",
+  "平台定位": "不是算法仓库、单个论文项目或脚本集合，而是高功率微波任务级数字孪生 CAE 平台",
+  "V2.0产品路线": "Scene First -> Mission First -> Publication First",
+  "默认首页": "场景编辑",
+  "验证中心入口": "工具 -> 可信度验证",
+  "V2.0用户主链路": [
+    "建立场景",
+    "配置阵列与系统",
+    "运行任务",
+    "查看场分布与风险",
+    "导出论文"
+  ],
+  "后续功能判断": "新增功能必须优先回答用户能分析什么新场景或新任务，而不是只新增验证指标",
   "长期架构": [
     "物理建模层 Physics Layer",
     "感知层 Perception Layer",
@@ -29,7 +40,8 @@
     "/api/platform/readiness",
     "/api/platform/mission-control"
   ],
-  "平台主控台": "src/hpm_platform/ui/templates_v20a/index.html#主控台",
+  "场景优先首页": "src/hpm_platform/ui/templates_v20a/index.html#场景编辑",
+  "平台主控台": "src/hpm_platform/ui/templates_v20a/index.html#项目管理",
   "平台成熟度报告": [
     "outputs_v20a_vv/platform_readiness/platform_readiness_report.json",
     "outputs_v20a_vv/platform_readiness/platform_readiness_dimensions.csv"

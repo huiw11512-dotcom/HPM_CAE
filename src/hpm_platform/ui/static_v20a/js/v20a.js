@@ -604,18 +604,35 @@ function 渲染卡片(卡片) {
       <div class="value mt-2">${项.数值}</div><div class="hint">${项.说明}</div>
     </div></div>`).join("");
 }
+const 页面别名 = {
+  "主控台": "项目管理",
+  "三维CAE编辑器": "场景编辑",
+  "验证总览": "验证中心",
+  "论文报告导出": "论文导出"
+};
+function 标准页面名(页面名) {
+  return 页面别名[页面名] || 页面名 || "场景编辑";
+}
+function 页面目标(页面名) {
+  const 标准名 = 标准页面名(页面名);
+  const 链接 = document.querySelector(`.sidebar .nav-link[data-page="${CSS.escape(标准名)}"]`);
+  return 链接?.dataset.sectionTarget || 标准名;
+}
 function 切换页面(页面名) {
-  document.querySelectorAll("[data-page-section]").forEach(x => x.classList.toggle("d-none", x.dataset.pageSection !== 页面名));
-  document.querySelectorAll("#主导航 .nav-link").forEach(x => x.classList.toggle("active", x.dataset.page === 页面名));
-  if (decodeURIComponent(window.location.hash.slice(1)) !== 页面名) {
-    history.replaceState(null, "", `#${encodeURIComponent(页面名)}`);
+  const 标准名 = 标准页面名(页面名);
+  const 目标页 = 页面目标(标准名);
+  document.querySelectorAll("[data-page-section]").forEach(x => x.classList.toggle("d-none", x.dataset.pageSection !== 目标页));
+  document.querySelectorAll(".sidebar .nav-link").forEach(x => x.classList.toggle("active", x.dataset.page === 标准名));
+  document.querySelectorAll(".scene-workflow-step").forEach(x => x.classList.toggle("active", x.dataset.pageJump === 标准名 || (标准名 === "场景编辑" && x.dataset.pageJump === "场景编辑")));
+  if (decodeURIComponent(window.location.hash.slice(1)) !== 标准名) {
+    history.replaceState(null, "", `#${encodeURIComponent(标准名)}`);
   }
   window.scrollTo({top: 0, behavior: "smooth"});
   setTimeout(()=>window.dispatchEvent(new Event("resize")),100);
 }
 function 初始页面() {
-  const 页面名 = decodeURIComponent(window.location.hash.slice(1));
-  return document.querySelector(`[data-page-section="${CSS.escape(页面名)}"]`) ? 页面名 : "主控台";
+  const 页面名 = 标准页面名(decodeURIComponent(window.location.hash.slice(1)));
+  return document.querySelector(`[data-page-section="${CSS.escape(页面目标(页面名))}"]`) ? 页面名 : "场景编辑";
 }
 function 后端记录(用例) {
   const item = (用例 || []).find(x => x["用例编号"] === "VV-06");
@@ -670,7 +687,7 @@ async function 运行VV(mode) {
 }
 async function 执行主控动作(action, page) {
   if (action === "run_fast_vv") {
-    切换页面("验证总览");
+    切换页面("验证中心");
     await 运行VV("fast");
     await 载入主控台();
     return;
@@ -682,7 +699,7 @@ async function 执行主控动作(action, page) {
     return;
   }
   if (action === "generate_paper") {
-    切换页面("论文报告导出");
+    切换页面("论文导出");
     await 生成论文包();
     await 载入主控台();
     return;
@@ -693,11 +710,12 @@ async function 执行主控动作(action, page) {
     await 载入主控台();
     return;
   }
-  切换页面(page || "主控台");
+  切换页面(page || "项目管理");
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("#主导航 .nav-link").forEach(x => x.addEventListener("click", e => { e.preventDefault(); 切换页面(x.dataset.page); }));
+  document.querySelectorAll(".sidebar .nav-link").forEach(x => x.addEventListener("click", e => { e.preventDefault(); 切换页面(x.dataset.page); }));
+  document.querySelectorAll(".scene-workflow-step").forEach(x => x.addEventListener("click", e => { e.preventDefault(); 切换页面(x.dataset.pageJump); }));
   $("主控台刷新").addEventListener("click", 载入主控台);
   $("主控台运行快速VV").addEventListener("click", async () => { await 运行VV("fast"); await 载入主控台(); });
   $("主控台快速入口").addEventListener("click", event => {

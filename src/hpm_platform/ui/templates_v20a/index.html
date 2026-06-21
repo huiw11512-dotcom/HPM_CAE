@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="HPM-DT 高功率微波数字孪生 CAE 平台 V2.0A 可信度验证中心">
-  <title>HPM-DT V2.0A 可信度验证中心</title>
+  <meta name="description" content="HPM-DT 高功率微波数字孪生 CAE 平台 V2.0B 场景优先工作台">
+  <title>HPM-DT CAE 场景工作台</title>
   <link rel="stylesheet" href="{{ url_for('static', path='vendor/bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', path='vendor/bootstrap-icons.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static_v20a', path='css/v20a.css') }}">
 </head>
 <body>
 <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-  <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">HPM-DT 可信度验证中心</a>
+  <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">HPM-DT CAE 场景工作台</a>
   <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#侧栏" aria-controls="侧栏" aria-expanded="false" aria-label="切换导航">
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="navbar-text flex-grow-1 px-3 d-none d-md-block text-light">
-    <span id="顶部状态">HPM-DT 长期 CAE 平台 · 正在准备 V2.0A 验证数据…</span>
+    <span id="顶部状态">HPM-DT 长期 CAE 平台 · Scene First 工作流 · 正在载入工程场景…</span>
   </div>
   <div class="navbar-nav">
     <div class="nav-item text-nowrap d-flex align-items-center gap-2 px-3">
@@ -31,19 +31,23 @@
     <nav id="侧栏" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
       <div class="position-sticky pt-3">
         <ul class="nav flex-column" id="主导航">
-          <li class="nav-item"><a class="nav-link active" href="#" data-page="主控台" data-testid="nav-mission-control"><i class="bi bi-grid-1x2"></i> 主控台</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-page="验证总览"><i class="bi bi-speedometer2"></i> 验证总览</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-page="平台愿景"><i class="bi bi-diagram-3"></i> 平台愿景</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-page="平台成熟度" data-testid="nav-platform-readiness"><i class="bi bi-clipboard2-check"></i> 平台成熟度</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-page="三维CAE编辑器" data-testid="nav-workbench3d"><i class="bi bi-box"></i> 三维CAE编辑器</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-page="插件市场" data-testid="nav-plugin-marketplace"><i class="bi bi-puzzle"></i> 插件市场</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="项目管理" data-testid="nav-mission-control"><i class="bi bi-folder2-open"></i> 项目管理</a></li>
+          <li class="nav-item"><a class="nav-link active" href="#" data-page="场景编辑" data-testid="nav-workbench3d"><i class="bi bi-box"></i> 场景编辑</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="阵列设计" data-section-target="场景编辑"><i class="bi bi-grid-3x3-gap"></i> 阵列设计</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="传播环境" data-section-target="场景编辑"><i class="bi bi-bounding-box"></i> 传播环境</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="求解设置" data-section-target="场景编辑"><i class="bi bi-cpu"></i> 求解设置</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="结果查看" data-section-target="场景编辑"><i class="bi bi-activity"></i> 结果查看</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="论文导出"><i class="bi bi-file-earmark-text"></i> 论文导出</a></li>
+        </ul>
+        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+          <span>工具</span><i class="bi bi-tools"></i>
+        </h6>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a class="nav-link" href="#" data-page="验证中心"><i class="bi bi-shield-check"></i> 可信度验证</a></li>
           <li class="nav-item"><a class="nav-link" href="#" data-page="数据导入" data-testid="nav-data-import"><i class="bi bi-database-down"></i> 数据导入</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-page="解析解验证"><i class="bi bi-graph-up"></i> 解析解验证</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-page="算法基准验证"><i class="bi bi-cpu"></i> 算法基准验证</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-page="后端一致性验证"><i class="bi bi-layers"></i> 后端一致性验证</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-page="不确定度分析"><i class="bi bi-shuffle"></i> 不确定度分析</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-page="敏感性分析"><i class="bi bi-bar-chart"></i> 敏感性分析</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-page="论文报告导出"><i class="bi bi-file-earmark-text"></i> 论文报告导出</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="插件市场" data-testid="nav-plugin-marketplace"><i class="bi bi-puzzle"></i> 插件市场</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="平台成熟度" data-testid="nav-platform-readiness"><i class="bi bi-clipboard2-check"></i> 平台成熟度</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="平台愿景"><i class="bi bi-diagram-3"></i> 平台愿景</a></li>
         </ul>
         <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
           <span>模型边界</span><i class="bi bi-shield-check"></i>
@@ -55,9 +59,9 @@
     </nav>
 
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <section class="页面" data-page-section="主控台" data-testid="mission-control-page">
+      <section class="页面 d-none" data-page-section="项目管理" data-testid="mission-control-page">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-          <div><h1 class="h2 mb-1">HPM-DT 主控台</h1><p class="text-muted mb-0">工程、三维编辑、求解、可信度验证、数据导入、插件和论文生产的一条主链路</p></div>
+          <div><h1 class="h2 mb-1">项目管理</h1><p class="text-muted mb-0">工程入口、主链路状态、证据链和发文/使用缺口，作为场景建模后的管理视图</p></div>
           <div class="btn-toolbar gap-2">
             <button class="btn btn-primary" id="主控台运行快速VV" data-testid="mission-control-run-vv"><i class="bi bi-play-fill"></i> 运行快速V&amp;V</button>
             <button class="btn btn-outline-primary" id="主控台刷新" data-testid="mission-control-refresh"><i class="bi bi-arrow-clockwise"></i> 刷新主控台</button>
@@ -107,9 +111,9 @@
         </div>
       </section>
 
-      <section class="页面 d-none" data-page-section="验证总览">
+      <section class="页面 d-none" data-page-section="验证中心">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-          <div><h1 class="h2 mb-1">可信度验证总览</h1><p class="text-muted mb-0">解析解、算法基准、后端一致性、不确定度和敏感性统一验收</p></div>
+          <div><h1 class="h2 mb-1">验证中心</h1><p class="text-muted mb-0">解析解、算法基准、后端一致性、不确定度和敏感性统一验收，面向报告、验收和发文复核</p></div>
           <div class="btn-toolbar gap-2">
             <button class="btn btn-primary" id="运行快速VV"><i class="bi bi-play-fill"></i> 运行快速V&amp;V</button>
             <button class="btn btn-outline-primary" id="运行完整VV"><i class="bi bi-lightning-charge"></i> 运行完整V&amp;V</button>
@@ -225,9 +229,9 @@
         </div>
       </section>
 
-      <section class="页面 d-none" data-page-section="三维CAE编辑器">
+      <section class="页面" data-page-section="场景编辑">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-          <div><h1 class="h2 mb-1">V2.0B 三维 CAE 编辑器</h1><p class="text-muted mb-0">Three.js 本地视口 · 工程对象树 · 属性面板 · 绝对量纲标定 · 求解联动 · 后端几何校验</p></div>
+          <div><h1 class="h2 mb-1">场景编辑</h1><p class="text-muted mb-0">打开即建模：阵列、目标、观察面、反射面、保护区、求解和结果档案集中在三维工作台</p></div>
           <div class="btn-toolbar gap-2">
             <button class="btn btn-outline-primary" id="三维移动模式" data-testid="workbench3d-move-mode"><i class="bi bi-arrows-move"></i> 移动</button>
             <button class="btn btn-outline-secondary" id="三维撤销" data-testid="workbench3d-undo" disabled><i class="bi bi-arrow-counterclockwise"></i> 撤销</button>
@@ -240,6 +244,19 @@
           </div>
         </div>
         <div id="三维状态" class="alert alert-info" data-testid="workbench3d-status">正在载入三维工程场景。</div>
+        <div class="scene-core-strip mb-3" data-testid="scene-first-core">
+          <div><strong>场景</strong><span>阵列、目标、观察面、反射面和保护区</span></div>
+          <div><strong>对象</strong><span>选择对象后编辑尺寸、位置、材料和标定元数据</span></div>
+          <div><strong>任务</strong><span>运行归一化快速求解并生成任务档案</span></div>
+          <div><strong>结果</strong><span>查看场分布、剖面、对象指标和结果库</span></div>
+        </div>
+        <div class="scene-workflow-bar mb-3" data-testid="scene-first-workflow">
+          <button type="button" class="scene-workflow-step active" data-page-jump="场景编辑"><i class="bi bi-box"></i><span>场景编辑</span><small>拖拽对象与边界</small></button>
+          <button type="button" class="scene-workflow-step" data-page-jump="阵列设计"><i class="bi bi-grid-3x3-gap"></i><span>阵列设计</span><small>阵元与功率元数据</small></button>
+          <button type="button" class="scene-workflow-step" data-page-jump="传播环境"><i class="bi bi-bounding-box"></i><span>传播环境</span><small>反射、腔体与观察面</small></button>
+          <button type="button" class="scene-workflow-step" data-page-jump="求解设置"><i class="bi bi-cpu"></i><span>求解设置</span><small>运行归一化快速求解</small></button>
+          <button type="button" class="scene-workflow-step" data-page-jump="结果查看"><i class="bi bi-activity"></i><span>结果查看</span><small>场分布、任务与档案</small></button>
+        </div>
         <div class="workbench3d-layout">
           <aside class="workbench3d-side" aria-label="三维对象树">
             <div class="workbench3d-side-title">对象树</div>
@@ -399,8 +416,8 @@
         </div>
       </section>
 
-      <section class="页面 d-none" data-page-section="论文报告导出">
-        <div class="pt-3 pb-2 mb-3 border-bottom"><h1 class="h2 mb-1">论文报告导出</h1><p class="text-muted mb-0">导出 V&V 报告，并生成 V2.0D Paper Factory 论文草稿包</p></div>
+      <section class="页面 d-none" data-page-section="论文导出">
+        <div class="pt-3 pb-2 mb-3 border-bottom"><h1 class="h2 mb-1">论文导出</h1><p class="text-muted mb-0">导出 V&V 报告，并生成 V2.0D Paper Factory 论文草稿包</p></div>
         <div class="export-grid">
           <button class="btn btn-primary" id="导出HTML报告"><i class="bi bi-filetype-html"></i> 导出HTML报告</button>
           <button class="btn btn-outline-primary" id="导出LaTeX表格"><i class="bi bi-table"></i> 导出LaTeX表格</button>
@@ -441,7 +458,7 @@
       </section>
 
       <footer class="pt-4 pb-4 mt-5 text-muted border-top small d-flex justify-content-between flex-wrap gap-2">
-        <span>HPM-DT 高功率微波数字孪生 CAE 平台 · V2.0A 可信度验证体系</span>
+        <span>HPM-DT 高功率微波数字孪生 CAE 平台 · Scene First 三维工作流</span>
         <span>界面基于 Bootstrap 5 官方 Dashboard 开源模板结构（MIT）</span>
       </footer>
     </main>
@@ -451,7 +468,7 @@
 <div id="忙碌遮罩" class="忙碌遮罩 d-none" aria-live="polite">
   <div class="busy-card"><div class="spinner-border text-primary mb-3" role="status"></div><div id="忙碌文字" class="fw-bold">正在计算…</div></div>
 </div>
-<div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="消息提示" class="toast" role="alert"><div class="toast-header"><strong class="me-auto">可信度验证中心</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="消息正文"></div></div></div>
+<div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="消息提示" class="toast" role="alert"><div class="toast-header"><strong class="me-auto">HPM-DT 场景工作台</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="消息正文"></div></div></div>
 
 <script src="{{ url_for('static', path='vendor/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ url_for('static', path='vendor/plotly.min.js') }}"></script>

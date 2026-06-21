@@ -1,4 +1,4 @@
-"""V2.0A 可信度验证中心服务层。"""
+"""V2.0 Scene First 工作台服务层。"""
 from __future__ import annotations
 
 from datetime import datetime, timezone

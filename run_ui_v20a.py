@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""启动 HPM 数字化电磁算法 CAE V2.0A 可信度验证中心。"""
+"""启动 HPM-DT CAE 场景工作台。"""
 from __future__ import annotations
 
 import argparse
@@ -20,9 +20,9 @@ from hpm_platform.ui.app_v20a import create_app  # noqa: E402
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="启动 HPM CAE V2.0A 可信度验证中心")
+    parser = argparse.ArgumentParser(description="启动 HPM-DT CAE 场景工作台")
     parser.add_argument("--host", default="127.0.0.1", help="监听地址")
-    parser.add_argument("--port", type=int, default=7860, help="监听端口")
+    parser.add_argument("--port", type=int, default=7869, help="监听端口")
     parser.add_argument("--project", default=str(ROOT / "configs" / "cae_project_v14.yaml"), help="工程 YAML")
     parser.add_argument("--output-dir", default=str(ROOT / "outputs_v20a_vv"), help="V&V 输出目录")
     parser.add_argument("--no-browser", action="store_true", help="不自动打开浏览器")

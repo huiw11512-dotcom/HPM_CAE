@@ -6,7 +6,7 @@
 
 ## North Star Context
 
-持续演进 HPM-DT（High-Power Microwave Digital Twin），构建一个面向高功率微波相控阵、效应分析与数字孪生研究的全中文科研级 CAE 平台。所有版本开发都必须服务于这个长期目标，而不是孤立地增加功能。
+持续演进 HPM-DT（High-Power Microwave Digital Twin），构建一个面向高功率微波相控阵、效应分析与数字孪生研究的全中文任务级科研 CAE 平台。所有版本开发都必须服务于这个长期目标，而不是孤立地增加功能。
 
 本文中的 V2.0A 只对应 HPM-DT 八层架构中的可信度层阶段成果，不替代平台长期目标。
 

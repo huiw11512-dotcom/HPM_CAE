@@ -716,7 +716,17 @@ def test_v20b_frontend_assets_are_local_and_registered():
         response = client.get("/")
     assert response.status_code == 200
     html = response.text
-    assert "V2.0B 三维 CAE 编辑器" in html
+    assert "场景编辑" in html
+    assert "Scene First" in html
+    assert '<section class="页面" data-page-section="场景编辑"' in html
+    assert '<section class="页面 d-none" data-page-section="验证中心"' in html
+    assert 'data-testid="scene-first-core"' in html
+    assert 'data-testid="scene-first-workflow"' in html
+    assert "阵列设计" in html
+    assert "传播环境" in html
+    assert "求解设置" in html
+    assert "结果查看" in html
+    assert "可信度验证" in html
     assert "workbench3d.js" in html
     assert "workbench3d-move-mode" in html
     assert "workbench3d-undo" in html

@@ -67,7 +67,11 @@ def test_v20a_chinese_ui_returns_http_200(tmp_path):
     with TestClient(create_app(ROOT / "configs" / "cae_project_v14.yaml", tmp_path)) as client:
         response = client.get("/")
     assert response.status_code == 200
-    assert "可信度验证中心" in response.text
+    assert "HPM-DT CAE 场景工作台" in response.text
+    assert '<section class="页面" data-page-section="场景编辑"' in response.text
+    assert '<section class="页面 d-none" data-page-section="验证中心"' in response.text
+    assert 'data-testid="scene-first-core"' in response.text
+    assert "可信度验证" in response.text
     assert "运行快速V&amp;V" in response.text
 
 
