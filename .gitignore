@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+dist/
+build/
+*.egg-info/
+workspaces/*.hpmdt
+outputs/
+playwright-report/
+test-results/
+*.log
+.DS_Store

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HPM-DT Studio</title>
+  <link rel="stylesheet" href="/static/vendor/bootstrap.min.css" />
+  <link rel="stylesheet" href="/static/vendor/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="/static/css/studio.css" />
+</head>
+<body>
+  <div id="app" class="studio-app">
+    <header class="studio-topbar">
+      <div class="brand-block">
+        <div class="brand-mark"><i class="bi bi-boxes"></i></div>
+        <div>
+          <div class="brand-name">HPM-DT Studio</div>
+          <div class="brand-subtitle">系统级电磁场景与任务仿真工作台</div>
+        </div>
+      </div>
+      <div class="project-heading">
+        <span id="projectName">正在载入工程…</span>
+        <span class="version-chip">{{ app_version }}</span>
+      </div>
+      <div class="top-actions">
+        <select id="exampleSelect" class="form-select form-select-sm studio-select" aria-label="示例工程"></select>
+        <button id="newBtn" class="btn btn-sm btn-outline-light"><i class="bi bi-file-earmark-plus me-1"></i>新建</button>
+        <button id="openBtn" class="btn btn-sm btn-outline-light"><i class="bi bi-folder2-open me-1"></i>打开</button>
+        <input id="projectFileInput" type="file" accept=".hpmdt" class="d-none" />
+        <button id="saveBtn" class="btn btn-sm btn-outline-light"><i class="bi bi-floppy me-1"></i>保存</button>
+        <button id="runBtn" class="btn btn-sm btn-primary"><i class="bi bi-play-fill me-1"></i>运行任务</button>
+      </div>
+    </header>
+
+    <div class="workflow-strip">
+      <button class="workflow-step active"><span>1</span>场景</button>
+      <button class="workflow-step"><span>2</span>系统</button>
+      <button class="workflow-step"><span>3</span>任务</button>
+      <button class="workflow-step"><span>4</span>求解</button>
+      <button class="workflow-step"><span>5</span>结果</button>
+      <div class="workflow-spacer"></div>
+      <span id="statusText" class="status-text">准备就绪</span>
+    </div>
+
+    <section class="studio-main">
+      <aside class="scene-panel panel-surface">
+        <div class="panel-tabs">
+          <button class="panel-tab active" data-panel="tree">场景树</button>
+          <button class="panel-tab" data-panel="assets">对象库</button>
+        </div>
+        <div id="treePanel" class="panel-content"></div>
+        <div id="assetPanel" class="panel-content d-none">
+          <div class="asset-hint">将物理对象加入当前场景。任务会通过角色和组件自动选择对象，不依赖固定编号。</div>
+          <div class="asset-grid">
+            <button class="asset-card" data-kind="array_platform"><i class="bi bi-grid-3x3-gap"></i><span>阵列平台</span></button>
+            <button class="asset-card" data-kind="moving_aircraft"><i class="bi bi-airplane"></i><span>运动对象</span></button>
+            <button class="asset-card" data-kind="building"><i class="bi bi-buildings"></i><span>建筑物</span></button>
+            <button class="asset-card" data-kind="receiver"><i class="bi bi-broadcast-pin"></i><span>接收设备</span></button>
+            <button class="asset-card" data-kind="plane_probe"><i class="bi bi-bounding-box"></i><span>场切片探针</span></button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="viewport-panel">
+        <div class="viewport-toolbar">
+          <div class="btn-group btn-group-sm" role="group">
+            <button id="homeViewBtn" class="btn btn-dark" title="恢复视角"><i class="bi bi-house"></i></button>
+            <button id="topViewBtn" class="btn btn-dark" title="顶视图"><i class="bi bi-arrow-down-square"></i></button>
+            <button id="toggleFieldBtn" class="btn btn-dark active" title="显示或隐藏场切片"><i class="bi bi-layers"></i></button>
+            <button id="toggleTrajectoryBtn" class="btn btn-dark active" title="显示或隐藏轨迹"><i class="bi bi-bezier2"></i></button>
+          </div>
+          <div class="viewport-mode">三维场景</div>
+        </div>
+        <div id="scenePlot" class="scene-plot"></div>
+        <div id="metricOverlay" class="metric-overlay d-none">
+          <div><small>平均接收幅度</small><strong id="metricMean">—</strong></div>
+          <div><small>最低接收幅度</small><strong id="metricMin">—</strong></div>
+          <div><small>时间稳定性</small><strong id="metricStable">—</strong></div>
+          <div><small>当前帧</small><strong id="metricFrame">—</strong></div>
+        </div>
+        <div class="viewport-legend">
+          <span><i class="legend-dot array"></i>阵列</span>
+          <span><i class="legend-dot moving"></i>运动对象</span>
+          <span><i class="legend-dot receiver"></i>接收设备</span>
+          <span><i class="legend-dot environment"></i>环境</span>
+        </div>
+      </main>
+
+      <aside class="inspector-panel panel-surface">
+        <div class="panel-heading">
+          <div>
+            <div class="panel-title">属性检查器</div>
+            <div id="selectedType" class="panel-subtitle">请选择场景对象</div>
+          </div>
+          <button id="deleteBtn" class="icon-button danger d-none" title="删除对象"><i class="bi bi-trash"></i></button>
+        </div>
+        <div id="inspectorEmpty" class="empty-state">
+          <i class="bi bi-cursor"></i>
+          <p>在场景树或三维视口中选择一个物理对象。</p>
+        </div>
+        <form id="inspectorForm" class="inspector-form d-none">
+          <label class="form-label">对象名称</label>
+          <input id="entityName" class="form-control form-control-sm" />
+
+          <div class="section-label">位置 / m</div>
+          <div class="input-triplet">
+            <label>X<input id="posX" type="number" step="0.1" class="form-control form-control-sm" /></label>
+            <label>Y<input id="posY" type="number" step="0.1" class="form-control form-control-sm" /></label>
+            <label>Z<input id="posZ" type="number" step="0.1" class="form-control form-control-sm" /></label>
+          </div>
+
+          <div class="section-label">旋转 / °</div>
+          <div class="input-triplet">
+            <label>X<input id="rotX" type="number" step="1" class="form-control form-control-sm" /></label>
+            <label>Y<input id="rotY" type="number" step="1" class="form-control form-control-sm" /></label>
+            <label>Z<input id="rotZ" type="number" step="1" class="form-control form-control-sm" /></label>
+          </div>
+
+          <div class="section-label">组件</div>
+          <div id="componentList" class="component-list"></div>
+
+          <div id="motionInfo" class="info-box d-none"></div>
+          <div id="arrayInfo" class="info-box d-none"></div>
+          <button type="submit" class="btn btn-primary btn-sm w-100 mt-3">应用修改</button>
+        </form>
+      </aside>
+    </section>
+
+    <section class="bottom-dock panel-surface">
+      <div class="dock-tabs">
+        <button class="dock-tab active" data-dock="timeline"><i class="bi bi-clock-history"></i>时间线</button>
+        <button class="dock-tab" data-dock="chart"><i class="bi bi-graph-up"></i>接收曲线</button>
+        <button class="dock-tab" data-dock="mission"><i class="bi bi-diagram-3"></i>任务配置</button>
+        <button class="dock-tab" data-dock="log"><i class="bi bi-terminal"></i>运行日志</button>
+        <button id="dockCollapseBtn" class="dock-collapse"><i class="bi bi-chevron-down"></i></button>
+      </div>
+      <div id="timelineDock" class="dock-body timeline-body">
+        <button id="playBtn" class="timeline-play"><i class="bi bi-play-fill"></i></button>
+        <span id="currentTime" class="time-readout">0.00 s</span>
+        <input id="timelineSlider" type="range" class="form-range timeline-slider" min="0" max="0" value="0" />
+        <span id="frameReadout" class="frame-readout">帧 1 / 1</span>
+      </div>
+      <div id="chartDock" class="dock-body d-none"><div id="receiverChart"></div></div>
+      <div id="missionDock" class="dock-body d-none"></div>
+      <div id="logDock" class="dock-body d-none"><pre id="logText" class="log-view">等待任务运行。</pre></div>
+    </section>
+  </div>
+
+  <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+  <script src="/static/vendor/bootstrap.bundle.min.js"></script>
+  <script src="/static/vendor/plotly.min.js"></script>
+  <script src="/static/js/studio.js"></script>
+</body>
+</html>
