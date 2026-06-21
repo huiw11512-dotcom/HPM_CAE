@@ -57,3 +57,5 @@ outputs_v20a_vv/platform_readiness/platform_readiness_dimensions.csv
 - 平台成熟度：面向 HPM-DT 八层长期架构的综合成熟度。
 
 当前 V3.0 外部数据如果缺真实源链、相位参考、校准证书和授权测量数据闭环，只能作为预评分附注，不能改写正式可信度评分。相关证据从 `configs/external_data_evidence.yaml` 读取，并输出 `evidence_chain_report.json/csv`。用户也可以通过 `/api/data-import/evidence-package/template` 生成含每阵元功率和实测标定点 CSV 的证据包模板，再通过 `/api/data-import/evidence-package` 提交本机 ZIP/目录证据包，生成 `evidence_package_audit.json/csv`；通过 `/api/data-import/evidence-package/vv-candidate` 可进一步生成 `evidence_package_vv_candidate.json`，把通过审计的证据包接入源链、相位参考、残差和 2σ 覆盖率门槛。平台成熟度报告会优先读取最新的 `evidence_package_vv_candidate.json`，并在“真实数据接入”维度和主链路中显示“证据包候选评分”状态；如果没有用户提交过证据包候选报告，才使用默认模板生成阻断态候选报告。该入口只给出候选评分状态，不会绕过 V&V 残差和人工复核门槛，也不会自动改写正式可信度评分。
+
+Paper Factory 的 `HPM_DT_V20D_投稿准备度审计.json/csv` 已接入“论文生产”维度和主链路。报告会显示投稿准备度审计是否存在、正式投稿门槛是否通过，并把外部 DOI、正式复现实验编号、证据包候选门槛、PDF 归档和目标期刊模板签名缺口展开为关键阻断项。

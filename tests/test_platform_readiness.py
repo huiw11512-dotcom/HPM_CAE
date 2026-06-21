@@ -27,6 +27,8 @@ def test_platform_readiness_config_lives_under_configs():
     assert "多模板导出达标" in paper_gates
     assert "模板审计通过" in paper_gates
     assert "LaTeX编译审计通过" in paper_gates
+    assert "投稿准备度审计存在" in paper_gates
+    assert "投稿门槛通过" in paper_gates
     data_gates = config["dimension_weights"]["真实数据接入"]["gates"]
     assert "证据包V&V候选评分存在" in data_gates
     assert "证据包候选评分门槛满足" in data_gates
@@ -47,14 +49,20 @@ def test_platform_readiness_api_generates_report_artifacts_and_blockers(tmp_path
     assert payload["配置"].endswith("configs\\platform_readiness.yaml") or payload["配置"].endswith("configs/platform_readiness.yaml")
     assert {"可信度验证", "三维CAE工作台", "真实数据接入", "论文生产"} <= {item["维度"] for item in payload["维度"]}
     data_dimension = next(item for item in payload["维度"] if item["维度"] == "真实数据接入")
+    paper_dimension = next(item for item in payload["维度"] if item["维度"] == "论文生产")
     assert any(item["项目"] == "证据包V&V候选评分存在" and item["通过"] is True for item in data_dimension["检查项"])
     assert any(item["项目"] == "证据包候选评分门槛满足" and item["通过"] is False for item in data_dimension["检查项"])
     assert any(item["项目"] == "证据包候选不自动改写评分" and item["通过"] is True for item in data_dimension["检查项"])
+    assert any(item["项目"] == "投稿准备度审计存在" and item["通过"] is True for item in paper_dimension["检查项"])
+    assert any(item["项目"] == "投稿门槛通过" and item["通过"] is False for item in paper_dimension["检查项"])
     assert any(item["步骤"] == "设置材料" and item["通过"] is True for item in payload["主链路"])
     assert any(item["步骤"] == "证据包候选评分" and item["通过"] is True for item in payload["主链路"])
     assert any(item["步骤"] == "正式数据纳入评分" and item["通过"] is False for item in payload["主链路"])
+    assert any(item["步骤"] == "投稿准备度审计" and item["通过"] is True for item in payload["主链路"])
+    assert any(item["步骤"] == "正式投稿门槛" and item["通过"] is False for item in payload["主链路"])
     assert any("候选评分" in item["阻断项"] or "证据包审计" in item["阻断项"] for item in payload["关键阻断项"])
     assert any("真实源链" in item["阻断项"] or "相位参考" in item["阻断项"] for item in payload["关键阻断项"])
+    assert any("外部引用 DOI" in item["阻断项"] or "PDF 编译归档" in item["阻断项"] for item in payload["关键阻断项"])
     assert "真实作用距离" in payload["安全边界"]["不输出项"]
     assert Path(payload["产物"]["json"]).exists()
     assert Path(payload["产物"]["csv"]).exists()
@@ -76,6 +84,8 @@ def test_mission_control_api_summarizes_visible_main_workflow(tmp_path):
     assert any(item["步骤"] == "设置材料" and item["通过"] is True for item in payload["主链路"])
     assert any(item["步骤"] == "证据包候选评分" and item["通过"] is True for item in payload["主链路"])
     assert any(item["步骤"] == "正式数据纳入评分" and item["通过"] is False for item in payload["主链路"])
+    assert any(item["步骤"] == "投稿准备度审计" and item["通过"] is True for item in payload["主链路"])
+    assert any(item["步骤"] == "正式投稿门槛" and item["通过"] is False for item in payload["主链路"])
     assert "真实作用距离" in payload["安全边界"]["不输出项"]
 
 

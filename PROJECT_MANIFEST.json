@@ -34,6 +34,11 @@
     "outputs_v20a_vv/platform_readiness/platform_readiness_report.json",
     "outputs_v20a_vv/platform_readiness/platform_readiness_dimensions.csv"
   ],
+  "平台成熟度投稿准备度接入": [
+    "src/hpm_platform/readiness.py",
+    "configs/platform_readiness.yaml",
+    "outputs_v20a_vv/paper_factory_v20d/HPM_DT_V20D_投稿准备度审计.json"
+  ],
   "项目管理文件": [
     "VISION.md",
     "ROADMAP.md",

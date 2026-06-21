@@ -7,6 +7,7 @@
 - 新增 `/api/platform/readiness` 和 UI“平台成熟度”页面，直接展示使用准备度、发文准备度、主链路接通状态、八层成熟度和关键阻断项。
 - 新增 `/api/platform/mission-control` 和 UI“主控台”首屏，把工程、三维编辑、求解、V&V、数据导入、插件和论文生产串成可见主链路。
 - 平台成熟度与主控台已纳入证据包 V&V 候选评分，真实数据接入维度会显示候选报告是否存在、候选门槛是否满足以及是否保持“不自动改写正式评分”。
+- 平台成熟度与主控台已纳入 Paper Factory 投稿准备度审计，论文生产维度会显示投稿准备度审计是否存在、正式投稿门槛是否通过，并展开 DOI、正式复现实验编号、PDF 和目标期刊模板签名阻断项。
 - 新增 `configs/paper_factory_v20d.yaml`，Paper Factory 现在自动输出 BibTeX 引用库、文献复现注册表、统计审计、IEEE/期刊/学位论文多模板、插件模板合并、模板审计、LaTeX 编译审计和前端论文生产审计表。
 - Paper Factory 已把 `evidence_package_vv_candidate.json` 写入论文草稿、补充材料索引、复现注册表、统计审计和 manifest；候选未过门槛时只作为风险附注，不改写正式可信度评分。
 - Paper Factory 新增投稿准备度审计 `HPM_DT_V20D_投稿准备度审计.json/csv`，将外部 DOI、正式复现实验编号、证据包候选门槛、PDF 归档和目标期刊模板签名纳入 P0/P1 发文阻断项。

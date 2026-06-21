@@ -252,6 +252,10 @@ def _paper_dimension(paper: Mapping[str, Any], config: Mapping[str, Any]) -> dic
     statistics_audit = _mapping(paper.get("统计审计"))
     template_audit = _mapping(paper.get("模板审计"))
     latex_audit = _mapping(paper.get("LaTeX编译审计"))
+    submission_audit = _mapping(paper.get("投稿准备度审计"))
+    submission_blockers = list(submission_audit.get("阻断项", ()) or ())
+    submission_path = Path(str(artifacts.get("投稿准备度审计JSON", "")))
+    submission_score = _number(submission_audit.get("投稿准备度/%"))
     checks = [
         _check("Paper Factory已生成", bool(paper.get("通过")), paper.get("状态", "未知")),
         _check("核心论文产物存在", existing >= _threshold(config, "min_paper_artifacts", 5), f"{existing}/{len(artifact_paths)} 个产物存在"),
@@ -263,14 +267,16 @@ def _paper_dimension(paper: Mapping[str, Any], config: Mapping[str, Any]) -> dic
         _check("多模板导出达标", int(_number(template_audit.get("模板数量"))) >= int(_number(template_audit.get("要求模板数量", 3))), f"{template_audit.get('模板数量', 0)}/{template_audit.get('要求模板数量', 3)} 个模板"),
         _check("模板审计通过", bool(template_audit.get("模板审计通过")), template_audit.get("说明", "未生成")),
         _check("LaTeX编译审计通过", bool(latex_audit.get("结构审计通过")), latex_audit.get("说明", "未生成")),
+        _check("投稿准备度审计存在", bool(submission_audit.get("版本")) and submission_path.exists(), f"投稿准备度 {submission_score:.2f}%，{len(submission_blockers)} 个阻断项", severity="P1"),
+        _check("投稿门槛通过", bool(submission_audit.get("投稿门槛通过")), submission_audit.get("状态", "未生成投稿准备度审计"), severity="P0"),
         _check("论文安全边界写入", bool(paper.get("安全边界")), "草稿包保留模型边界"),
     ]
     return _dimension(
         "论文生产",
         _weighted_checks(checks, _check_weights(config, "论文生产", checks)),
         checks,
-        "Markdown 草稿、IEEE LaTeX 骨架、多模板矩阵、BibTeX 引用库、复现注册表、统计审计、模板审计、LaTeX 审计、图表清单、补充材料和可复现论文包。",
-        f"状态 {paper.get('状态', '未知')}。",
+        "Markdown 草稿、IEEE LaTeX 骨架、多模板矩阵、BibTeX 引用库、复现注册表、统计审计、模板审计、LaTeX 审计、图表清单、补充材料、投稿准备度审计和可复现论文包。",
+        f"状态 {paper.get('状态', '未知')}；投稿准备度 {submission_score:.2f}%。",
         config,
     )
 
@@ -332,6 +338,7 @@ def _workflow_status(
     bridge = _mapping(data_import.get("bridge"))
     audit = _mapping(data_import.get("vv_audit"))
     candidate = _mapping(data_import.get("evidence_package_vv_candidate"))
+    submission = _mapping(paper.get("投稿准备度审计"))
     asset_types = {str(item.get("类型", "")) for item in assets.get("资产", ()) if isinstance(item, Mapping)}
     steps = [
         ("新建/加载工程", bool(scene), "默认工程可由 Workbench scene API 加载"),
@@ -344,6 +351,8 @@ def _workflow_status(
         ("正式数据纳入评分", bool(audit.get("可纳入正式可信度评分")), "当前仍待真实源链/相位参考"),
         ("自动生成图表", int(_number(paper.get("图表数量"))) >= 3, "Paper Factory 图表清单可生成"),
         ("自动生成论文", bool(paper.get("通过")), "Markdown/多模板LaTeX/BibTeX/复现注册/统计审计/ZIP 可生成"),
+        ("投稿准备度审计", bool(submission.get("版本")), f"投稿准备度 {_number(submission.get('投稿准备度/%')):.2f}%，阻断项 {len(submission.get('阻断项', ()) or ())} 个"),
+        ("正式投稿门槛", bool(submission.get("投稿门槛通过")), submission.get("状态", "未生成投稿准备度审计")),
     ]
     return [
         {
@@ -437,6 +446,18 @@ def _blockers(dimensions: list[dict[str, Any]], data_import: Mapping[str, Any], 
                 "维度": "论文生产",
                 "阻断项": "缺少 " + "、".join(missing_paper_items),
                 "证据": "Paper Factory 产物审计",
+            }
+        )
+    submission = _mapping(paper_factory.get("投稿准备度审计"))
+    for item in submission.get("阻断项", ()) or ():
+        if not isinstance(item, Mapping):
+            continue
+        rows.append(
+            {
+                "优先级": str(item.get("严重度", "P1")),
+                "维度": "论文生产",
+                "阻断项": str(item.get("项目", "投稿准备度阻断项")),
+                "证据": str(item.get("证据", "投稿准备度审计")),
             }
         )
     rows.append(
