@@ -172,6 +172,13 @@ def create_app(
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"生成数据导入模型误差对比预览失败：{exc}") from exc
 
+    @app.get("/api/data-import/evidence-chain")
+    async def data_import_evidence_chain() -> dict[str, Any]:
+        try:
+            return service.data_import_evidence_chain()
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"生成外部数据证据链审计失败：{exc}") from exc
+
     @app.get("/api/data-import/vv-audit")
     async def data_import_vv_audit() -> dict[str, Any]:
         try:

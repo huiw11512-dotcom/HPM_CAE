@@ -14,6 +14,10 @@ from typing import Any
 
 import numpy as np
 
+from hpm_platform.data_import.evidence_chain import (
+    evidence_source_chain_ready,
+    generate_evidence_chain_report,
+)
 from hpm_platform.data_import.importers import DataImportService, DEFAULT_OUTPUT
 from hpm_platform.data_import.model_comparison import generate_model_comparison_report
 from hpm_platform.validation.vv_metrics import bounded_score, grade_from_score
@@ -40,8 +44,10 @@ def generate_external_data_vv_audit(
     data_import = service or DataImportService(output_root)
     blockers: list[str] = []
     comparison: dict[str, Any] = {}
+    evidence: dict[str, Any] = {}
 
     try:
+        evidence = generate_evidence_chain_report(output_root)
         comparison = generate_model_comparison_report(
             project_path,
             output_root,
@@ -50,6 +56,7 @@ def generate_external_data_vv_audit(
         )
         audit = build_external_data_vv_audit(
             comparison,
+            evidence_report=evidence,
             base_credibility_score=base_credibility_score,
             output_file=report_path,
         )
@@ -58,6 +65,7 @@ def generate_external_data_vv_audit(
         audit = _blocked_audit(
             blockers=blockers,
             comparison=comparison,
+            evidence_report=evidence,
             base_credibility_score=base_credibility_score,
             output_file=report_path,
         )
@@ -69,6 +77,7 @@ def generate_external_data_vv_audit(
 def build_external_data_vv_audit(
     comparison: dict[str, Any],
     *,
+    evidence_report: dict[str, Any] | None = None,
     base_credibility_score: float | None = None,
     output_file: str | Path | None = None,
 ) -> dict[str, Any]:
@@ -77,7 +86,7 @@ def build_external_data_vv_audit(
     passed_comparison = bool(comparison.get("通过"))
     residual = comparison.get("误差对比") if isinstance(comparison.get("误差对比"), dict) else {}
     coverage = comparison.get("不确定度覆盖率") if isinstance(comparison.get("不确定度覆盖率"), dict) else {}
-    source_chain_ready = _gate_passed(comparison, "真实源链与相位参考已接入")
+    source_chain_ready = evidence_source_chain_ready(evidence_report) or _gate_passed(comparison, "真实源链与相位参考已接入")
 
     relative_rmse = _float_or_none(residual.get("标定后相对RMSE/%"))
     two_sigma_coverage = _float_or_none(coverage.get("2sigma覆盖率/%"))
@@ -152,8 +161,10 @@ def build_external_data_vv_audit(
             two_sigma_coverage=two_sigma_coverage,
             median_normalized=median_normalized,
             comparison=comparison,
+            evidence_report=evidence_report,
         ),
         "门槛": gates,
+        "证据链审计": _evidence_summary(evidence_report),
         "输入报告": comparison.get("输出文件"),
         "输出文件": str(Path(output_file).resolve()) if output_file else None,
         "安全边界": (
@@ -170,6 +181,7 @@ def _blocked_audit(
     *,
     blockers: list[str],
     comparison: dict[str, Any],
+    evidence_report: dict[str, Any],
     base_credibility_score: float | None,
     output_file: Path,
 ) -> dict[str, Any]:
@@ -192,6 +204,7 @@ def _blocked_audit(
         },
         "风险信号": [f"外部数据审计阻断：{item}" for item in blockers],
         "门槛": [{"项目": "外部数据 V&V 审计可执行", "通过": False}],
+        "证据链审计": _evidence_summary(evidence_report),
         "输入报告": comparison.get("输出文件"),
         "输出文件": str(output_file.resolve()),
         "阻断项": blockers,
@@ -232,10 +245,20 @@ def _risk_signals(
     two_sigma_coverage: float | None,
     median_normalized: float | None,
     comparison: dict[str, Any],
+    evidence_report: dict[str, Any] | None = None,
 ) -> list[str]:
     signals: list[str] = []
     if not source_chain_ready:
-        signals.append("真实源链与相位参考未接入，不能作为实测闭环标定结论。")
+        if evidence_report:
+            failed = [
+                str(item.get("项目"))
+                for item in evidence_report.get("阻断项", ())
+                if isinstance(item, dict) and item.get("严重度") == "P0"
+            ]
+            detail = "；".join(failed) if failed else "证据链未通过"
+            signals.append(f"真实源链与相位参考未接入：{detail}。")
+        else:
+            signals.append("真实源链与相位参考未接入，不能作为实测闭环标定结论。")
     if sample_count < 10:
         signals.append(f"样本数为 {sample_count}，只能支撑接口级预览，统计外推能力不足。")
     if relative_rmse is None:
@@ -255,6 +278,23 @@ def _risk_signals(
     if "代理激励" in str(comparison.get("安全边界", "")):
         signals.append("当前误差对比使用代理激励，不能解释为硬件源功率或效应标定。")
     return signals or ["未发现外部数据审计风险信号。"]
+
+
+def _evidence_summary(evidence_report: dict[str, Any] | None) -> dict[str, Any]:
+    if not evidence_report:
+        return {"通过": False, "说明": "未生成外部数据证据链审计。"}
+    return {
+        "版本": evidence_report.get("版本"),
+        "通过": bool(evidence_report.get("通过")),
+        "真实源链与相位参考已接入": bool(evidence_report.get("真实源链与相位参考已接入")),
+        "可纳入正式可信度评分证据": bool(evidence_report.get("可纳入正式可信度评分证据")),
+        "阻断项": [
+            item.get("项目")
+            for item in evidence_report.get("阻断项", ())
+            if isinstance(item, dict)
+        ],
+        "输出文件": evidence_report.get("输出文件"),
+    }
 
 
 def _risk_adjusted_score(

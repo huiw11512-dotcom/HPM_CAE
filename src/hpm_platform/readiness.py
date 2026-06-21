@@ -177,6 +177,7 @@ def _data_import_dimension(data_import: Mapping[str, Any], config: Mapping[str, 
     readiness = _mapping(data_import.get("readiness"))
     bridge = _mapping(data_import.get("bridge"))
     comparison = _mapping(data_import.get("model_comparison"))
+    evidence = _mapping(data_import.get("evidence_chain"))
     audit = _mapping(data_import.get("vv_audit"))
     formats = set(str(item) for item in catalog.get("支持格式", ()) or ())
     checks = [
@@ -184,6 +185,13 @@ def _data_import_dimension(data_import: Mapping[str, Any], config: Mapping[str, 
         _check("标定准备度通过", bool(readiness.get("通过")), f"准备度 {readiness.get('总体得分', '—')}"),
         _check("CalibrationSamples桥接通过", bool(bridge.get("通过")), f"样本 {bridge.get('样本数', 0)} 个"),
         _check("模型误差对比通过", bool(comparison.get("通过")), f"样本 {comparison.get('样本数', 0)} 个"),
+        _check("证据链审计可执行", bool(evidence.get("输出文件")), evidence.get("输出文件", "未生成")),
+        _check(
+            "真实源链与相位参考证据通过",
+            bool(evidence.get("真实源链与相位参考已接入")),
+            "授权、源链、相位参考和校准证书均需通过",
+            severity="P0",
+        ),
         _check("外部数据V&V审计存在", int(_number(audit.get("样本数"))) > 0, f"样本 {audit.get('样本数', 0)} 个"),
         _check(
             "可纳入正式可信度评分",

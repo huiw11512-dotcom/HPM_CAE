@@ -1,0 +1,42 @@
+version: V3.0-evidence-chain-v1
+dataset_id: V30-MEASUREMENT-CAMPAIGN
+
+thresholds:
+  max_phase_reference_uncertainty_deg: 5.0
+  min_raw_data_hashes: 1
+
+evidence:
+  authorization:
+    approved_for_research: false
+    approval_id: DEMO-ONLY
+    owner: HPM-DT preview
+    usage_scope: 算法接口演示，不用于正式可信度评分
+  source_chain:
+    status: preview_proxy
+    source_type: normalized_measurement_campaign
+    instrument_chain_id: DEMO-CHAIN-NOT-FORMAL
+    source_chain_hash: ""
+    traceability_note: 内置演示样例，不具备真实源链追溯
+  phase_reference:
+    status: preview_internal
+    reference_type: synthetic_phase_origin
+    locked_reference: false
+    reference_uncertainty_deg: null
+    phase_reference_hash: ""
+  calibration:
+    status: preview
+    certificate_id: DEMO-CAL-NOT-FORMAL
+    certificate_sha256: ""
+    valid_for_dataset: false
+  uncertainty_model:
+    status: preview
+    amplitude_sigma_declared: true
+    phase_sigma_declared: true
+    coverage_statement: 内置样例仅用于接口审计
+  raw_data_lineage:
+    raw_data_hashes: []
+    processing_script_hash: ""
+    immutable_archive: false
+
+safety_boundary:
+  本证据链只登记数据血缘、源链、相位参考、校准证书和不确定度模型；不登记真实作用距离、器件阈值或真实毁伤概率。

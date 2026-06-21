@@ -15,6 +15,7 @@ GET  /api/data-import/acceptance
 GET  /api/data-import/calibration-readiness
 GET  /api/data-import/calibration-bridge
 GET  /api/data-import/model-comparison
+GET  /api/data-import/evidence-chain
 GET  /api/data-import/vv-audit
 GET  /api/data-import/samples/{sample_id}
 POST /api/data-import/inspect
@@ -68,13 +69,27 @@ Measurement Campaign 样例会把 `x_mm/y_mm/z_mm` 按 `reference_frequency_ghz`
 
 该报告只证明外部测量批次已经能进入“导入样本 -> 标定接口 -> 模型残差 -> 不确定度覆盖率”的软件闭环。真实 V&V 结论仍需要授权外部数据、真实馈电链/相位参考、误差模型和独立复核。
 
+## 外部数据证据链与相位参考审计
+
+当前版本新增 `configs/external_data_evidence.yaml` 与 `evidence_chain_report.json`，用于把“真实数据闭环还差什么”固化为可配置、可审计的门槛：
+
+- 研究授权声明；
+- 真实源链哈希与仪器链 ID；
+- 已锁定的相位参考与参考不确定度；
+- 校准证书 ID 与 SHA256；
+- 幅度/相位不确定度模型；
+- 原始数据哈希和不可变归档声明；
+- 安全边界声明。
+
+默认配置是演示级配置，故意不通过正式门槛。用户后续只能通过替换授权测量链、相位参考和校准证书元数据来推动 `真实源链与相位参考已接入=true`；平台不会从归一化代理样例中自动推断真实源链。
+
 ## 外部数据 V&V 可信度审计
 
 当前版本新增 `external_data_vv_audit.json`，把模型误差对比报告进一步传播为 V&V 风险审计：
 
 - 输出外部数据预评分、预评分等级和分项得分；
 - 把标定后相对 RMSE、2σ 覆盖率、中位归一化残差等指标整理为关键指标；
-- 显式判断“可纳入正式可信度评分”，当前代理激励预览因真实源链/相位参考未接入而保持 `false`；
+- 读取证据链审计并显式判断“可纳入正式可信度评分”，当前代理激励预览因真实源链/相位参考未接入而保持 `false`；
 - 给出风险调整预览评分，但在不满足正式门槛时不改写 V2.0A 核心可信度评分；
 - 输出风险信号和门槛表，便于论文工厂和工作台复用同一份审计证据。
 

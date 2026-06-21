@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from hpm_platform.data_import import (
     DataImportService,
     generate_calibration_bridge_report,
+    generate_evidence_chain_report,
     generate_external_data_vv_audit,
     generate_model_comparison_report,
     inspect_dataset,
@@ -153,7 +154,23 @@ def test_v30_external_data_vv_audit_keeps_proxy_data_out_of_formal_score(tmp_pat
     assert report["正式评分策略"]["是否改写正式评分"] is False
     assert any("真实源链" in item for item in report["风险信号"])
     assert any(item["项目"] == "真实源链与相位参考已接入" and item["通过"] is False for item in report["门槛"])
+    assert report["证据链审计"]["真实源链与相位参考已接入"] is False
     assert Path(report["输出文件"]).exists()
+
+
+def test_v30_evidence_chain_audit_is_config_driven_and_blocks_demo_data(tmp_path):
+    report = generate_evidence_chain_report(tmp_path)
+
+    assert report["版本"] == "V3.0-evidence-chain-v1"
+    assert report["数据集ID"] == "V30-MEASUREMENT-CAMPAIGN"
+    assert report["通过"] is False
+    assert report["真实源链与相位参考已接入"] is False
+    assert report["可纳入正式可信度评分证据"] is False
+    assert any(item["项目"] == "真实源链可追溯" and item["通过"] is False for item in report["验收清单"])
+    assert any(item["严重度"] == "P0" for item in report["阻断项"])
+    assert "真实作用距离" in report["安全边界"]
+    assert Path(report["输出文件"]).exists()
+    assert Path(report["CSV"]).exists()
 
 
 def test_v30_data_import_rejects_unknown_format(tmp_path):
@@ -175,6 +192,7 @@ def test_v30_data_import_api_and_frontend_assets(tmp_path):
         readiness = client.get("/api/data-import/calibration-readiness")
         bridge = client.get("/api/data-import/calibration-bridge")
         model_comparison = client.get("/api/data-import/model-comparison")
+        evidence_chain = client.get("/api/data-import/evidence-chain")
         vv_audit = client.get("/api/data-import/vv-audit")
         sample = client.get("/api/data-import/samples/V30-TOUCHSTONE-S2P")
         by_path = client.post("/api/data-import/inspect", json={"path": sample.json()["源文件"]})
@@ -194,8 +212,12 @@ def test_v30_data_import_api_and_frontend_assets(tmp_path):
     assert model_comparison.json()["通过"] is True
     assert model_comparison.json()["样本数"] == 5
     assert model_comparison.json()["不确定度覆盖率"]["不确定度可用"] is True
+    assert evidence_chain.status_code == 200
+    assert evidence_chain.json()["通过"] is False
+    assert evidence_chain.json()["真实源链与相位参考已接入"] is False
     assert vv_audit.status_code == 200
     assert vv_audit.json()["可纳入正式可信度评分"] is False
+    assert vv_audit.json()["证据链审计"]["通过"] is False
     assert vv_audit.json()["样本数"] == 5
     assert sample.status_code == 200
     assert sample.json()["格式"] == "Touchstone"
@@ -209,13 +231,16 @@ def test_v30_data_import_api_and_frontend_assets(tmp_path):
     assert 'data-testid="data-import-calibration-readiness"' in html
     assert 'data-testid="data-import-calibration-bridge"' in html
     assert 'data-testid="data-import-model-comparison"' in html
+    assert 'data-testid="data-import-evidence-chain"' in html
     assert 'data-testid="data-import-vv-audit"' in html
     assert "/api/data-import/catalog" in js
     assert "/api/data-import/calibration-bridge" in js
     assert "/api/data-import/model-comparison" in js
+    assert "/api/data-import/evidence-chain" in js
     assert "/api/data-import/vv-audit" in js
     assert "渲染数据导入标定准备" in js
     assert "渲染数据导入标定桥接" in js
     assert "渲染数据导入模型误差对比" in js
+    assert "渲染数据导入证据链" in js
     assert "渲染数据导入VV审计" in js
     assert "/api/data-import/inspect" in js

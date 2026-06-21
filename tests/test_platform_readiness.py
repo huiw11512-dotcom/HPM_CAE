@@ -51,6 +51,7 @@ def test_platform_readiness_frontend_and_manifest_register_entrypoints():
     assert "/api/platform/readiness" in js
     assert "渲染平台成熟度" in js
     assert "platform_readiness.yaml" in manifest
+    assert "external_data_evidence.yaml" in manifest
 
 
 def test_required_project_management_files_exist_and_state_safety_scope():

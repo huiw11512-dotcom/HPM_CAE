@@ -7,9 +7,9 @@
 | 规则 | 当前落实 |
 |---|---|
 | 新增功能必须增加测试 | 新增平台成熟度模块配套 `tests/test_platform_readiness.py` |
-| 禁止复制已有功能 | 成熟度报告复用 V&V、Workbench、DataImport、Plugin、PaperFactory 服务结果 |
-| 禁止孤立算法 | 成熟度评估接入配置、API、UI、报告产物和 manifest |
-| 禁止硬编码 | 评分权重、门槛和安全边界进入 `configs/platform_readiness.yaml` |
+| 禁止复制已有功能 | 成熟度报告复用 V&V、Workbench、DataImport、Plugin、PaperFactory 服务结果；证据链审计复用 V3.0 数据导入与外部 V&V 审计 |
+| 禁止孤立算法 | 成熟度评估和证据链审计均接入配置、API、UI、报告产物和 manifest |
+| 禁止硬编码 | 成熟度评分进入 `configs/platform_readiness.yaml`；外部数据授权/源链/相位参考门槛进入 `configs/external_data_evidence.yaml` |
 | 论文适应平台 | Paper Factory 读取平台 V&V 结果，不为论文临时改核心求解 |
 
 ## 安全边界

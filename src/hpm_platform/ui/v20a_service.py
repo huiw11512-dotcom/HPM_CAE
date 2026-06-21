@@ -9,6 +9,7 @@ from typing import Any
 from hpm_platform.data_import import (
     DataImportService,
     generate_calibration_bridge_report,
+    generate_evidence_chain_report,
     generate_external_data_vv_audit,
     generate_model_comparison_report,
 )
@@ -82,6 +83,10 @@ class V20AValidationService:
                 self.data_import,
             )
 
+    def data_import_evidence_chain(self) -> dict[str, Any]:
+        with self._lock:
+            return generate_evidence_chain_report(self.output_dir)
+
     def data_import_vv_audit(self) -> dict[str, Any]:
         with self._lock:
             base_score = None
@@ -108,6 +113,7 @@ class V20AValidationService:
             vv_payload = self.overview()
             bridge = self.data_import_calibration_bridge()
             comparison = self.data_import_model_comparison()
+            evidence_chain = self.data_import_evidence_chain()
             external_audit = self.data_import_vv_audit()
             imported_bridge = self.ensure_workbench_imported_calibration_bridge()
             scene = self.workbench3d.scene()
@@ -134,6 +140,7 @@ class V20AValidationService:
                     "readiness": self.data_import.calibration_readiness(),
                     "bridge": bridge,
                     "model_comparison": comparison,
+                    "evidence_chain": evidence_chain,
                     "vv_audit": external_audit,
                 },
                 plugins={
