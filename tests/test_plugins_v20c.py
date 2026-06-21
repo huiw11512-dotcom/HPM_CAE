@@ -19,6 +19,7 @@ def test_v20c_registry_loads_builtin_plugin_manifests():
 
     assert ids == {
         "hpm.data_import.evidence_chain",
+        "hpm.publication.paper_template_pack",
         "hpm.propagation.hybrid_scene",
         "hpm.perception.music_esprit_benchmark",
         "hpm.publication.vv_report_pack",
@@ -38,7 +39,7 @@ def test_v20c_marketplace_runs_allowlisted_plugins_and_enforces_enable_state(tmp
     acceptance = service.acceptance_summary()
 
     assert catalog["版本"] == "V2.0C-preview"
-    assert catalog["插件总数"] == 4
+    assert catalog["插件总数"] == 5
     assert acceptance["通过"] is True
     assert any(item["项目"] == "数据导入插件可注册" and item["通过"] for item in acceptance["验收清单"])
 
@@ -52,6 +53,11 @@ def test_v20c_marketplace_runs_allowlisted_plugins_and_enforces_enable_state(tmp
     report = service.run_plugin("hpm.publication.vv_report_pack", {"format": "latex"})
     assert report["参数"]["format"] == "latex"
     assert report["结果"]["目标产物"].endswith("v20A_论文表格.tex")
+
+    paper_templates = service.run_plugin("hpm.publication.paper_template_pack", {"format": "paper_template"})
+    assert paper_templates["成功"] is True
+    assert paper_templates["结果"]["论文模板数量"] >= 2
+    assert {item["类型"] for item in paper_templates["结果"]["论文模板"]} >= {"journal_article", "thesis_chapter"}
 
     data_import = service.run_plugin("hpm.data_import.evidence_chain", {"report_type": "evidence_chain"})
     assert data_import["成功"] is True
@@ -82,7 +88,7 @@ def test_v20c_api_exposes_plugin_marketplace(tmp_path):
         rejected = client.post("/api/plugins/hpm.propagation.hybrid_scene/run", json={"parameters": {}})
 
     assert catalog.status_code == 200
-    assert catalog.json()["插件总数"] == 4
+    assert catalog.json()["插件总数"] == 5
     assert acceptance.status_code == 200
     assert acceptance.json()["通过"] is True
     assert detail.status_code == 200

@@ -29,7 +29,7 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     assert manifest["表格数量"] >= 3
     assert manifest["引用数量"] >= 3
     assert manifest["复现条目数"] >= 6
-    assert manifest["模板数量"] >= 3
+    assert manifest["模板数量"] >= 5
     assert manifest["统计审计"]["统计审计通过"] is True
     assert manifest["模板审计"]["模板审计通过"] is True
     assert manifest["LaTeX编译审计"]["结构审计通过"] is True
@@ -41,6 +41,7 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     assert "@misc{hpm_dt_platform" in bibliography
     assert template_audit["模板审计通过"] is True
     assert {row["类型"] for row in template_audit["模板"]} >= {"ieee_conference", "journal_article", "thesis_chapter"}
+    assert any(row["来源插件"] == "hpm.publication.paper_template_pack" for row in template_audit["模板"])
     assert latex_audit["结构审计通过"] is True
     assert bundle.templates_dir.exists()
     assert bundle.archive.exists()
@@ -66,6 +67,7 @@ def test_v20d_paper_factory_config_lives_under_configs():
     assert config["version"] == "V2.0D-paper-factory-v1"
     assert config["latex"]["require_compiler_for_preview"] is False
     assert config["templates"]["min_templates"] == 3
+    assert "hpm.publication.paper_template_pack" in config["templates"]["plugin_templates"]["plugin_ids"]
     assert {item["kind"] for item in config["templates"]["entries"]} >= {"ieee_conference", "journal_article", "thesis_chapter"}
     assert len(config["references"]) >= 3
     assert "真实作用距离" in config["safety_boundary"]["no_output_items"]

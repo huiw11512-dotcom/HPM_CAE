@@ -117,5 +117,5 @@ safety_boundary:
 
 next_actions:
   - 优先把 V3.0 Measurement Campaign 的真实源链、相位参考、仪器校准证书和授权数据血缘接入外部数据 V&V。
-  - 把 Paper Factory 的外部 DOI、正式复现实验编号、真实授权数据证据链、目标期刊模板插件和 PDF 归档补齐。
+  - 把 Paper Factory 的外部 DOI、正式复现实验编号、真实授权数据证据链、外部目标期刊模板签名和 PDF 归档补齐。
   - 继续补齐三维 Workbench 的尺寸/旋转 Gizmo、正式工程数据库和任务调度器。

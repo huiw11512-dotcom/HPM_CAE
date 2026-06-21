@@ -19,6 +19,7 @@ from typing import Any, Mapping
 
 import yaml
 
+from hpm_platform.plugins import PluginRegistry
 from hpm_platform.validation.vv_runner import load_last_vv_result
 
 
@@ -529,7 +530,43 @@ def _template_definitions(config: Mapping[str, Any]) -> list[dict[str, Any]]:
             "required_sections": [str(section) for section in item.get("required_sections", ()) or ()],
         }
         templates.append(template)
-    return templates or _default_template_definitions()
+    templates.extend(_plugin_template_definitions(config))
+    if not templates:
+        templates = _default_template_definitions()
+    deduped: dict[str, dict[str, Any]] = {}
+    for template in templates:
+        deduped.setdefault(str(template["id"]), template)
+    return list(deduped.values())
+
+
+def _plugin_template_definitions(config: Mapping[str, Any]) -> list[dict[str, Any]]:
+    plugin_cfg = _as_mapping(_as_mapping(config.get("templates")).get("plugin_templates"))
+    if not bool(plugin_cfg.get("enabled", True)):
+        return []
+    plugin_dirs = tuple(_resolve_project_path(item) for item in plugin_cfg.get("plugin_dirs", ()) or ())
+    registry = PluginRegistry(plugin_dirs or None)
+    requested_ids = {str(item) for item in plugin_cfg.get("plugin_ids", ()) or ()}
+    templates: list[dict[str, Any]] = []
+    for plugin in registry.list():
+        if plugin.category != "report_template":
+            continue
+        if requested_ids and plugin.plugin_id not in requested_ids:
+            continue
+        for item in plugin.settings.get("paper_templates", ()) or ():
+            if not isinstance(item, Mapping):
+                continue
+            template = {
+                "id": _safe_bib_key(item.get("id") or f"{plugin.plugin_id}_template_{len(templates)+1}"),
+                "name": str(item.get("name") or f"{plugin.name} 模板{len(templates)+1}"),
+                "kind": str(item.get("kind") or "journal_article"),
+                "filename": str(item.get("filename") or f"{_safe_bib_key(plugin.plugin_id)}_{len(templates)+1}.tex"),
+                "documentclass": str(item.get("documentclass") or "\\documentclass[UTF8]{ctexart}"),
+                "audience": str(item.get("audience") or plugin.summary or "科研论文草稿"),
+                "required_sections": [str(section) for section in item.get("required_sections", ()) or ()],
+                "source_plugin": plugin.plugin_id,
+            }
+            templates.append(template)
+    return templates
 
 
 def _default_template_definitions() -> list[dict[str, Any]]:
@@ -575,6 +612,7 @@ def _write_latex_templates(templates_dir: Path, context: Mapping[str, Any], conf
                 "模板ID": template["id"],
                 "模板名称": template["name"],
                 "类型": template["kind"],
+                "来源插件": template.get("source_plugin", ""),
                 "面向场景": template["audience"],
                 "文件": str(path.resolve()),
                 "包内文件": str(path.relative_to(templates_dir.parent)),
@@ -691,7 +729,7 @@ def _template_audit(template_rows: list[dict[str, Any]], config: Mapping[str, An
 
 def _write_template_audit_csv(path: Path, audit: Mapping[str, Any]) -> None:
     with path.open("w", encoding="utf-8-sig", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["模板ID", "模板名称", "类型", "面向场景", "通过", "结构审计通过", "包内文件", "文件"])
+        writer = csv.DictWriter(handle, fieldnames=["模板ID", "模板名称", "类型", "来源插件", "面向场景", "通过", "结构审计通过", "包内文件", "文件"])
         writer.writeheader()
         for row in audit.get("模板", ()) or ():
             writer.writerow({key: row.get(key, "") for key in writer.fieldnames})
@@ -993,6 +1031,11 @@ def _safe_template_filename(value: Any, fallback: str) -> str:
         name = f"{name}.tex"
     stem = _safe_stem(Path(name).stem)
     return f"{stem}.tex"
+
+
+def _resolve_project_path(value: Any) -> Path:
+    path = Path(str(value))
+    return path if path.is_absolute() else PROJECT_ROOT / path
 
 
 def _safe_stem(stem: str) -> str:

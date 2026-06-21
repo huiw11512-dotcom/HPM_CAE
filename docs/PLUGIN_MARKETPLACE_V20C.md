@@ -25,6 +25,7 @@ POST /api/plugins/{plugin_id}/run
 | `hpm.perception.music_esprit_benchmark` | `perception_algorithm` | Perception Layer | `perception_benchmark_summary` |
 | `hpm.data_import.evidence_chain` | `data_import_adapter` | CAE Layer | `data_import_summary` |
 | `hpm.publication.vv_report_pack` | `report_template` | Publication Layer | `report_template_summary` |
+| `hpm.publication.paper_template_pack` | `report_template` | Publication Layer | `report_template_summary` |
 
 ## Manifest 字段
 
@@ -56,6 +57,7 @@ POST /api/plugins/{plugin_id}/run
 - 不从插件 manifest 导入任意 Python 模块；
 - 不输出绝对源功率、器件阈值、现实作用距离或毁伤概率；
 - 外部插件包、签名校验、沙箱和插件级 V&V 属于后续门槛。
+- `report_template` 插件可以在 `settings.paper_templates` 中声明论文模板，Paper Factory 会按 `configs/paper_factory_v20d.yaml` 的 `plugin_templates` 白名单合并这些模板。
 
 ## 下一步
 
@@ -64,4 +66,4 @@ POST /api/plugins/{plugin_id}/run
 - 把插件运行绑定到三维工作台求解链路；
 - 为每个插件建立 V&V 夹具和回归测试；
 - 设计外部插件签名、隔离执行和版本兼容策略；
-- 为 V2.0D Paper Factory 暴露论文模板插件协议。
+- 把论文模板插件从内置预览扩展到可签名的外部目标期刊模板包。

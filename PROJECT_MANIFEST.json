@@ -198,6 +198,7 @@
     "plugins/builtin/data_import_evidence_chain.json",
     "plugins/builtin/field_backend_hybrid_scene.json",
     "plugins/builtin/perception_music_esprit.json",
+    "plugins/builtin/paper_template_pack.json",
     "plugins/builtin/report_template_vv_pack.json"
   ],
   "V2.0C插件API": [
@@ -226,6 +227,8 @@
     "outputs_v20a_vv/paper_factory_v20d/templates/HPM_DT_V20D_IEEE会议论文模板.tex",
     "outputs_v20a_vv/paper_factory_v20d/templates/HPM_DT_V20D_期刊论文模板.tex",
     "outputs_v20a_vv/paper_factory_v20d/templates/HPM_DT_V20D_学位论文章节模板.tex",
+    "outputs_v20a_vv/paper_factory_v20d/templates/HPM_DT_V20D_IEEE_Access扩展模板.tex",
+    "outputs_v20a_vv/paper_factory_v20d/templates/HPM_DT_V20D_中文博士论文章节模板.tex",
     "outputs_v20a_vv/paper_factory_v20d/HPM_DT_V20D_模板审计.json",
     "outputs_v20a_vv/paper_factory_v20d/HPM_DT_V20D_模板审计.csv",
     "outputs_v20a_vv/paper_factory_v20d/HPM_DT_V20D_LaTeX编译审计.json",

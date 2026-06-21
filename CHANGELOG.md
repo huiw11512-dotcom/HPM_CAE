@@ -6,7 +6,8 @@
 - 新增配置文件 `configs/platform_readiness.yaml`，统一管理成熟度权重、验收门槛和安全边界，避免硬编码评分口径。
 - 新增 `/api/platform/readiness` 和 UI“平台成熟度”页面，直接展示使用准备度、发文准备度、主链路接通状态、八层成熟度和关键阻断项。
 - 新增 `/api/platform/mission-control` 和 UI“主控台”首屏，把工程、三维编辑、求解、V&V、数据导入、插件和论文生产串成可见主链路。
-- 新增 `configs/paper_factory_v20d.yaml`，Paper Factory 现在自动输出 BibTeX 引用库、文献复现注册表、统计审计、IEEE/期刊/学位论文多模板、模板审计、LaTeX 编译审计和前端论文生产审计表。
+- 新增 `configs/paper_factory_v20d.yaml`，Paper Factory 现在自动输出 BibTeX 引用库、文献复现注册表、统计审计、IEEE/期刊/学位论文多模板、插件模板合并、模板审计、LaTeX 编译审计和前端论文生产审计表。
+- 新增 `hpm.publication.paper_template_pack` 内置论文模板包插件，V2.0C `report_template` 插件协议可向 V2.0D Paper Factory 暴露论文模板声明。
 - 新增 `configs/external_data_evidence.yaml`、`src/hpm_platform/data_import/evidence_chain.py` 与 `/api/data-import/evidence-chain`，审计外部数据授权、源链、相位参考、校准证书、原始数据哈希和不确定度模型。
 - 新增 `hpm.data_import.evidence_chain` 内置数据导入插件，V2.0C 插件市场支持 `data_import_adapter` 类别和 `data_import_summary` 白名单钩子。
 - 新增根目录项目管理文件 `VISION.md`、`ROADMAP.md`、`ARCHITECTURE.md`、`PROJECT_AUDIT.md`、`STATUS.md`。

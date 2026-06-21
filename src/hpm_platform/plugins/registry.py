@@ -361,14 +361,27 @@ class PluginMarketplaceService:
             "html": self.output_dir / "v20A_可信度验证报告.html",
             "latex": self.output_dir / "v20A_论文表格.tex",
             "zip": self.output_dir / "v20A_VV结果包.zip",
+            "paper_template": self.output_dir / "paper_factory_v20d" / "templates",
         }
         output_path = known_outputs.get(requested, known_outputs["html"])
+        paper_templates = list(plugin.settings.get("paper_templates", ()) or [])
         return {
             "执行摘要": f"报告模板插件已选择 {requested} 输出。",
             "目标产物": str(output_path),
             "产物存在": output_path.exists(),
+            "论文模板数量": len(paper_templates),
+            "论文模板": [
+                {
+                    "模板ID": item.get("id", ""),
+                    "模板名称": item.get("name", ""),
+                    "类型": item.get("kind", ""),
+                    "文件名": item.get("filename", ""),
+                }
+                for item in paper_templates
+                if isinstance(item, Mapping)
+            ],
             "模板能力": ["中文 HTML 报告", "LaTeX 表格", "论文图包索引", "V&V 结果包"],
-            "下一步接口": "V2.0D Paper Factory 将在此基础上生成 IEEE 草稿和补充材料。",
+            "下一步接口": "V2.0D Paper Factory 可从 report_template 插件合并论文模板声明。",
         }
 
 

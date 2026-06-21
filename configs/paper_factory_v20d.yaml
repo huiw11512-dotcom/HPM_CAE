@@ -13,6 +13,12 @@ latex:
 
 templates:
   min_templates: 3
+  plugin_templates:
+    enabled: true
+    plugin_dirs:
+      - plugins/builtin
+    plugin_ids:
+      - hpm.publication.paper_template_pack
   entries:
     - id: ieee_conference
       name: IEEE会议论文模板
