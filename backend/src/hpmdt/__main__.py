@@ -1,4 +1,4 @@
-"""Temporary Studio entry point for the reboot baseline."""
+"""Studio command entry point."""
 from __future__ import annotations
 
 import argparse
@@ -13,7 +13,7 @@ def main() -> None:
     if args.version:
         print(f"HPM-DT Studio {__version__}")
         return
-    print("HPM-DT Studio reboot baseline. Domain implementation starts in Commit 2.")
+    print("HPM-DT Studio domain kernel is available. Application services start in Commit 3.")
 
 
 if __name__ == "__main__":

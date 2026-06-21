@@ -29,5 +29,6 @@ def test_reboot_branch_does_not_keep_legacy_worktree_payloads():
 def test_reboot_status_records_next_commit():
     status = read("REBOOT_STATUS.md")
     assert "reboot/studio-core" in status
-    assert "Commit 2" in status
+    assert "Commit 3" in status
+    assert "hpmdt project format" in status or "ZIP 工程格式" in status
     assert "core: introduce entity component scene domain" in status
