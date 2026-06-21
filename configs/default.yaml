@@ -1,0 +1,43 @@
+seed: 20260619
+
+array:
+  nx: 8
+  ny: 8
+  frequency_hz: 1.0e10
+  spacing_lambda: 0.5
+
+perception:
+  snapshots: 512
+  desired:
+    theta_deg: 12.3
+    phi_deg: 0.0
+    snr_db: 0.0
+  interferer:
+    theta_deg: 37.7
+    phi_deg: 0.0
+    inr_db: 25.0
+  scan:
+    theta_min_deg: 0.0
+    theta_max_deg: 65.0
+    theta_points: 131
+    phi_min_deg: -30.0
+    phi_max_deg: 30.0
+    phi_points: 121
+
+protection:
+  diagonal_loading: 0.01
+
+field_control:
+  focus_lambda: [5.3, 0.0, 45.4]
+  x_min_lambda: -18.0
+  x_max_lambda: 18.0
+  x_points: 181
+  z_min_lambda: 5.0
+  z_max_lambda: 65.0
+  z_points: 241
+
+effect_model:
+  threshold_median: 0.55
+  threshold_log_sigma: 0.22
+  pulse_width_norm: 1.0
+  pulse_count: 1

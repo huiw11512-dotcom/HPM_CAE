@@ -1,0 +1,60 @@
+seed: 20260620
+array: {nx: 8, ny: 8, frequency_hz: 1.0e10, spacing_lambda: 0.5}
+scenario:
+  frames: 64
+  desired: {theta_deg: 15.0, phi_deg: 20.0, snr_db: -5.0}
+  interferers:
+    - {label: interferer_1, theta_start_deg: 34.0, phi_start_deg: -17.0, theta_rate_deg_per_frame: 0.30, phi_rate_deg_per_frame: 0.50, theta_sinusoid_amplitude_deg: 1.0, phi_sinusoid_amplitude_deg: 0.7, theta_sinusoid_frequency_rad_per_frame: 0.18, phi_sinusoid_frequency_rad_per_frame: 0.12, theta_phase_rad: 0.0, phi_phase_rad: 0.0, inr_db: 28.0}
+    - {label: interferer_2, theta_start_deg: 50.0, phi_start_deg: 21.0, theta_rate_deg_per_frame: -0.32, phi_rate_deg_per_frame: -0.43, theta_sinusoid_amplitude_deg: 0.8, phi_sinusoid_amplitude_deg: 0.6, theta_sinusoid_frequency_rad_per_frame: 0.16, phi_sinusoid_frequency_rad_per_frame: 0.10, theta_phase_rad: 0.6, phi_phase_rad: 1.1, inr_db: 24.0}
+  speed_scale: 1.0
+observation:
+  snapshots: 128
+  noise_power: 1.0
+  sensor_gain_std_db: 0.12
+  sensor_phase_std_deg: 2.5
+  fault_candidate_indices: [0, 7, 9, 18, 21, 42, 45, 54, 56, 63]
+  representative_fault_count: 4
+  first_fault_onset_fraction: 0.30
+  second_fault_onset_fraction: 0.60
+  fault_gain_db: -18.0
+  fault_phase_std_deg: 35.0
+  fault_extra_noise_db: 10.0
+perception:
+  update_interval_frames: 4
+  processing_latency_frames: 2
+  initial_prior_centers_deg: [[34.5, -15.0], [49.0, 19.0]]
+  scan: {theta_min_deg: 20.0, theta_max_deg: 60.0, theta_step_deg: 0.5, phi_min_deg: -30.0, phi_max_deg: 30.0, phi_step_deg: 0.5, min_peak_separation_deg: 6.0, local_refinement_radius_deg: 1.5}
+  spatial_smoothing: {subarray_nx: 6, subarray_ny: 6}
+  pawr: {prior_sigma_deg: 9.0, prior_strength: 5.0e-4, selection_exponent: 0.7, search_radius_sigma: 1.3, structure_blend: 0.02, forward_backward: true, health_window: 5, health_tuning: 2.5, reliability_floor: 0.05, weight_exponent: 20.0, weight_floor_fraction: 0.02}
+  uncertainty: {local_radius_deg: 3.0, local_grid_step_deg: 0.25, temperature: 0.55, std_floor_deg: 0.35, std_ceiling_deg: 5.0, health_tail_fraction: 0.10, health_covariance_inflation: 1.5}
+  tracker: {initial_position_std_deg: 5.0, initial_velocity_std_deg_per_frame: 0.8, process_acceleration_std_deg_per_frame2: 0.18, gate_mahalanobis_sq: 36.0}
+protection:
+  protection_sinr_threshold_db: 5.0
+  diagonal_loading: 0.03
+  fixed_sector_std_deg: 2.2
+  confidence_radius: 2.45
+  confidence_grid_step_deg: 0.5
+  min_half_width_deg: 1.5
+  fixed_min_half_width_deg: 3.0
+  max_half_width_deg: 12.0
+  energy_threshold: 0.997
+  max_rank_per_sector: 8
+  max_total_rank: 16
+  soft_strength: 0.55
+  white_noise_gain_floor_db: 6.0
+  condition_limit: 1.0e10
+  fault_penalty_strength: 1.0
+response_map: {theta_min_deg: 10.0, theta_max_deg: 60.0, theta_step_deg: 0.25, phi_min_deg: -30.0, phi_max_deg: 30.0, phi_step_deg: 0.25, floor_db: -80.0}
+monte_carlo:
+  trials: 100
+  frames: 48
+  confidence: 0.95
+  latency_sweep_frames: [0, 1, 2, 3, 4, 5, 6, 8]
+  update_interval_sweep_frames: [1, 2, 3, 4, 6, 8, 10]
+  fault_count_sweep: [0, 2, 4, 6, 8, 10]
+  speed_scale_sweep: [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5]
+  base_latency_frames: 2
+  base_update_interval_frames: 4
+  base_fault_count: 4
+  base_speed_scale: 1.0
+  ablation_trials: 150

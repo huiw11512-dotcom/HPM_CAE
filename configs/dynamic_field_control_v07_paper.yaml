@@ -1,0 +1,18 @@
+# Higher-density configuration for final paper recomputation.
+_base: dynamic_field_control_v07.yaml
+platform:
+  seed: 70620
+  version: "0.7.0-paper"
+control_plane:
+  representative_grid_points: 121
+  monte_carlo_grid_points: 61
+controller:
+  outside_samples: 420
+  target_radial_samples: 6
+  target_angular_samples: 16
+  alternating_iterations: 5
+monte_carlo:
+  frames: 36
+  trials_per_point: 60
+  ablation_trials: 100
+  confidence: 0.95

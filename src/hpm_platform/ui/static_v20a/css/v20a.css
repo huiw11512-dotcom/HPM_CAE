@@ -1,0 +1,225 @@
+/*
+ * V2.0A 可信度验证中心界面。
+ * 布局沿用 Bootstrap Dashboard 模板结构，补充 V&V 图表和导出区样式。
+ */
+body { font-size: .875rem; background: #f4f7fb; color: #1f2937; }
+.sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; padding: 48px 0 0; box-shadow: inset -1px 0 0 rgba(0,0,0,.1); }
+@media (max-width: 767.98px) { .sidebar { top: 5rem; } }
+.sidebar .nav-link { font-weight: 500; color: #4b5563; padding: .72rem 1rem; border-left: 3px solid transparent; }
+.sidebar .nav-link i { width: 1.35rem; margin-right: .35rem; color: #6b7280; }
+.sidebar .nav-link:hover { color: #1d4ed8; background: #eef4ff; }
+.sidebar .nav-link.active { color: #1d4ed8; background: #e8f0ff; border-left-color: #2563eb; }
+.sidebar .nav-link.active i { color: #2563eb; }
+.sidebar-heading { font-size: .75rem; text-transform: uppercase; }
+.navbar-brand { padding-top: .75rem; padding-bottom: .75rem; font-size: 1rem; background-color: rgba(0,0,0,.24); box-shadow: inset -1px 0 0 rgba(0,0,0,.24); }
+.navbar .navbar-toggler { top: .25rem; right: 1rem; }
+main { min-height: calc(100vh - 48px); }
+.metric-card { min-height: 124px; border: 0; border-left: 4px solid #2563eb; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.08); }
+.metric-card .value { font-size: 1.75rem; font-weight: 700; letter-spacing: 0; }
+.metric-card .hint { color: #6b7280; font-size: .78rem; }
+.chart-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
+.panel-title { padding: .85rem 1rem; border-bottom: 1px solid #e5e7eb; font-weight: 600; background: #fff; }
+.north-star-panel { background: #fff; border: 1px solid #dbeafe; border-left: 5px solid #2563eb; border-radius: 8px; padding: 1.1rem 1.25rem; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
+.north-star-panel h2 { font-size: 1.2rem; margin: .25rem 0 .55rem; color: #111827; }
+.north-star-panel p { margin-bottom: .45rem; line-height: 1.8; }
+.north-star-kicker { color: #1d4ed8; font-weight: 700; font-size: .78rem; letter-spacing: 0; }
+.platform-list { margin: 0; padding: 1rem 1rem 1rem 2.2rem; line-height: 1.9; }
+.图表 { min-height: 480px; width: 100%; }
+.table { font-size: .78rem; }
+.table th { color: #4b5563; white-space: nowrap; }
+.export-grid { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 12px; }
+.输出路径 { min-height: 180px; margin: 0; padding: 1rem; background: #07111f; color: #d7e5f7; font-family: "Noto Sans Mono CJK SC", "Microsoft YaHei", monospace; line-height: 1.7; }
+.paper-factory-status { min-height: 180px; background: #fff; }
+.paper-factory-checks { list-style: none; padding: 0; margin: 0; display: grid; gap: .45rem; }
+.paper-factory-checks li { display: flex; align-items: center; gap: .5rem; color: #374151; }
+.workbench3d-layout { display: grid; grid-template-columns: minmax(220px, 280px) minmax(420px, 1fr) minmax(260px, 340px); gap: 12px; align-items: stretch; }
+.workbench3d-side, .workbench3d-main { background: #fff; border: 1px solid #d8dee9; border-radius: 8px; box-shadow: 0 1px 2px rgba(15,23,42,.06); overflow: hidden; }
+.workbench3d-side-title { height: 42px; display: flex; align-items: center; padding: 0 .9rem; border-bottom: 1px solid #e5e7eb; font-weight: 700; color: #1f2937; background: #f9fafb; }
+.workbench3d-tree { max-height: 680px; overflow: auto; padding: .7rem; }
+.workbench3d-tree-group { margin-bottom: .75rem; }
+.workbench3d-tree-group-title { color: #6b7280; font-size: .74rem; font-weight: 700; margin: .3rem .3rem .35rem; }
+.workbench3d-object { width: 100%; min-height: 42px; display: grid; grid-template-columns: 10px 1fr; gap: .45rem; align-items: center; padding: .45rem .5rem; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #1f2937; text-align: left; }
+.workbench3d-object:hover { background: #eef4ff; border-color: #dbeafe; }
+.workbench3d-object.active { background: #e8f0ff; border-color: #2563eb; }
+.workbench3d-object.off { opacity: .62; }
+.workbench3d-dot { width: 9px; height: 9px; border-radius: 999px; background: #6b7280; }
+.workbench3d-object small { display: block; color: #6b7280; margin-top: .1rem; }
+.workbench3d-main { min-height: 720px; display: grid; grid-template-rows: 1fr auto auto auto auto auto auto; background: #101820; }
+.workbench3d-viewport { min-height: 674px; width: 100%; position: relative; background: #101820; }
+.workbench3d-viewport canvas { display: block; width: 100%; height: 100%; outline: none; }
+.workbench3d-viewport.move-mode canvas { cursor: grab; }
+.workbench3d-viewport.move-mode.dragging canvas { cursor: grabbing; }
+.workbench3d-readout { min-height: 46px; display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .65rem .85rem; background: #f9fafb; border-top: 1px solid #d8dee9; color: #4b5563; font-size: .78rem; }
+.workbench3d-solve-panel { min-height: 88px; padding: .75rem .85rem; border-top: 1px solid #d8dee9; background: #fff; color: #374151; font-size: .8rem; }
+.workbench3d-solve-grid { display: grid; grid-template-columns: repeat(4, minmax(110px, 1fr)); gap: .55rem; margin-bottom: .65rem; }
+.workbench3d-solve-metric { border: 1px solid #e5e7eb; border-radius: 6px; padding: .55rem .6rem; background: #f9fafb; min-width: 0; }
+.workbench3d-solve-metric small { display: block; color: #6b7280; font-size: .7rem; margin-bottom: .12rem; }
+.workbench3d-solve-metric strong { display: block; color: #111827; font-size: .95rem; line-height: 1.2; overflow-wrap: anywhere; }
+.workbench3d-solve-meta { display: flex; flex-wrap: wrap; gap: .45rem .8rem; color: #6b7280; }
+.workbench3d-result-diagnostics { display: grid; grid-template-columns: minmax(160px, 220px) 1fr; gap: .55rem .75rem; align-items: center; margin-top: .65rem; padding-top: .6rem; border-top: 1px solid #e5e7eb; color: #4b5563; }
+.workbench3d-result-legend { display: grid; grid-template-columns: auto 1fr auto; gap: .45rem; align-items: center; min-width: 0; font-size: .72rem; color: #6b7280; }
+.workbench3d-result-colorbar { height: 12px; border-radius: 3px; border: 1px solid rgba(17,24,39,.18); background: linear-gradient(90deg, #16234a 0%, #1f75a4 28%, #2ab07f 52%, #ecc44d 76%, #cc3d4a 100%); }
+.workbench3d-profile-grid { display: flex; flex-wrap: wrap; gap: .35rem; min-width: 0; }
+.workbench3d-profile-grid span { border: 1px solid #dbe3ef; border-radius: 6px; background: #f8fafc; color: #374151; padding: .2rem .42rem; overflow-wrap: anywhere; }
+.workbench3d-profile-inspector { grid-column: 1 / -1; border: 1px solid #dbe3ef; border-radius: 6px; background: #fff; padding: .55rem; min-width: 0; }
+.workbench3d-profile-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-bottom: .45rem; }
+.workbench3d-profile-title { display: grid; gap: .08rem; min-width: 0; }
+.workbench3d-profile-title strong { color: #111827; font-size: .82rem; }
+.workbench3d-profile-title small { color: #6b7280; overflow-wrap: anywhere; }
+.workbench3d-profile-tabs { display: inline-flex; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; }
+.workbench3d-profile-tabs button { border: 0; background: #fff; color: #374151; padding: .22rem .55rem; font-size: .74rem; }
+.workbench3d-profile-tabs button:hover { background: #eef4ff; }
+.workbench3d-profile-tabs button.active { background: #2563eb; color: #fff; }
+.workbench3d-profile-chart { width: 100%; min-height: 112px; display: block; }
+.workbench3d-profile-meta { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .35rem; }
+.workbench3d-profile-meta span { border: 1px solid #dbe3ef; border-radius: 6px; background: #f8fafc; color: #374151; padding: .18rem .42rem; overflow-wrap: anywhere; }
+.workbench3d-validity-diagnostics { display: grid; grid-template-columns: minmax(120px, 160px) 1fr; gap: .55rem; margin-top: .65rem; padding-top: .6rem; border-top: 1px solid #e5e7eb; }
+.workbench3d-validity-score { display: grid; align-content: center; gap: .12rem; border: 1px solid #dbe3ef; border-left-width: 4px; border-radius: 6px; background: #fff; padding: .5rem .6rem; min-width: 0; }
+.workbench3d-validity-score.ok { border-left-color: #10b981; }
+.workbench3d-validity-score.info { border-left-color: #2563eb; }
+.workbench3d-validity-score.warn { border-left-color: #f59e0b; }
+.workbench3d-validity-score.danger { border-left-color: #dc2626; }
+.workbench3d-validity-score small { color: #6b7280; }
+.workbench3d-validity-score strong { color: #111827; font-size: 1rem; }
+.workbench3d-validity-score span { color: #374151; overflow-wrap: anywhere; }
+.workbench3d-validity-body { min-width: 0; }
+.workbench3d-validity-body p { margin: .35rem 0 .45rem; color: #4b5563; line-height: 1.55; }
+.workbench3d-validity-chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+.workbench3d-validity-chips span { border: 1px solid #dbe3ef; border-radius: 6px; background: #f8fafc; color: #374151; padding: .18rem .42rem; overflow-wrap: anywhere; }
+.workbench3d-validity-checks { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: .4rem; }
+.workbench3d-validity-checks div { display: grid; gap: .1rem; border: 1px solid #dbe3ef; border-left: 4px solid #2563eb; border-radius: 6px; background: #fff; padding: .42rem .5rem; min-width: 0; }
+.workbench3d-validity-checks div.ok { border-left-color: #10b981; }
+.workbench3d-validity-checks div.info { border-left-color: #2563eb; }
+.workbench3d-validity-checks div.warn { border-left-color: #f59e0b; }
+.workbench3d-validity-checks div.danger { border-left-color: #dc2626; }
+.workbench3d-validity-checks strong { color: #111827; font-size: .8rem; overflow-wrap: anywhere; }
+.workbench3d-validity-checks small { color: #6b7280; overflow-wrap: anywhere; }
+.workbench3d-validity-checks span { color: #374151; overflow-wrap: anywhere; }
+.workbench3d-object-metrics { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: .45rem; margin-top: .65rem; padding-top: .6rem; border-top: 1px solid #e5e7eb; }
+.workbench3d-object-metrics button { min-width: 0; display: grid; gap: .12rem; text-align: left; border: 1px solid #dbe3ef; border-radius: 6px; background: #fff; padding: .45rem .55rem; color: #1f2937; }
+.workbench3d-object-metrics button:hover { background: #eef4ff; border-color: #93c5fd; }
+.workbench3d-object-metrics button.ok { border-left: 4px solid #10b981; }
+.workbench3d-object-metrics button.warn { border-left: 4px solid #f59e0b; }
+.workbench3d-object-metrics strong { font-size: .82rem; color: #111827; overflow-wrap: anywhere; }
+.workbench3d-object-metrics small { color: #6b7280; overflow-wrap: anywhere; }
+.workbench3d-object-metrics span { color: #374151; overflow-wrap: anywhere; }
+.workbench3d-solve-checks { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .55rem; }
+.workbench3d-solve-checks span { border-radius: 999px; border: 1px solid #d1d5db; padding: .18rem .5rem; background: #f9fafb; color: #374151; }
+.workbench3d-solve-jobs { min-height: 54px; padding: .65rem .85rem; border-top: 1px solid #d8dee9; background: #fff; color: #4b5563; font-size: .78rem; }
+.workbench3d-solve-job-audit { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; margin-bottom: .5rem; border: 1px solid #dbe3ef; border-left: 4px solid #10b981; border-radius: 6px; background: #f8fafc; padding: .38rem .5rem; }
+.workbench3d-solve-job-audit.warn { border-left-color: #f59e0b; background: #fffbeb; }
+.workbench3d-solve-job-audit span { border: 1px solid #dbe3ef; border-radius: 6px; background: #fff; color: #374151; padding: .14rem .38rem; overflow-wrap: anywhere; }
+.workbench3d-solve-job-audit button { margin-left: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #1f2937; padding: .18rem .5rem; white-space: nowrap; }
+.workbench3d-solve-job-audit button:hover { background: #eef4ff; border-color: #93c5fd; }
+.workbench3d-solve-job-empty { border: 1px dashed #cbd5e1; border-radius: 6px; background: #fff; padding: .55rem .65rem; color: #6b7280; }
+.workbench3d-solve-job-list { display: grid; gap: .45rem; }
+.workbench3d-solve-job { display: grid; grid-template-columns: minmax(88px, 120px) minmax(180px, 1fr) auto; gap: .5rem; align-items: center; border: 1px solid #dbe3ef; border-left: 4px solid #2563eb; border-radius: 6px; background: #fff; padding: .45rem .55rem; min-width: 0; }
+.workbench3d-solve-job.done { border-left-color: #10b981; }
+.workbench3d-solve-job.failed { border-left-color: #dc2626; }
+.workbench3d-solve-job.running { border-left-color: #f59e0b; }
+.workbench3d-solve-job.cancelled { border-left-color: #64748b; }
+.workbench3d-solve-job.paused { border-left-color: #8b5cf6; }
+.workbench3d-solve-job strong { color: #111827; font-size: .82rem; }
+.workbench3d-solve-job small { display: block; color: #6b7280; overflow-wrap: anywhere; }
+.workbench3d-solve-job-actions { display: flex; gap: .35rem; flex-wrap: wrap; justify-content: flex-end; }
+.workbench3d-solve-job-actions button { border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #1f2937; padding: .18rem .42rem; }
+.workbench3d-solve-job-actions button:hover { background: #eef4ff; border-color: #93c5fd; }
+.workbench3d-solve-job-actions button:disabled { background: #f3f4f6; border-color: #e5e7eb; color: #94a3b8; cursor: not-allowed; }
+.workbench3d-result-archive { min-height: 54px; padding: .65rem .85rem; border-top: 1px solid #d8dee9; background: #f8fafc; color: #4b5563; font-size: .78rem; }
+.workbench3d-result-archive-list { display: grid; gap: .45rem; }
+.workbench3d-result-record { display: grid; grid-template-columns: minmax(90px, 120px) 1fr auto; gap: .5rem; align-items: center; border: 1px solid #dbe3ef; border-radius: 6px; background: #fff; padding: .45rem .55rem; min-width: 0; }
+.workbench3d-result-record strong { color: #111827; font-size: .82rem; }
+.workbench3d-result-record small { display: block; color: #6b7280; overflow-wrap: anywhere; }
+.workbench3d-result-record-actions { display: flex; gap: .35rem; flex-wrap: wrap; justify-content: flex-end; }
+.workbench3d-result-record-actions button { border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #1f2937; padding: .18rem .42rem; }
+.workbench3d-result-record-actions button:hover { background: #eef4ff; border-color: #93c5fd; }
+.workbench3d-snapshot-archive { min-height: 54px; padding: .65rem .85rem; border-top: 1px solid #d8dee9; background: #fff; color: #4b5563; font-size: .78rem; }
+.workbench3d-snapshot-diff { border: 1px solid #dbe3ef; border-radius: 6px; background: #f8fafc; padding: .45rem .55rem; margin-bottom: .5rem; }
+.workbench3d-snapshot-diff strong { color: #111827; }
+.workbench3d-snapshot-diff small { display: block; color: #6b7280; margin-top: .18rem; overflow-wrap: anywhere; }
+.workbench3d-asset-ledger { min-height: 54px; padding: .65rem .85rem; border-top: 1px solid #d8dee9; background: #f8fafc; color: #4b5563; font-size: .78rem; }
+.workbench3d-asset-toolbar { display: grid; grid-template-columns: minmax(108px, 140px) minmax(180px, 1fr) repeat(10, auto); gap: .4rem; align-items: center; margin-bottom: .45rem; }
+.workbench3d-asset-toolbar select, .workbench3d-asset-toolbar input { min-width: 0; height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #1f2937; padding: .22rem .45rem; }
+.workbench3d-asset-toolbar button { height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #1f2937; padding: .18rem .5rem; white-space: nowrap; }
+.workbench3d-asset-toolbar button:hover { background: #eef4ff; border-color: #93c5fd; }
+.workbench3d-asset-summary { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .45rem; }
+.workbench3d-asset-summary span { border: 1px solid #dbe3ef; border-radius: 6px; background: #fff; color: #374151; padding: .16rem .42rem; overflow-wrap: anywhere; }
+.workbench3d-db-records { display: grid; gap: .45rem; border: 1px solid #dbe3ef; border-radius: 6px; background: #fff; padding: .5rem .6rem; margin-bottom: .5rem; }
+.workbench3d-db-records-head { display: flex; justify-content: space-between; gap: .5rem; color: #374151; }
+.workbench3d-db-records-head strong { color: #111827; }
+.workbench3d-db-records-grid { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: .45rem; }
+.workbench3d-db-record { display: grid; gap: .12rem; min-width: 0; border: 1px solid #e5e7eb; border-left: 4px solid #2563eb; border-radius: 6px; background: #f8fafc; padding: .4rem .5rem; }
+.workbench3d-db-record strong { color: #111827; overflow-wrap: anywhere; }
+.workbench3d-db-record span, .workbench3d-db-record small { color: #6b7280; overflow-wrap: anywhere; }
+.workbench3d-lineage { display: grid; gap: .45rem; border: 1px solid #dbe3ef; border-radius: 6px; background: #fff; padding: .5rem .6rem; margin-bottom: .5rem; }
+.workbench3d-lineage-head { display: flex; justify-content: space-between; gap: .5rem; color: #374151; }
+.workbench3d-lineage-head strong { color: #111827; }
+.workbench3d-lineage-checks { display: flex; flex-wrap: wrap; gap: .35rem; }
+.workbench3d-lineage-checks span { border: 1px solid #dbe3ef; border-radius: 6px; background: #f8fafc; color: #374151; padding: .14rem .38rem; overflow-wrap: anywhere; }
+.workbench3d-lineage-checks span.ok { border-color: #bbf7d0; color: #166534; background: #f0fdf4; }
+.workbench3d-lineage-checks span.warn { border-color: #fed7aa; color: #9a3412; background: #fff7ed; }
+.workbench3d-lineage-list { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: .45rem; }
+.workbench3d-lineage-edge { display: grid; gap: .12rem; min-width: 0; border: 1px solid #e5e7eb; border-left: 4px solid #10b981; border-radius: 6px; background: #f8fafc; padding: .4rem .5rem; }
+.workbench3d-lineage-edge strong { color: #111827; overflow-wrap: anywhere; }
+.workbench3d-lineage-edge small { color: #6b7280; overflow-wrap: anywhere; }
+.workbench3d-asset-empty { border: 1px dashed #cbd5e1; border-radius: 6px; background: #fff; padding: .55rem .65rem; color: #6b7280; }
+.workbench3d-asset-list { display: grid; gap: .45rem; }
+.workbench3d-asset-record { display: grid; grid-template-columns: minmax(88px, 118px) minmax(180px, 1fr) auto; gap: .5rem; align-items: center; border: 1px solid #dbe3ef; border-left: 4px solid #64748b; border-radius: 6px; background: #fff; padding: .45rem .55rem; min-width: 0; }
+.workbench3d-asset-record.job { border-left-color: #2563eb; }
+.workbench3d-asset-record.result { border-left-color: #10b981; }
+.workbench3d-asset-record.snapshot { border-left-color: #f59e0b; }
+.workbench3d-asset-record.imported { border-left-color: #0f766e; }
+.workbench3d-asset-record strong { color: #111827; font-size: .82rem; }
+.workbench3d-asset-record small { display: block; color: #6b7280; overflow-wrap: anywhere; }
+.workbench3d-asset-actions { display: flex; gap: .35rem; flex-wrap: wrap; justify-content: flex-end; }
+.workbench3d-asset-actions button { border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #1f2937; padding: .18rem .42rem; }
+.workbench3d-asset-actions button:hover { background: #eef4ff; border-color: #93c5fd; }
+.workbench3d-properties { padding: .85rem; max-height: 680px; overflow: auto; }
+.workbench3d-object-editor { padding-bottom: .9rem; margin-bottom: .9rem; border-bottom: 1px solid #e5e7eb; }
+.workbench3d-property-name { font-weight: 700; font-size: 1rem; color: #111827; }
+.workbench3d-property-type { color: #6b7280; font-size: .75rem; margin-bottom: .7rem; }
+.workbench3d-transform-controls { border: 1px solid #dbe3ef; border-radius: 6px; background: #f8fafc; padding: .5rem; margin-bottom: .65rem; }
+.workbench3d-transform-controls strong { display: block; color: #111827; font-size: .82rem; margin-bottom: .35rem; }
+.workbench3d-transform-buttons { display: grid; grid-template-columns: repeat(5, minmax(32px, 1fr)); gap: .35rem; }
+.workbench3d-transform-buttons button { width: 100%; min-width: 32px; height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #1f2937; display: inline-flex; align-items: center; justify-content: center; }
+.workbench3d-transform-buttons button:hover { background: #eef4ff; border-color: #93c5fd; color: #1d4ed8; }
+.workbench3d-absolute-calibration { display: grid; gap: .5rem; padding: .65rem; margin-bottom: .9rem; border: 1px solid #dbe3ef; border-left: 4px solid #0ea5e9; border-radius: 6px; background: #f8fafc; color: #1f2937; }
+.workbench3d-calibration-head { display: flex; align-items: flex-start; justify-content: space-between; gap: .55rem; }
+.workbench3d-calibration-head strong { display: block; color: #111827; font-size: .86rem; }
+.workbench3d-calibration-head small { display: block; color: #6b7280; font-size: .72rem; line-height: 1.45; margin-top: .14rem; }
+.workbench3d-calibration-head span { border: 1px solid #bbf7d0; border-radius: 999px; background: #f0fdf4; color: #166534; padding: .12rem .45rem; white-space: nowrap; }
+.workbench3d-calibration-head span.warn { border-color: #fed7aa; background: #fff7ed; color: #9a3412; }
+.workbench3d-calibration-summary, .workbench3d-calibration-checks { display: flex; flex-wrap: wrap; gap: .32rem; }
+.workbench3d-calibration-summary span, .workbench3d-calibration-checks span { border: 1px solid #dbe3ef; border-radius: 6px; background: #fff; color: #374151; padding: .16rem .38rem; font-size: .72rem; overflow-wrap: anywhere; }
+.workbench3d-calibration-checks span.ok { border-color: #bbf7d0; color: #166534; background: #f0fdf4; }
+.workbench3d-calibration-checks span.warn { border-color: #fed7aa; color: #9a3412; background: #fff7ed; }
+.workbench3d-imported-calibration, .workbench3d-imported-calibration-mini { border-left: 4px solid #0f766e; }
+.workbench3d-imported-calibration-mini { display: grid; gap: .16rem; border: 1px solid #ccfbf1; border-left-width: 4px; border-radius: 6px; background: #f0fdfa; padding: .4rem .5rem; }
+.workbench3d-imported-calibration-mini strong { color: #0f172a; font-size: .78rem; }
+.workbench3d-imported-calibration-mini span { color: #0f766e; font-size: .72rem; font-weight: 700; }
+.workbench3d-imported-calibration-mini small { color: #475569; overflow-wrap: anywhere; }
+.workbench3d-calibration-points { display: grid; gap: .32rem; }
+.workbench3d-calibration-points div { border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; padding: .36rem .45rem; min-width: 0; }
+.workbench3d-calibration-points strong { color: #111827; font-size: .78rem; }
+.workbench3d-calibration-points small { display: block; color: #6b7280; overflow-wrap: anywhere; }
+.workbench3d-calibration-form { display: grid; gap: .36rem; }
+.workbench3d-calibration-form label { color: #4b5563; font-size: .74rem; margin: 0; }
+.workbench3d-calibration-form textarea { width: 100%; min-width: 0; resize: vertical; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #111827; padding: .4rem .5rem; font-family: "Noto Sans Mono CJK SC", "Microsoft YaHei", monospace; font-size: .74rem; line-height: 1.45; }
+.workbench3d-field { display: grid; grid-template-columns: minmax(92px, 1fr) minmax(110px, 1fr); gap: .5rem; align-items: center; margin-bottom: .55rem; }
+.workbench3d-field label { margin: 0; color: #4b5563; font-size: .76rem; }
+.workbench3d-field input, .workbench3d-field select { min-width: 0; height: 32px; border: 1px solid #d1d5db; border-radius: 6px; padding: .25rem .45rem; font-size: .8rem; }
+.workbench3d-field input:disabled { background: #f3f4f6; color: #6b7280; }
+.workbench3d-material-editor { color: #1f2937; }
+.workbench3d-material-summary { display: grid; grid-template-columns: 1fr; gap: .45rem; margin-bottom: .7rem; }
+.workbench3d-material-summary strong { display: block; color: #111827; font-size: .86rem; }
+.workbench3d-material-summary small { display: block; color: #6b7280; font-size: .72rem; line-height: 1.35; margin-top: .12rem; }
+.workbench3d-material-summary select { min-width: 0; width: 100%; height: 32px; border: 1px solid #d1d5db; border-radius: 6px; padding: .25rem .45rem; font-size: .8rem; }
+.workbench3d-actions { display: flex; gap: .5rem; margin-top: .8rem; }
+.btn.move-mode-active { background: #2563eb; border-color: #2563eb; color: #fff; }
+.忙碌遮罩 { position: fixed; inset: 0; z-index: 2000; background: rgba(15,23,42,.35); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; }
+.busy-card { width: 280px; border-radius: 8px; background: #fff; padding: 1.5rem; text-align: center; box-shadow: 0 20px 45px rgba(15,23,42,.24); }
+.alert { border-radius: 8px; }
+@media (max-width: 1399.98px) { .workbench3d-layout { grid-template-columns: minmax(220px, 260px) 1fr; } .workbench3d-layout .workbench3d-side:last-child { grid-column: 1 / -1; } .workbench3d-main { min-height: 620px; } .workbench3d-viewport { min-height: 574px; } }
+@media (max-width: 1199.98px) { .export-grid { grid-template-columns: repeat(2, minmax(160px, 1fr)); } .图表 { min-height: 420px; } .workbench3d-layout { grid-template-columns: 1fr; } .workbench3d-layout .workbench3d-side:last-child { grid-column: auto; } }
+@media (max-width: 767.98px) { .workbench3d-solve-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); } .workbench3d-result-diagnostics { grid-template-columns: 1fr; } .workbench3d-validity-diagnostics { grid-template-columns: 1fr; } .workbench3d-validity-checks { grid-template-columns: 1fr; } .workbench3d-object-metrics { grid-template-columns: 1fr; } .workbench3d-solve-job-audit { align-items: stretch; } .workbench3d-solve-job-audit button { margin-left: 0; } .workbench3d-solve-job { grid-template-columns: 1fr; } .workbench3d-solve-job-actions { justify-content: flex-start; } .workbench3d-result-record { grid-template-columns: 1fr; } .workbench3d-result-record-actions { justify-content: flex-start; } .workbench3d-asset-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); } .workbench3d-asset-toolbar input { grid-column: 1 / -1; } .workbench3d-db-records-head, .workbench3d-lineage-head { flex-direction: column; } .workbench3d-db-records-grid, .workbench3d-lineage-list { grid-template-columns: 1fr; } .workbench3d-asset-record { grid-template-columns: 1fr; } .workbench3d-asset-actions { justify-content: flex-start; } }
+@media (max-width: 575.98px) { .export-grid { grid-template-columns: 1fr; } .图表 { min-height: 360px; } .workbench3d-main { min-height: 520px; } .workbench3d-viewport { min-height: 474px; } .workbench3d-readout { flex-direction: column; align-items: flex-start; } .workbench3d-solve-grid { grid-template-columns: 1fr; } .workbench3d-transform-buttons { grid-template-columns: repeat(4, minmax(32px, 1fr)); } }

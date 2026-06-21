@@ -1,0 +1,18 @@
+version: HPM_Digital_Twin_v2_0A
+name: 可信度验证体系默认配置
+output_dir: outputs_v20a_vv
+mode: fast
+random_seed: 20260620
+safety_scope:
+  - 归一化阵列算法与降阶传播数字孪生
+  - 不替代 CST/HFSS/COMSOL 全波仿真
+  - 不输出真实毁伤概率、真实作用距离、真实器件阈值或真实源功率
+credibility_score:
+  analytic_weight: 35
+  benchmark_weight: 25
+  uncertainty_weight: 20
+  backend_weight: 20
+grade_thresholds:
+  A: 90
+  B: 80
+  C: 70

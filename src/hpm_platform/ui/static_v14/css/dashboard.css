@@ -1,0 +1,39 @@
+/*
+ * 布局结构基于 Bootstrap 官方 Dashboard 示例（MIT License）。
+ * https://getbootstrap.com/docs/5.1/examples/dashboard/
+ * 本文件仅补充中文 CAE 工作台所需的图表、卡片和响应式细节。
+ */
+body { font-size: .875rem; background: #f4f7fb; color: #1f2937; }
+.feather { width: 16px; height: 16px; vertical-align: text-bottom; }
+.sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; padding: 48px 0 0; box-shadow: inset -1px 0 0 rgba(0,0,0,.1); }
+@media (max-width: 767.98px) { .sidebar { top: 5rem; } }
+.sidebar-sticky { position: relative; top: 0; height: calc(100vh - 48px); padding-top: .5rem; overflow-x: hidden; overflow-y: auto; }
+.sidebar .nav-link { font-weight: 500; color: #4b5563; padding: .72rem 1rem; border-left: 3px solid transparent; }
+.sidebar .nav-link i { width: 1.35rem; margin-right: .35rem; color: #6b7280; }
+.sidebar .nav-link:hover { color: #1d4ed8; background: #eef4ff; }
+.sidebar .nav-link.active { color: #1d4ed8; background: #e8f0ff; border-left-color: #2563eb; }
+.sidebar .nav-link.active i { color: #2563eb; }
+.sidebar-heading { font-size: .75rem; text-transform: uppercase; }
+.navbar-brand { padding-top: .75rem; padding-bottom: .75rem; font-size: 1rem; background-color: rgba(0,0,0,.24); box-shadow: inset -1px 0 0 rgba(0,0,0,.24); }
+.navbar .navbar-toggler { top: .25rem; right: 1rem; }
+main { min-height: calc(100vh - 48px); }
+.card { border: 0; border-radius: .75rem; overflow: hidden; }
+.card-header { background: #fff; border-bottom: 1px solid #e5e7eb; font-weight: 600; padding: .85rem 1rem; }
+.指标卡 { min-height: 128px; border-left: 4px solid #2563eb; }
+.指标卡 .数值 { font-size: 1.75rem; font-weight: 700; letter-spacing: -.02em; }
+.指标卡 .说明 { color: #6b7280; font-size: .78rem; }
+.指标卡 .状态 { font-size: .72rem; }
+.图表 { min-height: 520px; width: 100%; }
+.图表中 { min-height: 430px; }
+.图表大 { min-height: 800px; }
+.控制卡 { top: 70px; }
+.范围值 { text-align: right; color: #2563eb; font-variant-numeric: tabular-nums; margin-top: -.35rem; }
+.table { font-size: .78rem; }
+.table th { white-space: nowrap; color: #4b5563; }
+.状态徽章 { font-weight: 600; }
+.日志窗口 { min-height: 520px; max-height: 70vh; overflow: auto; background: #07111f; color: #d7e5f7; border-radius: .75rem; padding: 1.25rem; font-family: "Noto Sans Mono CJK SC", "Microsoft YaHei", monospace; line-height: 1.7; }
+.机理图 { background: #07111f; }
+.忙碌遮罩 { position: fixed; inset: 0; z-index: 2000; background: rgba(15,23,42,.35); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; }
+.忙碌卡 { width: 260px; border-radius: .85rem; }
+.alert { border-radius: .65rem; }
+@media (max-width: 1199.98px) { .控制卡 { position: static !important; } .图表大 { min-height: 650px; } }

@@ -1,0 +1,70 @@
+_base: dynamic_field_control_v07.yaml
+
+platform:
+  seed: 80620
+  version: "0.8.0"
+
+effect_twin:
+  reference_amplitude: 0.47
+  amplitude_exponent: 2.0
+  pulse_weight: 0.090
+  retention: 0.91
+  coupling_log_sigma: 0.22
+  epistemic_threshold_log_sigma: 0.15
+  confidence: 0.95
+  target_local_grid_points: 51
+  target_local_extent_scale: 1.45
+  coupling_correlation_pixels: 2.2
+  primary_tier: "Functional-response proxy"
+  tiers:
+    - name: "Reversible-response proxy"
+      threshold_median: 0.28
+      threshold_log_sigma: 0.34
+      probability_goal: 0.78
+      coverage_probability: 0.70
+    - name: "Functional-response proxy"
+      threshold_median: 0.62
+      threshold_log_sigma: 0.28
+      probability_goal: 0.70
+      coverage_probability: 0.60
+    - name: "Persistent-response proxy"
+      threshold_median: 1.05
+      threshold_log_sigma: 0.24
+      probability_goal: 0.58
+      coverage_probability: 0.50
+
+protected_zone:
+  center_lambda: [0.90, -0.85]
+  semi_axes_lambda: [0.38, 0.30]
+  rotation_deg: -18.0
+  guard_scale: 1.30
+
+effect_success:
+  high_risk_probability: 0.30
+  minimum_target_coverage: 0.60
+  maximum_protected_p95_probability: 0.42
+  maximum_off_target_high_risk_fraction: 0.12
+
+effect_policy:
+  candidate_duties: [0.0, 0.25, 0.50, 0.75, 1.0]
+  target_upper_probability: 0.88
+  objective_weights: [55.0, 3.0, 18.0, 12.0, 0.015, 0.10]
+  prediction_horizon_frames: 3
+  stop_hysteresis: 0.04
+
+monte_carlo_effect:
+  trials_per_point: 8
+  base_seed: 806200
+  confidence: 0.95
+  threshold_epistemic_draw_log_sigma: 0.15
+  pulse_weight_draw_log_sigma: 0.08
+  retention_draw_std: 0.015
+  sweeps:
+    threshold_median_scale: [0.70, 0.90, 1.10, 1.30]
+    retention: [0.78, 0.86, 0.91, 0.96]
+    coupling_log_sigma: [0.0, 0.15, 0.30, 0.45]
+    pulse_weight: [0.055, 0.075, 0.090, 0.115]
+
+representative_effect:
+  seed: 18062026
+  snapshot_frames: [6, 16, 27, 31]

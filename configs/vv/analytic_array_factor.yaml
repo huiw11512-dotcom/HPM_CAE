@@ -1,0 +1,16 @@
+case_group: 解析阵列验证
+array:
+  nx: 8
+  ny: 8
+  spacing_x_lambda: 0.5
+  spacing_y_lambda: 0.5
+uniform_case:
+  grid_points_fast: 151
+  grid_points_full: 241
+  main_lobe_error_threshold: 0.01
+  normalized_rmse_threshold: 1.0e-3
+scan_case:
+  target_u: 0.25
+  target_v: -0.15
+  peak_error_threshold: 0.03
+  normalized_rmse_threshold: 1.0e-3

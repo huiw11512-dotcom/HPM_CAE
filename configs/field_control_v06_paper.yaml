@@ -1,0 +1,82 @@
+platform:
+  seed: 60620
+  version: "0.6.0-paper"
+
+array:
+  nx: 8
+  ny: 8
+  frequency_hz: 1.0e10
+  spacing_lambda: 0.5
+
+control_plane:
+  z_lambda: 8.0
+  x_min_lambda: -4.0
+  x_max_lambda: 4.0
+  y_min_lambda: -4.0
+  y_max_lambda: 4.0
+  representative_grid_points: 161
+  monte_carlo_grid_points: 81
+
+region:
+  center_lambda: [0.8, -0.6]
+  semi_axes_lambda: [1.1, 0.65]
+  rotation_deg: 25.0
+  guard_scale: 1.45
+  target_amplitude: 0.47
+  tolerance_fraction: 0.10
+
+training:
+  outside_samples: 1800
+  sample_seed: 812
+
+excitation_limits:
+  rms_limit: 0.8
+  peak_limit: 1.0
+
+region_ls:
+  outside_penalty: 0.04
+  ridge: 0.001
+
+optimizer:
+  outside_hinge_amplitude: 0.14
+  nominal_outside_penalty: 1.5
+  proposed_outside_penalty: 1.2
+  iterations: 1100
+  learning_rate: 0.02
+  power_regularization: 0.0005
+  design_scenarios: 17
+  design_gain_std_fraction: 0.035
+  design_phase_std_deg: 5.0
+  design_registration_jitter_std_lambda: 0.10
+
+power_amplifier:
+  saturation_amplitude: 1.0
+  smoothness: 3.0
+  maximum_phase_deg: 12.0
+  predistorter_drive_limit: 1.2
+
+representative_uncertainty:
+  gain_std_fraction: 0.05
+  phase_std_deg: 8.0
+  registration_jitter_std_lambda: 0.14
+  seed: 1160644
+
+success_criterion:
+  target_rmse_fraction: 0.12
+  minimum_target_coverage: 0.60
+  maximum_peak_outside_db: -2.0
+
+monte_carlo:
+  trials_per_point: 250
+  ablation_trials: 500
+  confidence: 0.95
+  base_seed: 260620
+  sweeps:
+    phase_error_std_deg: [0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 15.0]
+    gain_error_std_fraction: [0.0, 0.02, 0.04, 0.06, 0.08, 0.10]
+    registration_jitter_std_lambda: [0.0, 0.04, 0.08, 0.12, 0.16, 0.20, 0.24]
+    pa_saturation_amplitude: [0.8, 0.9, 1.0, 1.1, 1.25, 1.4, 1.6]
+
+pareto:
+  outside_penalties: [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.5, 1.8, 2.2, 2.6, 3.2]
+  iterations: 700

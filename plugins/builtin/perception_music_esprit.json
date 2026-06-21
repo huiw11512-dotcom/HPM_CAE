@@ -1,0 +1,42 @@
+{
+  "id": "hpm.perception.music_esprit_benchmark",
+  "name": "MUSIC/ESPRIT 感知基准",
+  "version": "2.0.0",
+  "category": "perception_algorithm",
+  "layer": "Perception Layer",
+  "summary": "把 DOA 感知算法基准作为插件市场能力注册，供 V&V 和后续真实数据导入统一发现。",
+  "provider": "HPM-DT 内置",
+  "entry_point": {
+    "kind": "builtin_hook",
+    "target": "perception_benchmark_summary"
+  },
+  "parameters_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "algorithm": {
+        "type": "string",
+        "default": "music_esprit",
+        "enum": ["music", "esprit", "pawr_music", "music_esprit"],
+        "description": "要审计的感知算法族。"
+      }
+    }
+  },
+  "dependencies": ["hpm_platform.perception.music", "hpm_platform.perception.esprit"],
+  "enabled_by_default": true,
+  "safety": {
+    "execution": "builtin_hook_only",
+    "scope": "归一化阵列观测与角度估计基准",
+    "blocked_outputs": ["真实威胁识别参数", "外场作战用途建议"]
+  },
+  "acceptance_tests": [
+    "manifest 可解析",
+    "参数 Schema 可暴露",
+    "感知算法测试证据可追踪"
+  ],
+  "sample_project": "configs/vv/music_benchmark.yaml",
+  "tags": ["感知", "DOA", "V2.0C"],
+  "settings": {
+    "default_algorithm": "music_esprit"
+  }
+}

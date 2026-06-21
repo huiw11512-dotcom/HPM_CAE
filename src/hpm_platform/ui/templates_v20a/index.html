@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="HPM-DT 高功率微波数字孪生 CAE 平台 V2.0A 可信度验证中心">
+  <title>HPM-DT V2.0A 可信度验证中心</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='vendor/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='vendor/bootstrap-icons.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static_v20a', path='css/v20a.css') }}">
+</head>
+<body>
+<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+  <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">HPM-DT 可信度验证中心</a>
+  <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#侧栏" aria-controls="侧栏" aria-expanded="false" aria-label="切换导航">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="navbar-text flex-grow-1 px-3 d-none d-md-block text-light">
+    <span id="顶部状态">HPM-DT 长期 CAE 平台 · 正在准备 V2.0A 验证数据…</span>
+  </div>
+  <div class="navbar-nav">
+    <div class="nav-item text-nowrap d-flex align-items-center gap-2 px-3">
+      <span class="badge rounded-pill bg-success">本地离线</span>
+      <span class="badge rounded-pill bg-primary">{{ version }}</span>
+    </div>
+  </div>
+</header>
+
+<div class="container-fluid">
+  <div class="row">
+    <nav id="侧栏" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+      <div class="position-sticky pt-3">
+        <ul class="nav flex-column" id="主导航">
+          <li class="nav-item"><a class="nav-link active" href="#" data-page="验证总览"><i class="bi bi-speedometer2"></i> 验证总览</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="平台愿景"><i class="bi bi-diagram-3"></i> 平台愿景</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="三维CAE编辑器" data-testid="nav-workbench3d"><i class="bi bi-box"></i> 三维CAE编辑器</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="插件市场" data-testid="nav-plugin-marketplace"><i class="bi bi-puzzle"></i> 插件市场</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="数据导入" data-testid="nav-data-import"><i class="bi bi-database-down"></i> 数据导入</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="解析解验证"><i class="bi bi-graph-up"></i> 解析解验证</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="算法基准验证"><i class="bi bi-cpu"></i> 算法基准验证</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="后端一致性验证"><i class="bi bi-layers"></i> 后端一致性验证</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="不确定度分析"><i class="bi bi-shuffle"></i> 不确定度分析</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="敏感性分析"><i class="bi bi-bar-chart"></i> 敏感性分析</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-page="论文报告导出"><i class="bi bi-file-earmark-text"></i> 论文报告导出</a></li>
+        </ul>
+        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+          <span>模型边界</span><i class="bi bi-shield-check"></i>
+        </h6>
+        <div class="px-3 small text-muted lh-lg">
+          核心求解保持归一化；支持阵元功率元数据与实测点绝对量纲标定；不输出真实毁伤概率、作用距离或器件阈值。
+        </div>
+      </div>
+    </nav>
+
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <section class="页面" data-page-section="验证总览">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <div><h1 class="h2 mb-1">可信度验证总览</h1><p class="text-muted mb-0">解析解、算法基准、后端一致性、不确定度和敏感性统一验收</p></div>
+          <div class="btn-toolbar gap-2">
+            <button class="btn btn-primary" id="运行快速VV"><i class="bi bi-play-fill"></i> 运行快速V&amp;V</button>
+            <button class="btn btn-outline-primary" id="运行完整VV"><i class="bi bi-lightning-charge"></i> 运行完整V&amp;V</button>
+          </div>
+        </div>
+        <div id="总览提示" class="alert alert-info">正在读取最近一次验证结果。</div>
+        <div class="north-star-panel mb-4">
+          <div class="north-star-kicker">HPM-DT North Star</div>
+          <h2>面向高功率微波系统与效应研究的数字孪生 CAE 平台</h2>
+          <p>{{ platform["最高层目标"] }}</p>
+          <p class="mb-0 text-muted">当前 V2.0A 是可信度层阶段里程碑，不是平台最高目标。</p>
+        </div>
+        <div class="row g-3 mb-4" id="指标卡片"></div>
+        <div class="row g-3">
+          <div class="col-12 col-xl-6"><div class="chart-panel"><div class="panel-title">方向图解析对比</div><div id="图_方向图解析对比" class="图表"></div></div></div>
+          <div class="col-12 col-xl-6"><div class="chart-panel"><div class="panel-title">可信度雷达图</div><div id="图_可信度雷达图" class="图表"></div></div></div>
+          <div class="col-12"><div class="chart-panel"><div class="panel-title">验证用例结果</div><div class="table-responsive"><table class="table table-sm table-striped align-middle" id="用例表"></table></div></div></div>
+        </div>
+      </section>
+
+      <section class="页面 d-none" data-page-section="平台愿景">
+        <div class="pt-3 pb-2 mb-3 border-bottom"><h1 class="h2 mb-1">HPM-DT 平台愿景</h1><p class="text-muted mb-0">所有阶段开发都服务于高功率微波数字孪生 CAE 平台，而不是孤立功能堆叠</p></div>
+        <div class="north-star-panel mb-3">
+          <div class="north-star-kicker">{{ platform["平台名称"] }} · {{ platform["平台全称"] }}</div>
+          <h2>高功率微波数字孪生 CAE 平台</h2>
+          <p>{{ platform["平台定位"] }}</p>
+          <p class="mb-0">{{ platform["最高层目标"] }}</p>
+        </div>
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="chart-panel"><div class="panel-title">八层架构当前状态</div>
+              <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle mb-0">
+                  <thead><tr><th>层级</th><th>职责</th><th>当前状态</th><th>当前证据</th><th>下一步</th></tr></thead>
+                  <tbody>
+                    {% for layer in platform["层级状态"] %}
+                    <tr>
+                      <td><strong>{{ layer["层级"] }}</strong><br><span class="text-muted">{{ layer["英文"] }}</span></td>
+                      <td>{{ layer["职责"] }}</td>
+                      <td><span class="badge bg-primary">{{ layer["当前状态"] }}</span></td>
+                      <td>{{ layer["当前证据"] }}</td>
+                      <td>{{ layer["下一步"] }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-panel"><div class="panel-title">阶段路线与验收门槛</div>
+              <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle mb-0">
+                  <thead><tr><th>阶段</th><th>名称</th><th>状态</th><th>验收证据</th><th>下一门槛</th></tr></thead>
+                  <tbody>
+                    {% for item in platform["里程碑状态"] %}
+                    <tr>
+                      <td><strong>{{ item["阶段"] }}</strong></td>
+                      <td>{{ item["名称"] }}</td>
+                      <td><span class="badge bg-secondary">{{ item["状态"] }}</span></td>
+                      <td>{{ item["验收证据"] }}</td>
+                      <td>{{ item["下一门槛"] }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="页面 d-none" data-page-section="三维CAE编辑器">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <div><h1 class="h2 mb-1">V2.0B 三维 CAE 编辑器</h1><p class="text-muted mb-0">Three.js 本地视口 · 工程对象树 · 属性面板 · 绝对量纲标定 · 求解联动 · 后端几何校验</p></div>
+          <div class="btn-toolbar gap-2">
+            <button class="btn btn-outline-primary" id="三维移动模式" data-testid="workbench3d-move-mode"><i class="bi bi-arrows-move"></i> 移动</button>
+            <button class="btn btn-outline-secondary" id="三维撤销" data-testid="workbench3d-undo" disabled><i class="bi bi-arrow-counterclockwise"></i> 撤销</button>
+            <button class="btn btn-outline-secondary" id="三维重做" data-testid="workbench3d-redo" disabled><i class="bi bi-arrow-clockwise"></i> 重做</button>
+            <button class="btn btn-outline-warning" id="三维运行求解" data-testid="workbench3d-run-solve"><i class="bi bi-cpu"></i> 运行求解</button>
+            <button class="btn btn-outline-success" id="三维保存快照" data-testid="workbench3d-capture-snapshot"><i class="bi bi-bookmark-plus"></i> 保存快照</button>
+            <button class="btn btn-outline-secondary" id="三维重载场景"><i class="bi bi-arrow-clockwise"></i> 重载</button>
+            <button class="btn btn-outline-primary" id="三维重置相机"><i class="bi bi-fullscreen"></i> 视图</button>
+            <button class="btn btn-primary" id="三维导出快照"><i class="bi bi-download"></i> 导出JSON</button>
+          </div>
+        </div>
+        <div id="三维状态" class="alert alert-info" data-testid="workbench3d-status">正在载入三维工程场景。</div>
+        <div class="workbench3d-layout">
+          <aside class="workbench3d-side" aria-label="三维对象树">
+            <div class="workbench3d-side-title">对象树</div>
+            <div id="三维对象树" class="workbench3d-tree" data-testid="workbench3d-tree"></div>
+          </aside>
+          <section class="workbench3d-main" aria-label="Three.js 三维视口">
+            <div id="三维视口" class="workbench3d-viewport" data-testid="workbench3d-viewport"></div>
+            <div class="workbench3d-readout">
+              <span id="三维场景摘要">尚未载入</span>
+              <span id="三维哈希" data-testid="workbench3d-hash">scene_hash: --</span>
+            </div>
+            <div id="三维求解结果" class="workbench3d-solve-panel" data-testid="workbench3d-solve-panel">尚未运行三维联动求解。</div>
+            <div id="三维求解任务" class="workbench3d-solve-jobs" data-testid="workbench3d-solve-jobs">尚无三维求解任务。</div>
+            <div id="三维结果档案" class="workbench3d-result-archive" data-testid="workbench3d-result-archive">尚无三维求解结果档案。</div>
+            <div id="三维工程快照" class="workbench3d-snapshot-archive" data-testid="workbench3d-snapshot-archive">尚无三维工程快照。</div>
+            <div id="三维资产台账" class="workbench3d-asset-ledger" data-testid="workbench3d-asset-ledger">尚无工程资产台账。</div>
+          </section>
+          <aside class="workbench3d-side" aria-label="对象属性">
+            <div class="workbench3d-side-title">属性面板</div>
+            <div id="三维属性面板" class="workbench3d-properties text-muted">请选择对象。</div>
+            <div class="visually-hidden" data-testid="workbench3d-material-editor">材料编辑器</div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="页面 d-none" data-page-section="插件市场">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <div><h1 class="h2 mb-1">V2.0C 插件市场</h1><p class="text-muted mb-0">manifest · 白名单入口点 · 参数 Schema · 插件级验收</p></div>
+          <div class="btn-toolbar gap-2">
+            <button class="btn btn-outline-primary" id="插件刷新" data-testid="plugin-refresh"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
+          </div>
+        </div>
+        <div id="插件状态" class="alert alert-info" data-testid="plugin-status">正在载入插件目录。</div>
+        <div class="row g-3">
+          <div class="col-12 col-xl-5">
+            <div class="chart-panel h-100">
+              <div class="panel-title">V2.0C 验收清单</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="插件验收" data-testid="plugin-acceptance"></table></div>
+            </div>
+          </div>
+          <div class="col-12 col-xl-7">
+            <div class="chart-panel h-100">
+              <div class="panel-title">插件目录</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="插件目录" data-testid="plugin-catalog"></table></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-panel">
+              <div class="panel-title">插件运行结果</div>
+              <pre id="插件运行结果" class="输出路径" data-testid="plugin-run-output">尚未运行插件。</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="页面 d-none" data-page-section="数据导入">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <div><h1 class="h2 mb-1">V3.0 数据导入预览</h1><p class="text-muted mb-0">CST/HFSS 导出包 · 测量批次 · CSV · Touchstone · NPZ · HDF5 元数据、单位、不确定度和坐标系审计</p></div>
+          <div class="btn-toolbar gap-2">
+            <button class="btn btn-outline-primary" id="数据导入刷新" data-testid="data-import-refresh"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
+          </div>
+        </div>
+        <div id="数据导入状态" class="alert alert-info" data-testid="data-import-status">正在载入数据导入目录。</div>
+        <div class="row g-3">
+          <div class="col-12 col-xl-5">
+            <div class="chart-panel h-100">
+              <div class="panel-title">V3.0 验收清单</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="数据导入验收" data-testid="data-import-acceptance"></table></div>
+            </div>
+          </div>
+          <div class="col-12 col-xl-7">
+            <div class="chart-panel h-100">
+              <div class="panel-title">内置样例数据</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="数据导入样例" data-testid="data-import-samples"></table></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-panel">
+              <div class="panel-title">V&V 标定准备度</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="数据导入标定准备" data-testid="data-import-calibration-readiness"></table></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-panel">
+              <div class="panel-title">导入数据标定桥接</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="数据导入标定桥接" data-testid="data-import-calibration-bridge"></table></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-panel">
+              <div class="panel-title">导入数据模型误差对比</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="数据导入模型误差" data-testid="data-import-model-comparison"></table></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-panel">
+              <div class="panel-title">外部数据 V&amp;V 可信度审计</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="数据导入VV审计" data-testid="data-import-vv-audit"></table></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-panel">
+              <div class="panel-title">解析外部路径</div>
+              <div class="p-3 d-flex flex-column flex-lg-row gap-2">
+                <input class="form-control" id="数据导入路径" data-testid="data-import-path" placeholder="输入本机 CST/HFSS 导出包、测量批次、CSV、Touchstone、NPZ 或 HDF5 路径">
+                <button class="btn btn-primary" id="数据导入检查路径" data-testid="data-import-inspect-path"><i class="bi bi-search"></i> 解析路径</button>
+              </div>
+              <pre id="数据导入结果" class="输出路径" data-testid="data-import-output">尚未解析数据。</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="页面 d-none" data-page-section="解析解验证">
+        <div class="pt-3 pb-2 mb-3 border-bottom"><h1 class="h2 mb-1">解析解验证</h1><p class="text-muted mb-0">阵列因子、扫描波束和自由空间 Green 函数与解析公式对比</p></div>
+        <div class="row g-3">
+          <div class="col-12 col-xl-6"><div class="chart-panel"><div class="panel-title">误差热图</div><div id="图_误差热图" class="图表"></div></div></div>
+          <div class="col-12 col-xl-6"><div class="chart-panel"><div class="panel-title">Green函数幅相误差</div><div id="图_Green函数幅相误差" class="图表"></div></div></div>
+        </div>
+      </section>
+
+      <section class="页面 d-none" data-page-section="算法基准验证">
+        <div class="pt-3 pb-2 mb-3 border-bottom"><h1 class="h2 mb-1">算法基准验证</h1><p class="text-muted mb-0">MUSIC/ESPRIT/PAWR 测向与 MVDR/LCMV 约束响应</p></div>
+        <div class="row g-3">
+          <div class="col-12 col-xl-6"><div class="chart-panel"><div class="panel-title">MUSIC空间谱</div><div id="图_MUSIC空间谱" class="图表"></div></div></div>
+          <div class="col-12 col-xl-6"><div class="chart-panel"><div class="panel-title">MVDR零陷方向图</div><div id="图_MVDR零陷方向图" class="图表"></div></div></div>
+        </div>
+      </section>
+
+      <section class="页面 d-none" data-page-section="后端一致性验证">
+        <div class="pt-3 pb-2 mb-3 border-bottom"><h1 class="h2 mb-1">后端一致性验证</h1><p class="text-muted mb-0">复合传播后端关闭附加机制后应退化为自由空间基线</p></div>
+        <div class="chart-panel"><div class="panel-title">后端退化审计表</div><div class="table-responsive"><table class="table table-sm table-striped" id="后端表"></table></div></div>
+      </section>
+
+      <section class="页面 d-none" data-page-section="不确定度分析">
+        <div class="pt-3 pb-2 mb-3 border-bottom"><h1 class="h2 mb-1">不确定度分析</h1><p class="text-muted mb-0">固定随机种子的 Monte Carlo 统计</p></div>
+        <div class="row g-3">
+          <div class="col-12 col-xl-6"><div class="chart-panel"><div class="panel-title">峰值偏差分布</div><div id="图_不确定度直方图" class="图表"></div></div></div>
+          <div class="col-12 col-xl-6"><div class="chart-panel"><div class="panel-title">不确定度统计</div><div class="table-responsive"><table class="table table-sm table-striped" id="不确定度表"></table></div></div></div>
+        </div>
+      </section>
+
+      <section class="页面 d-none" data-page-section="敏感性分析">
+        <div class="pt-3 pb-2 mb-3 border-bottom"><h1 class="h2 mb-1">敏感性分析</h1><p class="text-muted mb-0">OAT 单因素敏感性排序</p></div>
+        <div class="row g-3">
+          <div class="col-12 col-xl-7"><div class="chart-panel"><div class="panel-title">敏感性tornado图</div><div id="图_敏感性tornado图" class="图表"></div></div></div>
+          <div class="col-12 col-xl-5"><div class="chart-panel"><div class="panel-title">敏感性排序表</div><div class="table-responsive"><table class="table table-sm table-striped" id="敏感性表"></table></div></div></div>
+        </div>
+      </section>
+
+      <section class="页面 d-none" data-page-section="论文报告导出">
+        <div class="pt-3 pb-2 mb-3 border-bottom"><h1 class="h2 mb-1">论文报告导出</h1><p class="text-muted mb-0">导出 V&V 报告，并生成 V2.0D Paper Factory 论文草稿包</p></div>
+        <div class="export-grid">
+          <button class="btn btn-primary" id="导出HTML报告"><i class="bi bi-filetype-html"></i> 导出HTML报告</button>
+          <button class="btn btn-outline-primary" id="导出LaTeX表格"><i class="bi bi-table"></i> 导出LaTeX表格</button>
+          <button class="btn btn-outline-primary" id="导出论文图包"><i class="bi bi-images"></i> 导出论文图包</button>
+          <button class="btn btn-success" id="下载结果ZIP"><i class="bi bi-file-earmark-zip"></i> 下载V&amp;V结果ZIP</button>
+          <button class="btn btn-warning" id="生成论文包" data-testid="paper-factory-generate"><i class="bi bi-journal-text"></i> 生成论文草稿包</button>
+          <button class="btn btn-outline-success" id="下载论文包" data-testid="paper-factory-download"><i class="bi bi-file-earmark-zip"></i> 下载论文包</button>
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-12 col-xl-5">
+            <div class="chart-panel h-100">
+              <div class="panel-title">V2.0D Paper Factory 状态</div>
+              <div id="论文工厂状态" class="paper-factory-status" data-testid="paper-factory-status">尚未读取。</div>
+            </div>
+          </div>
+          <div class="col-12 col-xl-7">
+            <div class="chart-panel h-100">
+              <div class="panel-title">论文包输出</div>
+              <pre id="论文工厂输出" class="输出路径" data-testid="paper-factory-output">尚未生成论文包。</pre>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-panel"><div class="panel-title">V&V 输出路径</div><pre id="输出路径" class="输出路径">尚未载入。</pre></div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="pt-4 pb-4 mt-5 text-muted border-top small d-flex justify-content-between flex-wrap gap-2">
+        <span>HPM-DT 高功率微波数字孪生 CAE 平台 · V2.0A 可信度验证体系</span>
+        <span>界面基于 Bootstrap 5 官方 Dashboard 开源模板结构（MIT）</span>
+      </footer>
+    </main>
+  </div>
+</div>
+
+<div id="忙碌遮罩" class="忙碌遮罩 d-none" aria-live="polite">
+  <div class="busy-card"><div class="spinner-border text-primary mb-3" role="status"></div><div id="忙碌文字" class="fw-bold">正在计算…</div></div>
+</div>
+<div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="消息提示" class="toast" role="alert"><div class="toast-header"><strong class="me-auto">可信度验证中心</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="消息正文"></div></div></div>
+
+<script src="{{ url_for('static', path='vendor/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', path='vendor/plotly.min.js') }}"></script>
+<script src="{{ url_for('static_v20a', path='js/v20a.js') }}"></script>
+<script type="module" src="{{ url_for('static_v20a', path='js/workbench3d.js') }}"></script>
+</body>
+</html>

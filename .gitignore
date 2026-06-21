@@ -1,0 +1,29 @@
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments and local machine state
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# Generated run outputs and local archives
+outputs*/
+*.log
+*.sqlite
+*.db
+*.zip
+*.sha256
+*.sha256.txt
+
+# Temporary files
+*.tmp
+*.bak
+~$*
+.DS_Store
+Thumbs.db

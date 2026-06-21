@@ -1,0 +1,220 @@
+meta:
+  name: HPM 数字化电磁算法 CAE V1.4 验证与标定工程
+  seed: 20260620
+  notes: Bootstrap 开源模板工作台、模型适用性诊断、传播后端对比与归一化尺度参数标定
+array:
+  nx: 8
+  ny: 8
+  frequency_ghz: 10.0
+  spacing_x_lambda: 0.5
+  spacing_y_lambda: 0.5
+plane:
+  z_lambda: 8.0
+  span_x_lambda: 8.0
+  span_y_lambda: 8.0
+  samples: 81
+propagation:
+  backend: hybrid_scene
+  direct_path_scale: 0.8
+  reflection_scale: 0.6
+  cavity_scale: 0.8
+  maximum_modes: 8
+  comparison_backends:
+  - free_space_green
+  - image_ray
+  - aperture_cavity_rom
+  - hybrid_scene
+materials:
+- material_id: MAT-金属代理
+  name: 金属反射代理
+  relative_permittivity: 4.0
+  loss_tangent: 0.02
+  reflection_magnitude: 0.82
+  reflection_phase_deg: 180.0
+  roughness_proxy: 0.08
+- material_id: MAT-损耗介质
+  name: 损耗介质代理
+  relative_permittivity: 2.8
+  loss_tangent: 0.08
+  reflection_magnitude: 0.38
+  reflection_phase_deg: -25.0
+  roughness_proxy: 0.22
+reflecting_planes:
+- object_id: REF-001
+  name: 侧向反射面1
+  enabled: true
+  axis: x
+  coordinate_lambda: -3.6
+  material_id: MAT-金属代理
+apertures:
+- object_id: APT-001
+  name: 等效孔缝1
+  enabled: true
+  center_x_lambda: 0.0
+  center_y_lambda: 0.0
+  center_z_lambda: 7.2
+  radius_lambda: 0.12
+  coupling_scale: 0.55
+  cavity_id: CAV-001
+cavities:
+- object_id: CAV-001
+  name: 电子舱降阶腔体1
+  enabled: true
+  center_x_lambda: 0.0
+  center_y_lambda: 0.0
+  center_z_lambda: 8.0
+  size_x_lambda: 3.0
+  size_y_lambda: 2.4
+  size_z_lambda: 1.6
+  quality_factor: 8.0
+  leakage_scale: 0.45
+  modes_x: 2
+  modes_y: 2
+  modes_z: 2
+  material_id: MAT-损耗介质
+target:
+  center_x_lambda: 0.8
+  center_y_lambda: -0.6
+  semi_major_lambda: 1.1
+  semi_minor_lambda: 0.65
+  rotation_deg: 25.0
+  guard_scale: 1.7
+  object_id: TGT-001
+  name: 目标区1
+  enabled: true
+  amplitude_scale: 1.0
+  priority: 1.0
+  tolerance_percent: 10.0
+protected_zone:
+  enabled: true
+  center_x_lambda: -2.5
+  center_y_lambda: 2.1
+  radius_lambda: 0.7
+  object_id: PRT-001
+  name: 保护区1
+  priority: 1.0
+  max_amplitude_scale: 0.24
+additional_targets:
+- center_x_lambda: -1.35
+  center_y_lambda: -1.15
+  semi_major_lambda: 0.58
+  semi_minor_lambda: 0.4
+  rotation_deg: -18
+  guard_scale: 1.5
+  object_id: TGT-002
+  name: 目标区2
+  enabled: true
+  amplitude_scale: 0.88
+  priority: 1.15
+  tolerance_percent: 12.0
+additional_protected_zones:
+- enabled: true
+  center_x_lambda: 2.35
+  center_y_lambda: -2.25
+  radius_lambda: 0.42
+  object_id: PRT-002
+  name: 保护区2
+  priority: 1.4
+  max_amplitude_scale: 0.22
+interferers:
+- object_id: INT-001
+  name: 相干辐射源1
+  enabled: true
+  theta_deg: 18.4
+  phi_deg: -7.6
+  relative_power_db: 0.0
+  echo_enabled: true
+  echo_theta_deg: 35.7
+  echo_phi_deg: 11.8
+  echo_relative_power_db: -3.0
+  echo_phase_deg: 55.0
+  prior_theta_deg: 20.0
+  prior_phi_deg: -5.0
+  uncertainty_theta_deg: 2.0
+  uncertainty_phi_deg: 2.5
+perception:
+  method: PAWR-MUSIC
+  snr_db: -8.0
+  snapshots: 128
+  subarray_nx: 6
+  subarray_ny: 6
+  scan_theta_min_deg: 5.0
+  scan_theta_max_deg: 50.0
+  scan_phi_min_deg: -25.0
+  scan_phi_max_deg: 25.0
+  scan_step_deg: 0.5
+  diagonal_loading: 0.001
+  sensor_gain_std_db: 0.15
+  sensor_phase_std_deg: 4.0
+  fault_count: 2
+  prior_sigma_deg: 5.0
+  prior_strength: 0.002
+protection:
+  method: CR-HybridNull
+  desired_theta_deg: 18.0
+  desired_phi_deg: 12.0
+  desired_power_db: 0.0
+  interferer_power_db: 32.0
+  noise_power: 1.0
+  loading_factor: 0.03
+  sector_scale: 2.2
+  grid_step_deg: 1.0
+  energy_threshold: 0.995
+  max_rank: 10
+  soft_strength: 0.65
+  wng_floor_db: 5.0
+solver:
+  method: Constrained-MO-PGMS
+  target_amplitude: 0.47
+  outside_penalty: 0.25
+  outside_hinge_amplitude: 0.14
+  outside_peak_limit_db: -2.0
+  protected_penalty: 1.2
+  fairness_penalty: 1.2
+  tail_penalty: 0.05
+  tail_fraction: 0.15
+  ridge: 0.001
+  iterations: 320
+  learning_rate: 0.025
+  rms_limit: 0.8
+  peak_limit: 1.0
+  target_samples: 320
+  outside_samples: 780
+  uncertainty_scenarios: 5
+  gain_std_percent: 3.0
+  phase_std_deg: 5.0
+  registration_jitter_lambda: 0.08
+  pa_enabled: true
+  dpd_enabled: true
+  pa_saturation_amplitude: 1.0
+  pa_smoothness: 3.0
+  pa_maximum_phase_deg: 12.0
+  pareto_points: 7
+motion:
+  enabled: false
+  frames: 18
+  dt_frames: 1.0
+  velocity_x_lambda_per_frame: 0.055
+  velocity_y_lambda_per_frame: 0.02
+  acceleration_x_lambda_per_frame2: 0.0
+  acceleration_y_lambda_per_frame2: 0.0
+  maneuver_amplitude_lambda: 0.24
+  maneuver_period_frames: 14.0
+  observation_delay_frames: 2
+  controller: Predictive-PGMS
+  preview_samples: 51
+workflow:
+  enabled_nodes:
+  - scene
+  - signal
+  - perception
+  - protection
+  - field_control
+  - effect_proxy
+  - report
+  experiment_database: outputs_v14_ui/experiments.sqlite3
+  parallel_workers: 2
+  checkpoint_interval: 1
+schema_version: '1.4'
+model_scope: 波长尺度归一化标量场与阵列算法研究模型；绝对功率仅作为实测标定元数据，不输出器件阈值、毁伤概率或现实作用距离
+saved_utc: '2026-06-20T17:33:24.407287+00:00'

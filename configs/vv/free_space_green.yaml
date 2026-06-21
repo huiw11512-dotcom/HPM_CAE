@@ -1,0 +1,9 @@
+case_group: 自由空间格林函数
+single_element:
+  distance_min_lambda: 1.0
+  distance_max_lambda: 12.0
+  samples_fast: 80
+  samples_full: 160
+thresholds:
+  amplitude_max_error: 1.0e-6
+  phase_rmse_rad: 1.0e-10

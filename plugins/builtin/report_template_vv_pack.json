@@ -1,0 +1,42 @@
+{
+  "id": "hpm.publication.vv_report_pack",
+  "name": "V&V 报告模板包",
+  "version": "2.0.0",
+  "category": "report_template",
+  "layer": "Publication Layer",
+  "summary": "把可信度验证 HTML、LaTeX 表格和结果包作为可发现报告模板插件暴露给平台。",
+  "provider": "HPM-DT 内置",
+  "entry_point": {
+    "kind": "builtin_hook",
+    "target": "report_template_summary"
+  },
+  "parameters_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "format": {
+        "type": "string",
+        "default": "html",
+        "enum": ["html", "latex", "zip"],
+        "description": "要审计的报告输出格式。"
+      }
+    }
+  },
+  "dependencies": ["hpm_platform.validation.vv_report", "hpm_platform.validation.vv_runner"],
+  "enabled_by_default": true,
+  "safety": {
+    "execution": "builtin_hook_only",
+    "scope": "科研报告、统计表格和结果包索引",
+    "blocked_outputs": ["未验证结论", "真实损伤概率", "现实作用距离"]
+  },
+  "acceptance_tests": [
+    "manifest 可解析",
+    "报告产物路径可审计",
+    "后续 Paper Factory 可复用"
+  ],
+  "sample_project": "outputs_v20a_vv/v20A_可信度验证报告.html",
+  "tags": ["报告", "论文生产", "V2.0C"],
+  "settings": {
+    "default_format": "html"
+  }
+}
