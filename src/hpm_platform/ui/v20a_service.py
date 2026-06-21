@@ -13,6 +13,7 @@ from hpm_platform.data_import import (
     generate_evidence_chain_report,
     generate_external_data_vv_audit,
     generate_model_comparison_report,
+    inspect_evidence_package,
 )
 from hpm_platform.north_star import platform_north_star_payload
 from hpm_platform.plugins import PluginMarketplaceService
@@ -87,6 +88,10 @@ class V20AValidationService:
     def data_import_evidence_chain(self) -> dict[str, Any]:
         with self._lock:
             return generate_evidence_chain_report(self.output_dir)
+
+    def data_import_evidence_package(self, path: str | Path) -> dict[str, Any]:
+        with self._lock:
+            return inspect_evidence_package(path, self.output_dir)
 
     def data_import_vv_audit(self) -> dict[str, Any]:
         with self._lock:

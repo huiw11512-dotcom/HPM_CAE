@@ -16,6 +16,7 @@ GET  /api/data-import/calibration-readiness
 GET  /api/data-import/calibration-bridge
 GET  /api/data-import/model-comparison
 GET  /api/data-import/evidence-chain
+POST /api/data-import/evidence-package
 GET  /api/data-import/vv-audit
 GET  /api/data-import/samples/{sample_id}
 POST /api/data-import/inspect
@@ -82,6 +83,18 @@ Measurement Campaign 样例会把 `x_mm/y_mm/z_mm` 按 `reference_frequency_ghz`
 - 安全边界声明。
 
 默认配置是演示级配置，故意不通过正式门槛。用户后续只能通过替换授权测量链、相位参考和校准证书元数据来推动 `真实源链与相位参考已接入=true`；平台不会从归一化代理样例中自动推断真实源链。
+
+## 正式证据包审计入口
+
+当前版本新增 `POST /api/data-import/evidence-package`，允许用户提交本机 ZIP 或目录路径，把外部证据从“单个配置文件”推进为“可复查证据包”：
+
+- 包内必须包含 `external_data_evidence.yaml/yml/json` manifest；
+- 包内原始数据文件 SHA256 必须与 manifest 的 `evidence.raw_data_lineage.raw_data_hashes` 匹配；
+- manifest 必须通过授权、真实源链、相位参考、校准证书、不确定度模型和安全边界门槛；
+- 审计会输出 `evidence_package_audit.json/csv`，并标记“可作为正式证据配置候选”；
+- 审计不会直接改写可信度评分，正式纳入仍需要外部 V&V 残差、覆盖率和人工复核同时通过。
+
+证据包审计会扫描禁用字段，包括真实作用距离、器件阈值、真实毁伤概率和作战效能字段。该入口用于学术数据血缘和复现实验管理，不用于输出现实效应参数。
 
 ## 外部数据 V&V 可信度审计
 

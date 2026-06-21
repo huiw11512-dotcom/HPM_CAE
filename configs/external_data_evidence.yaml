@@ -5,6 +5,29 @@ thresholds:
   max_phase_reference_uncertainty_deg: 5.0
   min_raw_data_hashes: 1
 
+evidence_package:
+  manifest_names:
+    - external_data_evidence.yaml
+    - external_data_evidence.yml
+    - external_data_evidence.json
+    - EXTERNAL_DATA_EVIDENCE.yaml
+  min_files: 2
+  max_files: 500
+  max_bytes: 50000000
+  forbidden_fields:
+    - real_effect_distance
+    - effect_distance
+    - action_distance
+    - device_threshold
+    - damage_probability
+    - kill_probability
+    - 真实作用距离
+    - 作用距离
+    - 器件阈值
+    - 真实毁伤概率
+    - 毁伤概率
+    - 作战效能
+
 evidence:
   authorization:
     approved_for_research: false

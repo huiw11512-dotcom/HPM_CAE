@@ -186,6 +186,17 @@ def create_app(
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"生成外部数据证据链审计失败：{exc}") from exc
 
+    @app.post("/api/data-import/evidence-package")
+    async def data_import_evidence_package(payload: DataImportPathRequest) -> dict[str, Any]:
+        try:
+            return service.data_import_evidence_package(payload.path)
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"审计外部数据正式证据包失败：{exc}") from exc
+
     @app.get("/api/data-import/vv-audit")
     async def data_import_vv_audit() -> dict[str, Any]:
         try:

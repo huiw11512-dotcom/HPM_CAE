@@ -323,6 +323,21 @@ async function 解析数据路径() {
     提示(错误.message);
   }
 }
+async function 审计数据证据包() {
+  const path = $("数据导入路径").value.trim();
+  if (!path) {
+    提示("请输入证据包 ZIP 或目录路径");
+    return;
+  }
+  try {
+    const 数据 = await 请求("/api/data-import/evidence-package", {method: "POST", body: JSON.stringify({path})});
+    $("数据导入结果").textContent = JSON.stringify(数据, null, 2);
+    提示(数据.通过 ? "证据包审计通过" : "证据包存在阻断项");
+  } catch (错误) {
+    $("数据导入结果").textContent = 错误.message;
+    提示(错误.message);
+  }
+}
 async function 载入论文工厂状态() {
   if (!$("论文工厂状态")) return;
   try {
@@ -623,6 +638,7 @@ window.addEventListener("DOMContentLoaded", () => {
   $("下载论文包").addEventListener("click", () => { window.location.href = "/download/paper-factory.zip"; });
   $("数据导入刷新").addEventListener("click", 载入数据导入);
   $("数据导入检查路径").addEventListener("click", 解析数据路径);
+  $("数据导入审计证据包").addEventListener("click", 审计数据证据包);
   $("数据导入样例").addEventListener("click", event => {
     const button = event.target.closest(".数据样例解析");
     if (button) 解析数据样例(button.dataset.sampleId);

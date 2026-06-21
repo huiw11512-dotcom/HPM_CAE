@@ -1,6 +1,9 @@
+import hashlib
 from pathlib import Path
+import zipfile
 
 from fastapi.testclient import TestClient
+import yaml
 
 from hpm_platform.data_import import (
     DataImportService,
@@ -8,12 +11,74 @@ from hpm_platform.data_import import (
     generate_evidence_chain_report,
     generate_external_data_vv_audit,
     generate_model_comparison_report,
+    inspect_evidence_package,
     inspect_dataset,
 )
 from hpm_platform.ui.app_v20a import create_app
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _make_evidence_package(tmp_path: Path, *, forbidden_field: bool = False) -> Path:
+    raw_payload = "x_lambda,y_lambda,field_norm,phase_deg\n0,0,0.62,12\n0.1,0,0.58,18\n"
+    raw_hash = hashlib.sha256(raw_payload.encode("utf-8")).hexdigest()
+    manifest = {
+        "version": "V3.0-evidence-chain-v1",
+        "dataset_id": "AUTH-CANDIDATE-001",
+        "thresholds": {
+            "max_phase_reference_uncertainty_deg": 5.0,
+            "min_raw_data_hashes": 1,
+        },
+        "evidence": {
+            "authorization": {
+                "approved_for_research": True,
+                "approval_id": "LAB-AUTH-001",
+                "owner": "authorized academic lab",
+                "usage_scope": "algorithm validation and paper reproduction",
+            },
+            "source_chain": {
+                "status": "verified",
+                "source_type": "measurement_campaign",
+                "instrument_chain_id": "LAB-CHAIN-001",
+                "source_chain_hash": raw_hash,
+                "traceability_note": "authorized metadata chain with immutable raw-data hash",
+            },
+            "phase_reference": {
+                "status": "verified",
+                "reference_type": "locked_vna_reference",
+                "locked_reference": True,
+                "reference_uncertainty_deg": 1.2,
+                "phase_reference_hash": raw_hash,
+            },
+            "calibration": {
+                "status": "verified",
+                "certificate_id": "CAL-001",
+                "certificate_sha256": raw_hash,
+                "valid_for_dataset": True,
+            },
+            "uncertainty_model": {
+                "status": "verified",
+                "amplitude_sigma_declared": True,
+                "phase_sigma_declared": True,
+                "coverage_statement": "2sigma measurement uncertainty model is declared",
+            },
+            "raw_data_lineage": {
+                "raw_data_hashes": [raw_hash],
+                "processing_script_hash": raw_hash,
+                "immutable_archive": True,
+            },
+        },
+        "safety_boundary": "Only provenance and normalized measurement metadata are audited; no real effect range or device threshold is output.",
+    }
+    if forbidden_field:
+        manifest["evidence"]["raw_data_lineage"]["device_threshold"] = 1.0
+
+    package_path = tmp_path / ("forbidden_evidence_package.zip" if forbidden_field else "evidence_package.zip")
+    with zipfile.ZipFile(package_path, "w") as archive:
+        archive.writestr("external_data_evidence.yaml", yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False))
+        archive.writestr("raw/near_field.csv", raw_payload)
+    return package_path
 
 
 def test_v30_data_import_catalog_parses_builtin_samples(tmp_path):
@@ -173,6 +238,37 @@ def test_v30_evidence_chain_audit_is_config_driven_and_blocks_demo_data(tmp_path
     assert Path(report["CSV"]).exists()
 
 
+def test_v30_evidence_package_accepts_authorized_zip_candidate(tmp_path):
+    package_path = _make_evidence_package(tmp_path)
+    report = inspect_evidence_package(package_path, tmp_path)
+
+    assert report["版本"] == "V3.0-evidence-package-audit-v1"
+    assert report["包类型"] == "zip"
+    assert report["manifest"] == "external_data_evidence.yaml"
+    assert report["数据集ID"] == "AUTH-CANDIDATE-001"
+    assert report["通过"] is True
+    assert report["可作为正式证据配置候选"] is True
+    assert report["可直接改写可信度评分"] is False
+    assert report["证据链审计"]["可纳入正式可信度评分证据"] is True
+    assert report["包内文件数量"] == 2
+    assert len(report["匹配原始数据哈希"]) == 1
+    assert report["缺失原始数据哈希"] == []
+    assert report["安全字段命中"] == []
+    assert Path(report["输出文件"]).exists()
+    assert Path(report["CSV"]).exists()
+
+
+def test_v30_evidence_package_blocks_forbidden_research_boundary_fields(tmp_path):
+    package_path = _make_evidence_package(tmp_path, forbidden_field=True)
+    report = inspect_evidence_package(package_path, tmp_path)
+
+    assert report["通过"] is False
+    assert report["可作为正式证据配置候选"] is False
+    assert report["证据链审计"]["可纳入正式可信度评分证据"] is True
+    assert any("device_threshold" in item for item in report["安全字段命中"])
+    assert any(item["项目"] == "安全字段扫描通过" and item["通过"] is False for item in report["阻断项"])
+
+
 def test_v30_data_import_rejects_unknown_format(tmp_path):
     path = tmp_path / "unknown.dat"
     path.write_text("not a supported format", encoding="utf-8")
@@ -186,6 +282,7 @@ def test_v30_data_import_rejects_unknown_format(tmp_path):
 
 
 def test_v30_data_import_api_and_frontend_assets(tmp_path):
+    evidence_package_path = _make_evidence_package(tmp_path)
     with TestClient(create_app(ROOT / "configs" / "cae_project_v14.yaml", tmp_path)) as client:
         catalog = client.get("/api/data-import/catalog")
         acceptance = client.get("/api/data-import/acceptance")
@@ -193,6 +290,7 @@ def test_v30_data_import_api_and_frontend_assets(tmp_path):
         bridge = client.get("/api/data-import/calibration-bridge")
         model_comparison = client.get("/api/data-import/model-comparison")
         evidence_chain = client.get("/api/data-import/evidence-chain")
+        evidence_package = client.post("/api/data-import/evidence-package", json={"path": str(evidence_package_path)})
         vv_audit = client.get("/api/data-import/vv-audit")
         sample = client.get("/api/data-import/samples/V30-TOUCHSTONE-S2P")
         by_path = client.post("/api/data-import/inspect", json={"path": sample.json()["源文件"]})
@@ -215,6 +313,9 @@ def test_v30_data_import_api_and_frontend_assets(tmp_path):
     assert evidence_chain.status_code == 200
     assert evidence_chain.json()["通过"] is False
     assert evidence_chain.json()["真实源链与相位参考已接入"] is False
+    assert evidence_package.status_code == 200
+    assert evidence_package.json()["通过"] is True
+    assert evidence_package.json()["可直接改写可信度评分"] is False
     assert vv_audit.status_code == 200
     assert vv_audit.json()["可纳入正式可信度评分"] is False
     assert vv_audit.json()["证据链审计"]["通过"] is False
@@ -232,11 +333,13 @@ def test_v30_data_import_api_and_frontend_assets(tmp_path):
     assert 'data-testid="data-import-calibration-bridge"' in html
     assert 'data-testid="data-import-model-comparison"' in html
     assert 'data-testid="data-import-evidence-chain"' in html
+    assert 'data-testid="data-import-evidence-package"' in html
     assert 'data-testid="data-import-vv-audit"' in html
     assert "/api/data-import/catalog" in js
     assert "/api/data-import/calibration-bridge" in js
     assert "/api/data-import/model-comparison" in js
     assert "/api/data-import/evidence-chain" in js
+    assert "/api/data-import/evidence-package" in js
     assert "/api/data-import/vv-audit" in js
     assert "渲染数据导入标定准备" in js
     assert "渲染数据导入标定桥接" in js
