@@ -4,7 +4,7 @@ An open-source Chinese CAE platform for high-power microwave phased arrays, digi
 
 HPM-DT（High-Power Microwave Digital Twin）的长期目标，是构建一个面向高功率微波相控阵、效应分析与数字孪生研究的全中文开源科研级 CAE 平台。它不是一个算法仓库、单个论文项目或几个 Python 脚本，而是持续演进的高功率微波数字孪生 CAE 平台。
 
-V2.0A 只是当前阶段里程碑：它完成可信度验证体系；当前工作已经推进到 V2.0B 三维 CAE 编辑器原型、V2.0C 插件市场预览、V2.0D Paper Factory 预览和 V3.0 数据导入预览。V1.4 的 FastAPI + Bootstrap 5 Dashboard + Plotly 离线工作台、插件式传播后端、模型适用性诊断和参数标定能力全部保留。
+V2.0A 只是当前阶段里程碑：它完成可信度验证体系；当前工作已经推进到 V2.0B 三维 CAE 编辑器原型、V2.0C 任务级仿真框架预览与插件基础设施、V2.0D Paper Factory 预览和 V3.0 数据导入预览。V1.4 的 FastAPI + Bootstrap 5 Dashboard + Plotly 离线工作台、插件式传播后端、模型适用性诊断和参数标定能力全部保留。
 
 > **North Star**：所有版本开发都必须服务于 HPM-DT 长期平台目标，而不是孤立地增加功能。长期架构包括物理建模、感知、防护、控场、效应、可信度、CAE 工作台和论文生产八层。
 
@@ -71,7 +71,7 @@ http://127.0.0.1:7869
 - 新增 FastAPI + Bootstrap 5 “可信度验证中心”，包含总览卡片、交互图、同步运行按钮和下载端点；当前入口已移动到 `工具 -> 可信度验证`；
 - 生成中文 HTML 报告、JSON/CSV/LaTeX 表格、论文图包、中文技术说明、论文提纲和已执行 Notebook；
 - 生成三张中文 SVG/PNG 示意图：可信度验证体系总架构、解析解对比机理、传播后端退化验证；
-- 当前快速验收：6/6 V&V 用例通过，可信度评分 91.58/A，全量 pytest 146 项通过。
+- 当前快速验收：6/6 V&V 用例通过，可信度评分 91.58/A，全量 pytest 149 项通过。
 
 ## 平台成熟度与发文准备度
 
@@ -93,9 +93,15 @@ http://127.0.0.1:7869
 - 新增工程对象树、属性面板、材料设置与材料代理审计、绝对量纲标定卡片、三维拖拽移动、受控几何变换控件、求解联动、求解任务队列生命周期控制、后台 worker 检查点、暂停/恢复、结果图层回写、对象级指标列表/三维徽标、结果档案复查/导出、工程快照落盘/恢复/差异对比、统一工程资产台账筛选、数据库浏览、资产谱系追溯、可复现实验审计、审计和命名规范检查、视图重置和场景快照导出；
 - 属性、材料和几何变换修改回到后端 `CAEProject` 做几何/材料边界校验；材料代理审计输出 `material_proxy_audit.json/csv` 并以 `MAT-AUDIT-001` 纳入统一资产台账，检查引用完整性、字段白名单、参数范围和安全边界；三维工作台求解联动复用现有快速 CAE 求解器并返回指标摘要、对象级约束、适用性提示、V&V 适用性诊断层、观察面归一化场强 heatmap、色标、中心剖面采样、x/y 剖面交互曲线和目标/保护区对象指标；绝对量纲标定支持每阵元输入功率元数据和实测点 CSV，输出 `absolute_calibration.json`、`absolute_calibration_points.csv` 与 `absolute_element_powers.csv`，只给出校准系数、残差、2σ覆盖率和实测距离覆盖区间；每次求解生成 `JOB-xxxx` 任务记录和 `SOL-xxxx` 结果档案并保存完整 JSON，支持任务审计、后台 worker 检查点、暂停/恢复、重试派生和取消请求操作日志；后台任务可通过 `background`/`start_paused` 提交，并在任务 JSON 中保留提交时 `CAEProject` 快照，恢复时从该快照继续；同时维护求解任务、结果、工程快照、导入标定桥接、材料代理审计和统一工程资产台账的 `index.json`/`index.csv`/`assets.sqlite`/`audit.json`/`audit.csv` 轻量索引；`assets.sqlite` 已增加 `workbench3d_solve_jobs`、`workbench3d_solve_job_events`、`workbench3d_results`、`workbench3d_snapshots` 和 `workbench3d_database_manifest` 表，支持记录提交、暂停、恢复、启动、完成、取消等 worker 事件，并可浏览任务/结果/快照库表记录；资产谱系已输出 `lineage.json`/`lineage.csv`，把快照、任务、结果、重试和事件派生关系展开为可审计节点-边；可复现实验审计输出 `reproducibility_audit.json`/`reproducibility_audit.csv`；资产命名审计已固化 `JOB-xxxx`、`SOL-xxxx`、`SNP-xxxx` 编号和 `scene_hash`/`field_hash` 文件名绑定，并输出 `naming_audit.json`/`naming_audit.csv`；资产台账支持按资产类型、标签、哈希和路径筛选，服务重启后可恢复列表并对比两份工程快照的对象/材料字段差异。
 
-## V2.0C 插件市场预览
+## V2.0C 任务级仿真框架预览
 
-- 新增 `src/hpm_platform/plugins/registry.py`，支持本地 JSON manifest、语义版本校验、参数 Schema、依赖声明和安全边界声明；
+- 新增 `src/hpm_platform/ui/mission_sim.py`，把旧版动态时间线求解器接入新版 Scene First 工作台，形成“目标运动 -> 控场求解 -> 逐帧指标 -> 风险代理 -> 论文产物”的最小任务闭环；
+- 新增 `/api/mission/templates`、`/api/mission/status`、`/api/mission/run`、`/api/mission/results/{mission_id}`；
+- 新增三类内置任务模板：`MST-TRACK-001` 目标运动控场任务、`MST-DELAY-001` 观测延迟对比任务、`MST-STATIC-001` 静态赋形基线任务；
+- 场景编辑首页新增“V2.0C 任务级仿真”面板，支持选择任务模板、设置帧数、运行任务、查看任务指标、时间线和产物路径；
+- 每次任务运行输出 HTML 时间线报告、逐帧 CSV、压缩场数据、任务 JSON 和 ZIP 包，并写入 `outputs_v20a_vv/mission_v20c/index.json/csv`；
+- 任务结果只输出目标覆盖、跟踪误差、保护区 P95、归一化风险代理和任务成功代理，不输出真实毁伤概率、真实作用距离、现实作用距离、器件阈值或武器效能参数；
+- 新增 `src/hpm_platform/plugins/registry.py`，插件市场继续作为传播后端、感知算法、报告模板和后续任务模板扩展的基础设施，支持本地 JSON manifest、语义版本校验、参数 Schema、依赖声明和安全边界声明；
 - 新增 `plugins/builtin/` 五个内置插件：传播后端、感知基准、数据导入证据链、V&V 报告模板和 Paper Factory 论文模板包；
 - 新增 `/api/plugins/catalog`、`/api/plugins/acceptance`、`/api/plugins/{plugin_id}/enable`、`/api/plugins/{plugin_id}/run`；
 - 插件运行限制在平台白名单 `builtin_hook` 内，不从 manifest 导入任意 Python 模块；数据导入插件复用 V3.0 证据链审计，不输出真实源功率、现实作用距离、器件阈值或毁伤概率；
@@ -157,7 +163,7 @@ http://127.0.0.1:7869
 | 参数标定前相对 RMSE | 41.99% |
 | 参数标定后相对 RMSE | 0.24% |
 | 联合归一化控制判据 | 通过 |
-| 自动测试 | 146 项全部通过 |
+| 自动测试 | 149 项全部通过 |
 
 标定算例含 0.25% 归一化复场噪声；结果用于软件验收和方法展示，不等同于全波或实物验证。
 
@@ -178,6 +184,8 @@ configs/paper_factory_v20d.yaml                   V2.0D 论文工厂配置
 src/hpm_platform/readiness.py                     平台成熟度与发文准备度评估
 docs/PAPER_FACTORY_V20D.md                        V2.0D Paper Factory 技术说明
 src/hpm_platform/publication/paper_factory.py     V2.0D 论文自动生产线
+docs/MISSION_SIMULATION_V20C.md                   V2.0C 任务级仿真框架说明
+src/hpm_platform/ui/mission_sim.py                V2.0C 任务级仿真服务
 run_vv_v20a.py                                    V2.0A 命令行可信度验证
 run_ui_v20a.py                                    V2.0 Scene First CAE 场景工作台
 run_ui_v14.py                                      V1.4 中文工作台
@@ -216,6 +224,7 @@ papers/paper4_model_validation_v14_outline.md
 - `docs/CAE_WORKBENCH_V14.md`：V1.4 完整技术说明；
 - `docs/可信度验证体系_V20A.md`：V2.0A 可信度验证体系；
 - `docs/CAE_WORKBENCH_V20B.md`：V2.0B 三维 CAE 编辑器原型；
+- `docs/MISSION_SIMULATION_V20C.md`：V2.0C 任务级仿真框架；
 - `docs/SAFETY_SCOPE.md`：研究边界；
 - `outputs_v20a_vv/v20A_可信度验证报告.html`：V2.0A 中文验证报告；
 - `outputs_v14_ui/v14_验收报告.html`：图文验收结果。

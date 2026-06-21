@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 const 图表配置 = {responsive: true, displaylogo: false, locale: "zh-CN", scrollZoom: true};
 let 最近数据 = null;
 let 插件缓存 = [];
+let 任务模板缓存 = [];
 
 function 忙碌(显示, 文字="正在计算…") {
   $("忙碌文字").textContent = 文字;
@@ -47,6 +48,47 @@ function 渲染表格(表格, 记录) {
 }
 function 渲染键值表(表格, 对象) {
   渲染表格(表格, Object.entries(对象 || {}).map(([指标, 数值]) => ({指标, 数值})));
+}
+function 渲染任务模板(数据) {
+  任务模板缓存 = 数据.模板 || [];
+  const 选择 = $("任务模板选择");
+  if (选择) {
+    选择.innerHTML = 任务模板缓存.map(模板 => `<option value="${转义文本(模板.id)}">${转义文本(模板.名称)}</option>`).join("");
+    选择.value = 数据.默认模板 || (任务模板缓存[0] && 任务模板缓存[0].id) || "";
+  }
+  if ($("任务帧数") && 任务模板缓存[0]) $("任务帧数").value = 任务模板缓存[0].默认帧数 || 6;
+  if ($("任务状态")) $("任务状态").textContent = `${任务模板缓存.length} 个模板 · ${数据.结果数量 || 0} 个结果档案`;
+  if ($("任务模板目录")) {
+    渲染表格($("任务模板目录"), 任务模板缓存.map(模板 => ({
+      ID: 模板.id,
+      任务: 模板.名称,
+      控制器: 模板.控制器,
+      帧数: 模板.默认帧数,
+      输出: (模板.输出 || []).join(" / ")
+    })));
+  }
+}
+function 渲染任务结果(数据) {
+  if ($("任务状态")) $("任务状态").textContent = `${数据.mission_id} · ${数据.任务?.控制器 || "controller"} · ${数据.任务?.帧数 || 0} 帧`;
+  if ($("任务指标")) 渲染键值表($("任务指标"), 数据.指标 || {});
+  if ($("任务时间线")) {
+    const 时间线 = (数据.时间线 || []).slice(0, 12).map(帧 => ({
+      帧: 帧.frame,
+      真实x: 帧.true_x_lambda,
+      真实y: 帧.true_y_lambda,
+      赋形x: 帧.design_x_lambda,
+      赋形y: 帧.design_y_lambda,
+      覆盖率: 帧.target_coverage_percent,
+      风险代理: 帧.归一化风险代理,
+      成功: 帧.control_success
+    }));
+    渲染表格($("任务时间线"), 时间线);
+  }
+  if ($("任务输出")) {
+    const 产物 = 数据.产物 || {};
+    const 边界 = 数据.安全边界?.不输出项 ? `不输出项: ${数据.安全边界.不输出项.join(" / ")}` : "";
+    $("任务输出").textContent = Object.entries(产物).map(([k,v]) => `${k}: ${v}`).concat([边界]).filter(Boolean).join("\n");
+  }
 }
 function 渲染插件验收(数据) {
   const 记录 = (数据.验收清单 || []).map(项 => ({
@@ -685,6 +727,31 @@ async function 运行VV(mode) {
     忙碌(false);
   }
 }
+async function 载入任务模板() {
+  if (!$("任务模板目录")) return;
+  try {
+    渲染任务模板(await 请求("/api/mission/templates"));
+  } catch (错误) {
+    if ($("任务状态")) $("任务状态").textContent = 错误.message;
+    提示(错误.message);
+  }
+}
+async function 运行任务级仿真() {
+  const 模板 = $("任务模板选择")?.value || "MST-TRACK-001";
+  const 帧数 = Number($("任务帧数")?.value || 6);
+  忙碌(true, "正在运行任务级仿真…");
+  try {
+    const 数据 = await 请求("/api/mission/run", {method: "POST", body: JSON.stringify({template_id: 模板, frames: 帧数})});
+    渲染任务结果(数据);
+    await 载入任务模板();
+    渲染任务结果(数据);
+    提示("任务级仿真已完成");
+  } catch (错误) {
+    提示(错误.message);
+  } finally {
+    忙碌(false);
+  }
+}
 async function 执行主控动作(action, page) {
   if (action === "run_fast_vv") {
     切换页面("验证中心");
@@ -710,6 +777,12 @@ async function 执行主控动作(action, page) {
     await 载入主控台();
     return;
   }
+  if (action === "run_mission_simulation") {
+    切换页面("场景编辑");
+    await 运行任务级仿真();
+    await 载入主控台();
+    return;
+  }
   切换页面(page || "项目管理");
 }
 
@@ -724,6 +797,12 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   $("运行快速VV").addEventListener("click", () => 运行VV("fast"));
   $("运行完整VV").addEventListener("click", () => 运行VV("full"));
+  $("任务刷新").addEventListener("click", 载入任务模板);
+  $("运行目标运动任务").addEventListener("click", 运行任务级仿真);
+  $("任务模板选择").addEventListener("change", () => {
+    const 模板 = 任务模板缓存.find(项 => 项.id === $("任务模板选择").value);
+    if (模板 && $("任务帧数")) $("任务帧数").value = 模板.默认帧数 || 6;
+  });
   $("导出HTML报告").addEventListener("click", () => { window.location.href = "/download/vv-report.html"; });
   $("导出LaTeX表格").addEventListener("click", () => { window.location.href = "/download/vv-latex.tex"; });
   $("导出论文图包").addEventListener("click", () => { window.location.href = "/download/vv-results.zip"; });
@@ -751,6 +830,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (run) 运行插件(run.dataset.pluginId);
   });
   切换页面(初始页面());
+  载入任务模板();
   载入主控台();
   载入总览();
   载入插件市场();

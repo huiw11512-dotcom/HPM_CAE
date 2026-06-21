@@ -6,9 +6,9 @@
 
 | 规则 | 当前落实 |
 |---|---|
-| 新增功能必须增加测试 | 新增平台成熟度和主控台模块配套 `tests/test_platform_readiness.py`；材料代理审计配套 `tests/test_workbench3d_v20b.py`；正式证据包审计和证据包 V&V 候选评分配套 `tests/test_data_import_v30.py`；Paper Factory 候选评分入论文链路、投稿准备度审计和投稿元数据模板配套 `tests/test_paper_factory_v20d.py`；投稿准备度进入成熟度/主控台配套 `tests/test_platform_readiness.py` |
+| 新增功能必须增加测试 | 新增平台成熟度和主控台模块配套 `tests/test_platform_readiness.py`；材料代理审计配套 `tests/test_workbench3d_v20b.py`；V2.0C 任务级仿真配套 `tests/test_mission_v20c.py`；正式证据包审计和证据包 V&V 候选评分配套 `tests/test_data_import_v30.py`；Paper Factory 候选评分入论文链路、投稿准备度审计和投稿元数据模板配套 `tests/test_paper_factory_v20d.py`；投稿准备度进入成熟度/主控台配套 `tests/test_platform_readiness.py` |
 | 禁止复制已有功能 | 主控台和成熟度报告复用 V&V、Workbench、DataImport、Plugin、PaperFactory 和最新证据包候选评分服务结果；证据包模板/审计/候选评分复用 V3.0 数据导入、证据链、Workbench 阵元功率元数据与外部 V&V 审计 |
-| 禁止孤立算法 | 主控台、成熟度评估、材料代理审计、证据链/证据包审计、证据包 V&V 候选评分、数据导入插件、论文模板插件和 Paper Factory 均接入配置、API/UI、报告产物或插件 manifest；候选评分已进入论文草稿、补充材料、复现注册和统计审计，投稿准备度审计与投稿元数据模板已进入论文包、manifest、状态 API、平台成熟度、主控台和论文导出页 |
+| 禁止孤立算法 | 主控台、成熟度评估、材料代理审计、V2.0C 任务级仿真、证据链/证据包审计、证据包 V&V 候选评分、数据导入插件、论文模板插件和 Paper Factory 均接入配置、API/UI、报告产物或插件 manifest；候选评分已进入论文草稿、补充材料、复现注册和统计审计，投稿准备度审计与投稿元数据模板已进入论文包、manifest、状态 API、平台成熟度、主控台和论文导出页 |
 | 禁止硬编码 | 成熟度评分进入 `configs/platform_readiness.yaml`；外部数据授权/源链/相位参考门槛进入 `configs/external_data_evidence.yaml`；论文工厂引用、复现注册、多模板、插件模板源、LaTeX 审计和投稿准备度门槛进入 `configs/paper_factory_v20d.yaml` |
 | 论文适应平台 | Paper Factory 读取平台 V&V 结果和证据包 V&V 候选评分，并生成引用库、复现注册表、统计审计、多模板矩阵、插件模板合并和 LaTeX 审计，不为论文临时改核心求解 |
 | Scene First 主链路 | 默认首页已从验证中心/主控台切换为“场景编辑”，可信度验证作为工具入口；新增功能必须优先说明用户可分析的新场景或新任务 |
@@ -21,5 +21,5 @@
 
 - V3.0 已具备正式证据包模板、审计入口、V&V 候选评分入口，并已把候选评分接入平台成熟度和主控台；但内置代理测量批次的残差和 2σ 覆盖率仍不满足正式评分门槛，仍缺可公开复查的高质量真实源链、相位参考和授权测量数据包。
 - V2.0B 三维编辑器仍缺完整尺寸/旋转 Gizmo、多用户调度器和正式工程数据库。
-- V2.0C Mission First 还没有真正形成目标运动、感知、测向、控场、风险代理和任务回放闭环；插件市场目前只是基础设施，不能替代任务级仿真体验。
+- V2.0C Mission First 已形成目标运动、区域控场、归一化风险代理和任务产物的最小闭环；剩余风险是感知/测向、波束控制策略选择、多目标任务、阵列退化任务和任务回放尚未做成可编辑任务库。
 - V2.0D Paper Factory 已接入证据包候选评分、投稿准备度审计和投稿元数据模板；外部 DOI、正式复现实验编号、外部目标期刊模板签名和本机 PDF 编译归档仍是投稿前 P0/P1 阻断项，需要人工填写真实可核验元数据后再复跑审计。

@@ -257,6 +257,38 @@
           <button type="button" class="scene-workflow-step" data-page-jump="求解设置"><i class="bi bi-cpu"></i><span>求解设置</span><small>运行归一化快速求解</small></button>
           <button type="button" class="scene-workflow-step" data-page-jump="结果查看"><i class="bi bi-activity"></i><span>结果查看</span><small>场分布、任务与档案</small></button>
         </div>
+        <div class="mission-sim-panel mb-3" data-testid="mission-first-panel">
+          <div class="mission-sim-head">
+            <div>
+              <strong>V2.0C 任务级仿真</strong>
+              <span id="任务状态" data-testid="mission-status">正在载入任务模板。</span>
+            </div>
+            <div class="mission-sim-actions">
+              <select id="任务模板选择" data-testid="mission-template-select" aria-label="任务模板"></select>
+              <input id="任务帧数" data-testid="mission-frames" type="number" min="3" max="24" step="1" value="6" aria-label="任务帧数">
+              <button class="btn btn-outline-primary btn-sm" id="任务刷新" data-testid="mission-refresh"><i class="bi bi-arrow-clockwise"></i> 任务库</button>
+              <button class="btn btn-primary btn-sm" id="运行目标运动任务" data-testid="mission-run"><i class="bi bi-play-fill"></i> 运行任务</button>
+            </div>
+          </div>
+          <div class="mission-sim-grid">
+            <section class="mission-sim-block" aria-label="任务模板">
+              <div class="panel-title">任务模板</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="任务模板目录" data-testid="mission-template-catalog"></table></div>
+            </section>
+            <section class="mission-sim-block" aria-label="任务指标">
+              <div class="panel-title">任务指标</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="任务指标" data-testid="mission-metrics"></table></div>
+            </section>
+            <section class="mission-sim-block span-2" aria-label="任务时间线">
+              <div class="panel-title">时间线</div>
+              <div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" id="任务时间线" data-testid="mission-timeline"></table></div>
+            </section>
+            <section class="mission-sim-block span-2" aria-label="任务产物">
+              <div class="panel-title">产物</div>
+              <pre id="任务输出" class="输出路径 mission-output" data-testid="mission-output">尚未运行任务。</pre>
+            </section>
+          </div>
+        </div>
         <div class="workbench3d-layout">
           <aside class="workbench3d-side" aria-label="三维对象树">
             <div class="workbench3d-side-title">对象树</div>

@@ -64,7 +64,7 @@ V2.0B 以后，路线图从 Verification First 调整为 Scene First。默认首
 
 ### V2.0C：任务级仿真框架（Mission First）
 
-状态：预览接入中，插件市场基础设施已完成，下一步主目标转为任务级仿真。
+状态：预览接入中，已完成最小任务级仿真闭环，插件市场继续作为后续任务模板和算法扩展基础设施。
 
 目标是把平台从“单次场景求解”推进到“任务级仿真”：
 
@@ -76,6 +76,12 @@ V2.0B 以后，路线图从 Verification First 调整为 Scene First。默认首
 
 当前预览已经完成：
 
+- `hpm_platform.ui.mission_sim` 将旧版动态时间线求解器接入 V2.0 Scene First 工作台；
+- FastAPI 暴露 `/api/mission/templates`、`/api/mission/status`、`/api/mission/run` 和 `/api/mission/results/{mission_id}`；
+- 场景编辑首页新增“V2.0C 任务级仿真”面板，可选择任务模板、设置帧数、运行任务并查看指标/时间线/产物路径；
+- 内置 `MST-TRACK-001`、`MST-DELAY-001` 和 `MST-STATIC-001` 三类任务模板；
+- 每次任务运行输出 HTML 时间线报告、逐帧 CSV、压缩场数据、任务 JSON、ZIP 包和 `mission_v20c/index.json/csv`；
+- 任务结果输出目标覆盖、跟踪误差、保护区 P95、归一化风险代理和任务成功代理，保留不输出真实毁伤概率、真实作用距离、现实作用距离、器件阈值或武器效能参数的安全边界；
 - `plugins/builtin/` 内置传播后端、感知基准和报告模板三类 manifest；
 - `hpm_platform.plugins.registry` 支持 manifest 解析、语义版本校验、参数 Schema、启停状态和验收摘要；
 - FastAPI 暴露插件目录、详情、启停、运行和 V2.0C 验收清单 API；

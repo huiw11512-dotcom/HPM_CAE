@@ -57,6 +57,13 @@ class DataImportPathRequest(BaseModel):
     path: str
 
 
+class MissionRunRequest(BaseModel):
+    template_id: str = "MST-TRACK-001"
+    frames: int | None = None
+    controller: str | None = None
+    label: str | None = None
+
+
 def create_app(
     project_path: str | Path | None = None,
     output_dir: str | Path | None = None,
@@ -108,6 +115,35 @@ def create_app(
             return service.mission_control()
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"生成主控台状态失败：{exc}") from exc
+
+    @app.get("/api/mission/templates")
+    async def mission_templates() -> dict[str, Any]:
+        return service.mission_sim.catalog()
+
+    @app.get("/api/mission/status")
+    async def mission_status() -> dict[str, Any]:
+        return service.mission_sim.status()
+
+    @app.post("/api/mission/run")
+    async def mission_run(payload: MissionRunRequest) -> dict[str, Any]:
+        try:
+            return service.mission_sim.run_mission(
+                payload.template_id,
+                frames=payload.frames,
+                controller=payload.controller,
+                label=payload.label,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"运行任务级仿真失败：{exc}") from exc
+
+    @app.get("/api/mission/results/{mission_id}")
+    async def mission_result(mission_id: str) -> dict[str, Any]:
+        try:
+            return service.mission_sim.get_mission(mission_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     @app.get("/api/plugins/catalog")
     async def plugin_catalog() -> dict[str, Any]:

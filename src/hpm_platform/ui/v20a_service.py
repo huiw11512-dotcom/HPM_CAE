@@ -22,6 +22,7 @@ from hpm_platform.north_star import platform_north_star_payload
 from hpm_platform.plugins import PluginMarketplaceService
 from hpm_platform.publication import PaperFactoryService
 from hpm_platform.readiness import build_platform_readiness_report, load_readiness_config
+from hpm_platform.ui.mission_sim import MissionSimulationService
 from hpm_platform.ui.workbench3d import Workbench3DService
 from hpm_platform.validation.vv_runner import load_last_vv_result, run_vv
 
@@ -35,6 +36,7 @@ class V20AValidationService:
         self._lock = threading.RLock()
         self._payload: dict[str, Any] | None = None
         self.workbench3d = Workbench3DService(self.project_path, self.output_dir)
+        self.mission_sim = MissionSimulationService(self.project_path, self.output_dir)
         self.plugins = PluginMarketplaceService(output_dir=self.output_dir)
         self.paper_factory = PaperFactoryService(self.output_dir)
         self.data_import = DataImportService(self.output_dir)
@@ -206,6 +208,8 @@ class V20AValidationService:
             readiness = self.platform_readiness()
             vv_payload = self.overview()
             plugin_catalog = self.plugins.catalog()
+            mission_catalog = self.mission_sim.catalog()
+            mission_status = self.mission_sim.status()
             data_catalog = self.data_import.catalog()
             paper_status = self.paper_factory.status()
             score = vv_payload.get("评分", {})
@@ -217,6 +221,8 @@ class V20AValidationService:
                 "平台成熟度/%": readiness.get("平台成熟度/%", 0),
                 "插件数": plugin_catalog.get("插件总数", 0),
                 "插件类别数": plugin_catalog.get("类别总数", 0),
+                "任务模板数": len(mission_catalog.get("模板", ())),
+                "任务结果数": mission_status.get("任务数量", 0),
                 "数据样例数": data_catalog.get("样例数", 0),
                 "论文工厂状态": paper_status.get("状态", "未知"),
             }
@@ -244,6 +250,7 @@ class V20AValidationService:
                 "主链路": workflow,
                 "可用入口": [
                     {"入口": "三维CAE编辑器", "状态": _entry_state(workflow, "三维CAE编辑器"), "证据": "Three.js 视口、对象树、属性面板与求解档案"},
+                    {"入口": "任务级仿真", "状态": "已接通" if mission_catalog.get("模板") else "待补齐", "证据": f"{len(mission_catalog.get('模板', ())) } 个任务模板，{mission_status.get('任务数量', 0)} 个结果档案"},
                     {"入口": "插件市场", "状态": "已接通" if plugin_catalog.get("插件总数", 0) else "待补齐", "证据": f"{plugin_catalog.get('插件总数', 0)} 个插件，{plugin_catalog.get('类别总数', 0)} 类"},
                     {"入口": "数据导入", "状态": "已接通" if data_catalog.get("样例数", 0) else "待补齐", "证据": f"{data_catalog.get('样例数', 0)} 个样例，支持 {', '.join(data_catalog.get('支持格式', []) or [])}"},
                     {"入口": "论文报告导出", "状态": "已接通" if paper_status.get("通过") else "待补齐", "证据": paper_status.get("状态", "未知")},
@@ -253,6 +260,7 @@ class V20AValidationService:
                 "快速动作": [
                     {"名称": "运行快速V&V", "入口": "验证总览", "动作": "run_fast_vv", "说明": "刷新可信度评分和图表。"},
                     {"名称": "打开三维CAE编辑器", "入口": "三维CAE编辑器", "动作": "open_page", "说明": "编辑对象、材料代理和求解预览。"},
+                    {"名称": "运行目标运动任务", "入口": "任务级仿真", "动作": "run_mission_simulation", "说明": "生成目标运动、控场质量和归一化风险时间线。"},
                     {"名称": "运行数据导入证据链插件", "入口": "插件市场", "动作": "run_data_import_plugin", "说明": "检查外部数据证据链与相位参考状态。"},
                     {"名称": "生成论文草稿包", "入口": "论文报告导出", "动作": "generate_paper", "说明": "输出 Markdown、LaTeX、图表索引和补充材料。"},
                     {"名称": "刷新平台成熟度", "入口": "平台成熟度", "动作": "refresh_readiness", "说明": "更新使用准备度、发文准备度和阻断项。"},

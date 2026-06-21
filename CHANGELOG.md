@@ -4,6 +4,10 @@
 
 - 将 V2.0 产品路线从 Verification First 调整为 Scene First：UI 默认首页切换到“场景编辑”，首屏固定 `场景 / 对象 / 任务 / 结果` 主链路，左侧导航重排为项目管理、场景编辑、阵列设计、传播环境、求解设置、结果查看和论文导出，可信度验证移动到工具入口。
 - 更新 North Star、Roadmap、AGENTS、STATUS 和 manifest，把后续路线固定为 V2.0B 三维场景编辑器（Scene First）、V2.0C 任务级仿真框架（Mission First）、V2.0D 论文自动生产线（Publication First）、V2.1 数字孪生任务库和 V3.0 真实数据接入与实验闭环。
+- 新增 V2.0C 任务级仿真框架：`src/hpm_platform/ui/mission_sim.py` 将旧版动态时间线求解器接入新版三维工作台，支持目标运动任务、观测延迟基线、静态赋形基线、归一化风险代理、任务成功代理、HTML/CSV/JSON/ZIP 任务产物和 `outputs_v20a_vv/mission_v20c` 索引。
+- 新增 `/api/mission/templates`、`/api/mission/status`、`/api/mission/run`、`/api/mission/results/{mission_id}`，并在场景编辑首页新增“V2.0C 任务级仿真”面板，用户可直接选择任务模板、设置帧数、运行任务和查看时间线。
+- 新增 `docs/MISSION_SIMULATION_V20C.md` 与 `tests/test_mission_v20c.py`，锁定 Mission First 服务层、API、前端入口、产物归档和不输出真实作用距离/器件阈值/毁伤概率的安全边界。
+- 全量 pytest 从 146 项增加到 149 项并全部通过。
 - 新增平台成熟度与发文准备度主链路：`src/hpm_platform/readiness.py` 汇总 V&V、三维 Workbench、数据导入、插件市场、Paper Factory 和工程复现证据。
 - 新增配置文件 `configs/platform_readiness.yaml`，统一管理成熟度权重、验收门槛和安全边界，避免硬编码评分口径。
 - 新增 `/api/platform/readiness` 和 UI“平台成熟度”页面，直接展示使用准备度、发文准备度、主链路接通状态、八层成熟度和关键阻断项。

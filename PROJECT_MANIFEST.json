@@ -26,7 +26,7 @@
   ],
   "语言": "Python",
   "Python要求": ">=3.10",
-  "自动测试": "146 项全部通过",
+  "自动测试": "149 项全部通过",
   "主入口": "run_ui_v20a.py",
   "主配置": "configs/cae_project_v14.yaml",
   "成熟度配置": "configs/platform_readiness.yaml",
@@ -211,6 +211,24 @@
     "outputs_v20a_vv/v20b_asset_naming_mobile_smoke.png",
     "outputs_v20a_vv/v20b_background_worker_smoke.png",
     "outputs_v20a_vv/v20b_background_worker_mobile_smoke.png"
+  ],
+  "V2.0C任务级仿真": "src/hpm_platform/ui/mission_sim.py",
+  "V2.0C任务级仿真技术说明": "docs/MISSION_SIMULATION_V20C.md",
+  "V2.0C任务级仿真API": [
+    "/api/mission/templates",
+    "/api/mission/status",
+    "/api/mission/run",
+    "/api/mission/results/{mission_id}"
+  ],
+  "V2.0C任务模板": [
+    "MST-TRACK-001 目标运动控场任务",
+    "MST-DELAY-001 观测延迟对比任务",
+    "MST-STATIC-001 静态赋形基线任务"
+  ],
+  "V2.0C任务级仿真产物目录": "outputs_v20a_vv/mission_v20c",
+  "V2.0C任务级仿真索引": [
+    "outputs_v20a_vv/mission_v20c/index.json",
+    "outputs_v20a_vv/mission_v20c/index.csv"
   ],
   "V2.0C插件系统": "src/hpm_platform/plugins/registry.py",
   "V2.0C插件目录": "plugins/builtin",
