@@ -11,6 +11,7 @@
 - 新增 `configs/paper_factory_v20d.yaml`，Paper Factory 现在自动输出 BibTeX 引用库、文献复现注册表、统计审计、IEEE/期刊/学位论文多模板、插件模板合并、模板审计、LaTeX 编译审计和前端论文生产审计表。
 - Paper Factory 已把 `evidence_package_vv_candidate.json` 写入论文草稿、补充材料索引、复现注册表、统计审计和 manifest；候选未过门槛时只作为风险附注，不改写正式可信度评分。
 - Paper Factory 新增投稿准备度审计 `HPM_DT_V20D_投稿准备度审计.json/csv`，将外部 DOI、正式复现实验编号、证据包候选门槛、PDF 归档和目标期刊模板签名纳入 P0/P1 发文阻断项。
+- Paper Factory 新增投稿元数据模板 `HPM_DT_V20D_投稿元数据模板.yaml/csv`，把 DOI、正式复现实验编号、PDF 归档和目标期刊模板签名做成可填写、可打包、可审计的投稿入口，同时保持不伪造值、不自动放行投稿门槛。
 - 论文报告导出页新增投稿准备度审计面板，直接展示投稿准备度百分比、投稿门槛状态、外部 DOI/正式复现实验编号/签名模板计数和前 8 个阻断项。
 - 新增 `hpm.publication.paper_template_pack` 内置论文模板包插件，V2.0C `report_template` 插件协议可向 V2.0D Paper Factory 暴露论文模板声明。
 - 新增 Workbench 材料代理审计：`/api/workbench3d/materials/audit` 输出 `MAT-AUDIT-001`，并让平台主链路“设置材料”由可编辑提升为可审计、可入账。

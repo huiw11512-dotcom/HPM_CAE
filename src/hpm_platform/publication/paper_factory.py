@@ -44,6 +44,8 @@ class PaperFactoryBundle:
     figure_manifest: Path
     supplement_index: Path
     submission_readiness: Path
+    submission_metadata_template: Path
+    submission_metadata_template_csv: Path
     archive: Path
 
     def as_dict(self) -> dict[str, Any]:
@@ -61,6 +63,8 @@ class PaperFactoryBundle:
             "figure_manifest": str(self.figure_manifest),
             "supplement_index": str(self.supplement_index),
             "submission_readiness": str(self.submission_readiness),
+            "submission_metadata_template": str(self.submission_metadata_template),
+            "submission_metadata_template_csv": str(self.submission_metadata_template_csv),
             "archive": str(self.archive),
         }
 
@@ -95,6 +99,7 @@ class PaperFactoryService:
                         {"项目": "图表清单", "通过": False},
                         {"项目": "补充材料索引", "通过": False},
                         {"项目": "投稿准备度审计", "通过": False},
+                        {"项目": "投稿元数据模板", "通过": False},
                         {"项目": "可复现论文包 ZIP", "通过": False},
                     ],
                 }
@@ -147,6 +152,8 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
     supplement_path = bundle_dir / "HPM_DT_V20D_补充材料索引.md"
     submission_path = bundle_dir / "HPM_DT_V20D_投稿准备度审计.json"
     submission_csv_path = bundle_dir / "HPM_DT_V20D_投稿准备度审计.csv"
+    submission_template_path = bundle_dir / "HPM_DT_V20D_投稿元数据模板.yaml"
+    submission_template_csv_path = bundle_dir / "HPM_DT_V20D_投稿元数据模板.csv"
     manifest_path = bundle_dir / "paper_factory_manifest.json"
     archive_path = bundle_dir / "HPM_DT_V20D_paper_factory_bundle.zip"
 
@@ -184,6 +191,15 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
     )
     submission_path.write_text(json.dumps(submission_audit, ensure_ascii=False, indent=2), encoding="utf-8")
     _write_submission_readiness_csv(submission_csv_path, submission_audit)
+    submission_template = _submission_metadata_template(
+        context=context,
+        config=config,
+        submission_audit=submission_audit,
+        template_rows=template_rows,
+        archive_path=archive_path,
+    )
+    submission_template_path.write_text(yaml.safe_dump(submission_template, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    _write_submission_metadata_template_csv(submission_template_csv_path, submission_template)
 
     acceptance = _acceptance(
         draft_path=draft_path,
@@ -196,6 +212,8 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
         figure_manifest_path=figure_manifest_path,
         supplement_path=supplement_path,
         submission_path=submission_path,
+        submission_template_path=submission_template_path,
+        submission_template_csv_path=submission_template_csv_path,
         figures=copied_figures,
         tables=copied_tables,
     )
@@ -224,6 +242,8 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
             "补充材料索引": str(supplement_path.resolve()),
             "投稿准备度审计JSON": str(submission_path.resolve()),
             "投稿准备度审计CSV": str(submission_csv_path.resolve()),
+            "投稿元数据模板YAML": str(submission_template_path.resolve()),
+            "投稿元数据模板CSV": str(submission_template_csv_path.resolve()),
             "论文包ZIP": str(archive_path.resolve()),
         },
         "图表数量": len(copied_figures),
@@ -237,10 +257,17 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
         "LaTeX编译审计": {key: value for key, value in latex_audit.items() if key != "日志"},
         "证据包候选评分": _candidate_manifest_summary(_as_mapping(context.get("evidence_candidate")), out),
         "投稿准备度审计": submission_audit,
+        "投稿元数据模板": {
+            "YAML": str(submission_template_path.resolve()),
+            "CSV": str(submission_template_csv_path.resolve()),
+            "用途": "人工补齐外部 DOI、正式复现实验编号、PDF 归档和目标期刊模板签名。",
+            "不会自动放行投稿门槛": True,
+            "安全边界": "模板只登记论文证据链元数据，不填写真实作用距离、器件阈值、真实毁伤概率或作战效能结论。",
+        },
         "验收清单": acceptance,
         "安全边界": context["safety_boundary"],
         "配置": str(config.get("__path__", DEFAULT_CONFIG)),
-        "下一门槛": "清零投稿准备度审计中的 P0/P1 阻断项：外部 DOI、正式复现实验编号、真实数据论文证据链、本机 PDF 编译归档和目标期刊模板签名。",
+        "下一门槛": "填写投稿元数据模板并清零投稿准备度审计中的 P0/P1 阻断项：外部 DOI、正式复现实验编号、真实数据论文证据链、本机 PDF 编译归档和目标期刊模板签名。",
     }
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     _archive_bundle(bundle_dir, archive_path)
@@ -265,6 +292,8 @@ def generate_paper_factory_bundle(output_dir: str | Path = DEFAULT_OUTPUT, *, ti
         figure_manifest=figure_manifest_path,
         supplement_index=supplement_path,
         submission_readiness=submission_path,
+        submission_metadata_template=submission_template_path,
+        submission_metadata_template_csv=submission_template_csv_path,
         archive=archive_path,
     )
 
@@ -765,6 +794,144 @@ def _write_submission_readiness_csv(path: Path, audit: Mapping[str, Any]) -> Non
         writer.writeheader()
         for row in audit.get("检查项", ()) or ():
             writer.writerow({key: row.get(key, "") for key in writer.fieldnames})
+
+
+def _submission_metadata_template(
+    *,
+    context: Mapping[str, Any],
+    config: Mapping[str, Any],
+    submission_audit: Mapping[str, Any],
+    template_rows: list[dict[str, Any]],
+    archive_path: Path,
+) -> dict[str, Any]:
+    submission_cfg = _as_mapping(config.get("submission_readiness"))
+    safety_cfg = _as_mapping(config.get("safety_boundary"))
+    no_output_items = [str(item) for item in safety_cfg.get("no_output_items", ()) or ()]
+    required_pdf = str(submission_cfg.get("required_pdf_filename") or "HPM_DT_V20D_论文定稿.pdf")
+    output_dir = Path(str(context.get("output_dir", DEFAULT_OUTPUT)))
+    candidate_summary = _candidate_manifest_summary(_as_mapping(context.get("evidence_candidate")), output_dir)
+    target_template_id = str(template_rows[0].get("模板ID", "target_template_001")) if template_rows else "target_template_001"
+    return {
+        "version": "V2.0D-submission-metadata-template-v1",
+        "name": "Paper Factory 投稿元数据模板",
+        "purpose": "人工补齐投稿准备度审计中的 P0/P1 阻断项；生成模板不会伪造 DOI、复现实验编号或目标期刊签名。",
+        "generated_utc": context.get("generated_utc", ""),
+        "paper_title": context.get("title", ""),
+        "readiness_snapshot": {
+            "submission_readiness_percent": submission_audit.get("投稿准备度/%"),
+            "submission_gate_passed": submission_audit.get("投稿门槛通过"),
+            "status": submission_audit.get("状态", ""),
+            "blockers": [
+                {
+                    "item": item.get("项目", ""),
+                    "severity": item.get("严重度", ""),
+                    "evidence": item.get("证据", ""),
+                }
+                for item in submission_audit.get("阻断项", ()) or ()
+            ],
+        },
+        "external_references": [
+            {
+                "reference_key": "external_reference_001",
+                "doi": "",
+                "title": "",
+                "venue": "",
+                "year": "",
+                "relation": "literature_reproduction_or_method_comparison",
+                "evidence_note": "填写可公开核验的论文、数据集或方法对比来源；不填写设备阈值或真实作用距离。",
+            }
+        ],
+        "reproduction_registry": [
+            {
+                "id": "REP-EXT-001",
+                "formal_reproduction_id": "",
+                "linked_reference_key": "external_reference_001",
+                "evidence_path": "",
+                "reviewer": "",
+                "status": "planned",
+                "scope": "software_reproduction_or_authorized_measurement_metadata",
+            }
+        ],
+        "pdf_archive": {
+            "required_pdf_filename": required_pdf,
+            "pdf_path": "",
+            "sha256": "",
+            "archive_bundle": str(archive_path.resolve()),
+        },
+        "target_template_signatures": [
+            {
+                "template_id": target_template_id,
+                "journal_or_venue": "",
+                "signature": "",
+                "source": "",
+                "license_or_authorization": "",
+            }
+        ],
+        "evidence_candidate": {
+            "report": candidate_summary.get("输出文件", ""),
+            "candidate_gate_passed": candidate_summary.get("候选门槛满足"),
+            "formal_score_rewrite": candidate_summary.get("正式评分改写"),
+            "status": candidate_summary.get("候选评分状态", ""),
+        },
+        "scoring_policy": {
+            "does_not_auto_pass_submission_gate": True,
+            "does_not_rewrite_formal_credibility_score": True,
+            "manual_review_required_after_fill": True,
+        },
+        "safety_boundary": {
+            "description": safety_cfg.get("description", context.get("safety_boundary", "")),
+            "no_output_items": no_output_items,
+            "blocked_fields": ["real_effect_distance", "device_threshold", "damage_probability", "combat_effectiveness"],
+            "instruction": "本模板只登记论文证据链元数据；不填写真实作用距离、器件阈值、真实毁伤概率或作战效能结论。",
+        },
+        "fill_instructions": [
+            "把真实 DOI 写入 external_references 后，同步到 configs/paper_factory_v20d.yaml 的 references。",
+            "把正式复现实验编号写入 reproduction_registry 后，同步到 configs/paper_factory_v20d.yaml 的 reproduction_registry。",
+            "PDF 编译完成后填写 pdf_archive.pdf_path 和 sha256，再重新生成 Paper Factory 包。",
+            "目标期刊模板需要可核验签名或来源授权，填写 target_template_signatures 后再复跑投稿准备度审计。",
+        ],
+    }
+
+
+def _write_submission_metadata_template_csv(path: Path, template: Mapping[str, Any]) -> None:
+    rows = [
+        {
+            "类别": "external_references",
+            "字段": "doi",
+            "必填": "是",
+            "当前值": "",
+            "填写说明": "填写可公开核验的外部 DOI；没有 DOI 时保持空白，不伪造。",
+            "安全边界": "不登记真实作用距离、器件阈值或毁伤概率。",
+        },
+        {
+            "类别": "reproduction_registry",
+            "字段": "formal_reproduction_id",
+            "必填": "是",
+            "当前值": "",
+            "填写说明": "填写正式复现实验或授权测量元数据编号。",
+            "安全边界": "编号只用于证据链追踪，不代表真实效能结论。",
+        },
+        {
+            "类别": "pdf_archive",
+            "字段": "pdf_path",
+            "必填": "是",
+            "当前值": "",
+            "填写说明": f"归档文件名建议为 {template.get('pdf_archive', {}).get('required_pdf_filename', '')}。",
+            "安全边界": "PDF 内容仍需遵守模型边界声明。",
+        },
+        {
+            "类别": "target_template_signatures",
+            "字段": "signature",
+            "必填": "是",
+            "当前值": "",
+            "填写说明": "填写目标期刊/会议模板签名、来源哈希或授权记录。",
+            "安全边界": "签名只证明模板来源，不证明科研结论成立。",
+        },
+    ]
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["类别", "字段", "必填", "当前值", "填写说明", "安全边界"])
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def _external_doi_count(config: Mapping[str, Any]) -> int:
@@ -1325,6 +1492,7 @@ def _supplement_index(context: Mapping[str, Any]) -> str:
 - 统计审计：`HPM_DT_V20D_统计审计.json`
 - 模板审计：`HPM_DT_V20D_模板审计.json`
 - LaTeX 编译审计：`HPM_DT_V20D_LaTeX编译审计.json`
+- 投稿元数据模板：`HPM_DT_V20D_投稿元数据模板.yaml`
 """
 
 
@@ -1340,6 +1508,8 @@ def _acceptance(
     figure_manifest_path: Path,
     supplement_path: Path,
     submission_path: Path,
+    submission_template_path: Path,
+    submission_template_csv_path: Path,
     figures: list[dict[str, Any]],
     tables: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -1360,6 +1530,13 @@ def _acceptance(
         {"项目": "补充材料索引", "通过": supplement_path.exists() and len(tables) >= 3},
         {"项目": "证据包候选评分写入论文材料", "通过": "证据包 V&V 候选评分" in draft_text and "外部数据证据包候选评分" in supplement_text},
         {"项目": "投稿准备度审计", "通过": submission_path.exists() and submission_path.stat().st_size > 100},
+        {
+            "项目": "投稿元数据模板",
+            "通过": submission_template_path.exists()
+            and submission_template_path.stat().st_size > 100
+            and submission_template_csv_path.exists()
+            and submission_template_csv_path.stat().st_size > 100,
+        },
         {"项目": "安全边界声明", "通过": "安全边界" in draft_text},
     ]
 

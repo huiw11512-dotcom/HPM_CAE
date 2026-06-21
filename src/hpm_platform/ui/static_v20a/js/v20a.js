@@ -100,9 +100,9 @@ function 渲染论文工厂状态(数据) {
       状态: 项.通过 ? "通过" : "待补齐"
     })));
   }
-  渲染投稿准备度(数据.投稿准备度审计 || null);
+  渲染投稿准备度(数据.投稿准备度审计 || null, 数据.投稿元数据模板 || null);
 }
-function 渲染投稿准备度(审计) {
+function 渲染投稿准备度(审计, 模板) {
   const 容器 = $("论文工厂投稿准备度");
   if (!容器) return;
   if (!审计) {
@@ -113,6 +113,13 @@ function 渲染投稿准备度(审计) {
   const 通过 = Boolean(审计.投稿门槛通过);
   const 阻断项 = (审计.阻断项 || []).slice(0, 8);
   const 计数 = 审计.关键计数 || {};
+  const 模板路径 = 模板 ? [模板.YAML, 模板.CSV].filter(Boolean) : [];
+  const 模板块 = 模板路径.length ? `
+    <div class="submission-template-path mt-3">
+      <div class="fw-semibold mb-1">投稿元数据模板</div>
+      <div class="small text-muted mb-1">填写外部 DOI、正式复现实验编号、PDF 归档和目标期刊模板签名；模板不会自动放行投稿门槛。</div>
+      ${模板路径.map(路径 => `<div class="small text-break"><code>${转义文本(路径)}</code></div>`).join("")}
+    </div>` : "";
   const 行 = 阻断项.length ? 阻断项.map(项 => `<tr>
     <td><span class="badge bg-${项.严重度 === "P0" ? "danger" : "warning"}">${转义文本(项.严重度 || "P1")}</span></td>
     <td>${转义文本(项.项目 || "")}</td>
@@ -141,7 +148,8 @@ function 渲染投稿准备度(审计) {
         <thead><tr><th>级别</th><th>项目</th><th>证据</th></tr></thead>
         <tbody>${行}</tbody>
       </table>
-    </div>`;
+    </div>
+    ${模板块}`;
 }
 function 渲染数据导入验收(数据) {
   const 验收 = 数据.验收 || 数据;

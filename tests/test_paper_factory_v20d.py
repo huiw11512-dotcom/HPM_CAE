@@ -3,6 +3,7 @@ import json
 import zipfile
 
 from fastapi.testclient import TestClient
+import yaml
 
 from hpm_platform.data_import import (
     DataImportService,
@@ -36,6 +37,8 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     registry = bundle.reproduction_registry.read_text(encoding="utf-8-sig")
     supplement = bundle.supplement_index.read_text(encoding="utf-8")
     submission = json.loads(bundle.submission_readiness.read_text(encoding="utf-8"))
+    submission_template = yaml.safe_load(bundle.submission_metadata_template.read_text(encoding="utf-8"))
+    submission_template_csv = bundle.submission_metadata_template_csv.read_text(encoding="utf-8-sig")
     template_audit = json.loads(bundle.template_audit.read_text(encoding="utf-8"))
     latex_audit = json.loads(bundle.latex_compile_audit.read_text(encoding="utf-8"))
 
@@ -62,6 +65,18 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     assert any(item["项目"] == "PDF 编译归档存在" and item["通过"] is False for item in manifest["投稿准备度审计"]["检查项"])
     assert submission["版本"] == "V2.0D-submission-readiness-v1"
     assert submission["投稿准备度/%"] < 80
+    assert manifest["投稿元数据模板"]["不会自动放行投稿门槛"] is True
+    assert Path(manifest["产物"]["投稿元数据模板YAML"]).exists()
+    assert Path(manifest["产物"]["投稿元数据模板CSV"]).exists()
+    assert submission_template["version"] == "V2.0D-submission-metadata-template-v1"
+    assert submission_template["external_references"][0]["doi"] == ""
+    assert submission_template["reproduction_registry"][0]["formal_reproduction_id"] == ""
+    assert submission_template["pdf_archive"]["pdf_path"] == ""
+    assert submission_template["target_template_signatures"][0]["signature"] == ""
+    assert submission_template["scoring_policy"]["does_not_auto_pass_submission_gate"] is True
+    assert "真实作用距离" in submission_template["safety_boundary"]["no_output_items"]
+    assert "doi" in submission_template_csv
+    assert "formal_reproduction_id" in submission_template_csv
     assert "摘要" in draft
     assert "安全边界" in draft
     assert "证据包 V&V 候选评分" in draft
@@ -80,7 +95,10 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     assert latex_audit["结构审计通过"] is True
     assert bundle.templates_dir.exists()
     assert bundle.submission_readiness.exists()
+    assert bundle.submission_metadata_template.exists()
+    assert bundle.submission_metadata_template_csv.exists()
     assert bundle.archive.exists()
+    assert any(item["项目"] == "投稿元数据模板" and item["通过"] is True for item in manifest["验收清单"])
 
     with zipfile.ZipFile(bundle.archive) as zf:
         names = set(zf.namelist())
@@ -93,6 +111,8 @@ def test_v20d_paper_factory_generates_reproducible_bundle(tmp_path):
     assert "HPM_DT_V20D_LaTeX编译审计.json" in names
     assert "HPM_DT_V20D_投稿准备度审计.json" in names
     assert "HPM_DT_V20D_投稿准备度审计.csv" in names
+    assert "HPM_DT_V20D_投稿元数据模板.yaml" in names
+    assert "HPM_DT_V20D_投稿元数据模板.csv" in names
     assert any(name.startswith("templates/") and name.endswith(".tex") for name in names)
     assert "paper_factory_manifest.json" in names
     assert any(name.startswith("figures/") for name in names)
@@ -131,6 +151,7 @@ def test_v20d_service_status_reflects_generation(tmp_path):
     assert Path(status["产物"]["引用库"]).exists()
     assert Path(status["产物"]["模板审计JSON"]).exists()
     assert Path(status["产物"]["投稿准备度审计JSON"]).exists()
+    assert Path(status["产物"]["投稿元数据模板YAML"]).exists()
     assert status["统计审计"]["统计审计通过"] is True
     assert status["投稿准备度审计"]["投稿门槛通过"] is False
     assert status["模板审计"]["模板审计通过"] is True
@@ -152,7 +173,9 @@ def test_v20d_api_generates_and_downloads_paper_bundle(tmp_path):
     assert "模板审计JSON" in generated.json()["产物"]
     assert "LaTeX编译审计" in generated.json()["产物"]
     assert "投稿准备度审计JSON" in generated.json()["产物"]
+    assert "投稿元数据模板YAML" in generated.json()["产物"]
     assert generated.json()["投稿准备度审计"]["投稿门槛通过"] is False
+    assert generated.json()["投稿元数据模板"]["不会自动放行投稿门槛"] is True
     assert status_after.json()["状态"] == "已生成"
     assert download.status_code == 200
     assert download.content[:2] == b"PK"
@@ -173,3 +196,4 @@ def test_v20d_frontend_assets_register_paper_factory_controls():
     assert "论文工厂验收" in js
     assert "渲染投稿准备度" in js
     assert "投稿准备度审计" in js
+    assert "投稿元数据模板" in js
